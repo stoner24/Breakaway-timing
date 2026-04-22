@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Results · Breakaway Timing</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- NAV -->
+  <nav>
+    <a class="nav-logo" href="index.html">
+      <img src="logo.jpg" alt="Breakaway Timing" />
+      <span>Breakaway Timing</span>
+    </a>
+    <ul class="nav-links">
+      <li><a href="index.html">Home</a></li>
+      <li><a href="results.html" class="active">Results</a></li>
+      <li><a href="about.html">About</a></li>
+      <li><a href="contact.html">Contact</a></li>
+    </ul>
+  </nav>
+
+  <!-- PAGE HEADER -->
+  <div class="page-header">
+    <div class="page-header-inner">
+      <p class="section-label">Live &amp; Historical</p>
+      <h1 class="section-title">Race Results</h1>
+    </div>
+  </div>
+
+  <!-- RESULTS -->
+  <div class="results-section">
+
+    <!-- Controls -->
+    <div class="controls-row">
+      <select class="styled-select" id="raceDropdown">
+        <option value="LIVE">🔴 Live Results</option>
+      </select>
+      <select class="styled-select" id="categoryDropdown">
+        <option value="ALL">All Categories</option>
+      </select>
+    </div>
+
+    <!-- Status bar -->
+    <div class="status-bar">
+      <span id="lastUpdated">Last updated: —</span>
+      <span id="liveIndicator"><span class="live-dot"></span> Live</span>
+    </div>
+
+    <!-- Table -->
+    <div class="results-table-wrap">
+      <table id="resultsTable">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Bib</th>
+            <th>Rider</th>
+            <th>Team / Affiliation</th>
+            <th>Category</th>
+            <th>Time</th>
+            <th>Gap</th>
+          </tr>
+        </thead>
+        <tbody id="resultsBody">
+          <tr>
+            <td colspan="7" style="text-align:center; padding: 3rem; color: var(--mid);">
+              Waiting for results...
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+  </div>
+
+  <!-- FOOTER -->
+  <footer>
+    <div class="footer-logo">Breakaway Timing</div>
+    <ul class="footer-links">
+      <li><a href="index.html">Home</a></li>
+      <li><a href="results.html">Results</a></li>
+      <li><a href="about.html">About</a></li>
+      <li><a href="contact.html">Contact</a></li>
+    </ul>
+    <p class="footer-copy">© 2026 Breakaway Timing · TJ Stone · breakawayracetiming@gmail.com</p>
+  </footer>
+
+  <script>
+    const REFRESH_MS   = 15000;
+    const FIREBASE_URL = "https://breakaway-timing-results-default-rtdb.europe-west1.firebasedatabase.app";
+
+    let lastGeneratedAt  = null;
+    let lastPayload      = null;
+    let selectedCategory = "ALL";
+    let selectedRace     = "LIVE";
+    let pollingTimer     = null;
+
+    const raceDropdown    = document.getElementById("raceDropdown");
+    const categoryDropdown = document.getElementById("categoryDropdown");
+    const resultsBody     = document.getElementById("resultsBody");
+    const lastUpdatedEl   = document.getElementById("lastUpdated");
+    const liveIndicator   = document.getElementById("liveIndicator");
+
+    // ── INIT ──
+    loadRaceIndex();
+    startPolling();
+
+    raceDropdown.addEventListener("change", () => {
+      selectedRace     = raceDropdown.value || "LIVE";
+      selectedCategory = "ALL";
+      lastGeneratedAt  = null;
+      lastPayload      = null;
+      categoryDropdown.innerHTML = '<option value="ALL">All Categories</option>';
+      categoryDropdown.value = "ALL";
+
+      if (selectedRace === "LIVE") {
+        liveIndicator.style.display = "";
+        startPolling();
+      } else {
+        liveIndicator.style.display = "none";
+        stopPolling();
+        loadHistoricRace(selectedRace);
+      }
+    });
+
+    categoryDropdown.addEventListener("change", () => {
+      selectedCategory = categoryDropdown.value || "ALL";
+      if (lastPayload) renderResults(lastPayload);
+    });
+
+    // ── RACE INDEX ──
+    function loadRaceIndex() {
+      fetch(FIREBASE_URL + "/race_index.json")
+        .then(r => r.json())
+        .then(index => {
+          if (!index) return;
+          const races = Object.values(index).sort((a, b) =>
+            (b.generatedAt || "").localeCompare(a.generatedAt || "")
+          );
+          races.forEach(r => {
+            const opt = document.createElement("option");
+            opt.value = r.raceId;
+            opt.textContent = r.raceLabel || r.raceId;
+            raceDropdown.appendChild(opt);
+          });
+          raceDropdown.value = "LIVE";
+        })
+        .catch(err => console.warn("Failed to load race index:", err));
+    }
+
+    // ── HISTORIC RACE ──
+    function loadHistoricRace(raceId) {
+      lastUpdatedEl.textContent = "Loading...";
+      showPlaceholder();
+      fetch(FIREBASE_URL + "/race_history/" + encodeURIComponent(raceId) + ".json")
+        .then(r => r.json())
+        .then(data => {
+          if (!data) { lastUpdatedEl.textContent = "No data found."; return; }
+          lastPayload = data;
+          renderResults(data);
+        })
+        .catch(err => {
+          console.warn("Failed to load historic race:", err);
+          lastUpdatedEl.textContent = "Failed to load race data.";
+        });
+    }
+
+    // ── POLLING ──
+    function startPolling() {
+      stopPolling();
+      refreshResults();
+      pollingTimer = setInterval(refreshResults, REFRESH_MS);
+    }
+
+    function stopPolling() {
+      if (pollingTimer) { clearInterval(pollingTimer); pollingTimer = null; }
+    }
+
+    function refreshResults() {
+      fetch(FIREBASE_URL + "/live_race.json")
+        .then(r => r.json())
+        .then(data => {
+          if (!data || !data.generatedAt) return;
+          if (data.generatedAt === lastGeneratedAt) return;
+          lastGeneratedAt = data.generatedAt;
+          lastPayload     = data;
+          renderResults(data);
+        })
+        .catch(err => console.warn("Auto-refresh failed:", err));
+    }
+
+    // ── RENDER ──
+    function renderResults(data) {
+      const label = selectedRace === "LIVE"
+        ? "Last updated: " + new Date(data.generatedAt).toLocaleTimeString()
+        : "Race: " + (data.raceLabel || data.raceId);
+      lastUpdatedEl.textContent = label;
+
+      const out         = [];
+      const events      = Array.isArray(data.events) ? data.events : [];
+      const categorySet = new Set();
+
+      for (const ev of events) {
+        const results = Array.isArray(ev.results) ? ev.results : [];
+        for (const r of results) {
+          const place     = clean(r.place || "");
+          const bib       = clean(r.bib || "");
+          const time      = clean(r.time || "");
+          const firstName = clean(r.firstName || "");
+          const lastName  = clean(r.lastName || "");
+          const rider     = (firstName && lastName) ? (firstName + " " + lastName) : (lastName || firstName);
+          const team      = clean(r.team || r.affiliation || "");
+          const category  = clean(r.category || "");
+          const gap       = clean(r.gap || "");
+
+          if (category) categorySet.add(category);
+          if (selectedCategory !== "ALL" && category !== selectedCategory) continue;
+          if (isHeader(bib) || isHeader(rider)) continue;
+          if (!place && !bib && !rider && !time) continue;
+
+          out.push({ place, bib, rider, team, category, time, gap });
+        }
+      }
+
+      updateCategoryDropdown(Array.from(categorySet).sort());
+
+      if (out.length === 0) { showPlaceholder(); return; }
+
+      resultsBody.innerHTML = out.map((row, i) => `
+        <tr>
+          <td>${i + 1}</td>
+          <td>${row.bib}</td>
+          <td>${row.rider}</td>
+          <td>${row.team}</td>
+          <td>${row.category ? `<span class="badge">${row.category}</span>` : ""}</td>
+          <td>${row.time}</td>
+          <td style="color:var(--mid)">${row.gap}</td>
+        </tr>
+      `).join("");
+    }
+
+    function updateCategoryDropdown(categories) {
+      const current = Array.from(categoryDropdown.options).map(o => o.value).join(",");
+      const next    = ["ALL", ...categories].join(",");
+      if (current === next) return;
+
+      const prev = categoryDropdown.value;
+      categoryDropdown.innerHTML = '<option value="ALL">All Categories</option>';
+      categories.forEach(c => {
+        const opt = document.createElement("option");
+        opt.value = c; opt.textContent = c;
+        categoryDropdown.appendChild(opt);
+      });
+      categoryDropdown.value = categories.includes(prev) ? prev : "ALL";
+      selectedCategory = categoryDropdown.value;
+    }
+
+    function showPlaceholder() {
+      resultsBody.innerHTML = `
+        <tr>
+          <td colspan="7" style="text-align:center; padding:3rem; color:var(--mid);">
+            Waiting for results...
+          </td>
+        </tr>`;
+    }
+
+    function clean(v) {
+      const s = String(v ?? "").trim();
+      return (s === "#N/A" || s.toUpperCase() === "N/A") ? "" : s;
+    }
+
+    function isHeader(v) {
+      const s = String(v || "").trim().toLowerCase();
+      return ["bib","first name","last name","firstname","lastname"].includes(s);
+    }
+  </script>
+
+</body>
+</html>

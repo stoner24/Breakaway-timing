@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Contact · Breakaway Timing</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- NAV -->
+  <nav>
+    <a class="nav-logo" href="index.html">
+      <img src="logo.jpg" alt="Breakaway Timing" />
+      <span>Breakaway Timing</span>
+    </a>
+    <ul class="nav-links">
+      <li><a href="index.html">Home</a></li>
+      <li><a href="results.html">Results</a></li>
+      <li><a href="about.html">About</a></li>
+      <li><a href="contact.html" class="active">Contact</a></li>
+    </ul>
+  </nav>
+
+  <!-- PAGE HEADER -->
+  <div class="page-header">
+    <div class="page-header-inner">
+      <p class="section-label">Get In Touch</p>
+      <h1 class="section-title">Contact Us</h1>
+    </div>
+  </div>
+
+  <!-- CONTACT CONTENT -->
+  <section class="section">
+    <div class="contact-grid">
+
+      <!-- Contact Info -->
+      <div class="contact-info">
+        <h3>Name</h3>
+        <p>TJ Stone</p>
+
+        <h3>Email</h3>
+        <a href="mailto:breakawayracetiming@gmail.com">breakawayracetiming@gmail.com</a>
+
+        <h3>Location</h3>
+        <p>Utah, USA</p>
+
+        <h3>Services</h3>
+        <p style="color: var(--mid); font-size: 0.95rem; line-height: 1.7; margin-top: 0.25rem;">
+          Race timing, chip timing setup, live results systems, event consultation. Serving Utah cycling events — cyclocross, XC mountain bike, road, and gravel.
+        </p>
+
+        <h3 style="margin-top: 2.5rem;">Social</h3>
+        <div style="display: flex; gap: 1rem; margin-top: 0.5rem;">
+          <a href="#" style="font-family: var(--font-heading); font-size: 0.75rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--mid); border: 1px solid var(--border); padding: 0.5rem 1rem; transition: all 0.2s;" onmouseover="this.style.color='var(--white)';this.style.borderColor='var(--white)'" onmouseout="this.style.color='var(--mid)';this.style.borderColor='var(--border)'">Instagram</a>
+          <a href="#" style="font-family: var(--font-heading); font-size: 0.75rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--mid); border: 1px solid var(--border); padding: 0.5rem 1rem; transition: all 0.2s;" onmouseover="this.style.color='var(--white)';this.style.borderColor='var(--white)'" onmouseout="this.style.color='var(--mid)';this.style.borderColor='var(--border)'">Facebook</a>
+        </div>
+      </div>
+
+      <!-- Contact Form -->
+      <div>
+        <p style="font-family: var(--font-heading); font-size: 0.75rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--mid); margin-bottom: 1.5rem;">Send a Message</p>
+
+        <form class="contact-form" id="contactForm">
+          <div class="form-group">
+            <label for="name">Your Name</label>
+            <input type="text" id="name" name="name" placeholder="Jane Smith" required />
+          </div>
+          <div class="form-group">
+            <label for="email">Email Address</label>
+            <input type="email" id="email" name="email" placeholder="jane@example.com" required />
+          </div>
+          <div class="form-group">
+            <label for="event">Event / Race Name</label>
+            <input type="text" id="event" name="event" placeholder="e.g. UTCX Race #4" />
+          </div>
+          <div class="form-group">
+            <label for="message">Message</label>
+            <textarea id="message" name="message" rows="6" placeholder="Tell us about your event, timing needs, or any questions..." required></textarea>
+          </div>
+          <div>
+            <a href="mailto:breakawayracetiming@gmail.com" class="btn btn-solid" id="submitBtn">Send Message</a>
+          </div>
+          <p style="font-size: 0.8rem; color: var(--mid); margin-top: 0.5rem;">
+            Or email directly: <a href="mailto:breakawayracetiming@gmail.com" style="color: var(--white);">breakawayracetiming@gmail.com</a>
+          </p>
+        </form>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer>
+    <div class="footer-logo">Breakaway Timing</div>
+    <ul class="footer-links">
+      <li><a href="index.html">Home</a></li>
+      <li><a href="results.html">Results</a></li>
+      <li><a href="about.html">About</a></li>
+      <li><a href="contact.html">Contact</a></li>
+    </ul>
+    <p class="footer-copy">© 2026 Breakaway Timing · TJ Stone · breakawayracetiming@gmail.com</p>
+  </footer>
+
+</body>
+</html>
