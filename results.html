@@ -84,7 +84,7 @@
       <li><a href="about.html">About</a></li>
       <li><a href="contact.html">Contact</a></li>
     </ul>
-    <p class="footer-copy">© 2026 Breakaway Timing · TJ Stone · breakawayracetiming@gmail.com</p>
+    <p class="footer-copy">© 2026 Breakaway Timing · breakawayracetiming@gmail.com</p>
   </footer>
 
   <script>
@@ -199,11 +199,18 @@
       lastUpdatedEl.textContent = label;
 
       const out         = [];
-      const events      = Array.isArray(data.events) ? data.events : [];
+      // Firebase can return arrays as objects with numeric keys — normalize both
+      const toArray = v => {
+        if (!v) return [];
+        if (Array.isArray(v)) return v;
+        return Object.values(v);
+      };
+
+      const events      = toArray(data.events);
       const categorySet = new Set();
 
       for (const ev of events) {
-        const results = Array.isArray(ev.results) ? ev.results : [];
+        const results = toArray(ev.results);
         for (const r of results) {
           const place     = clean(r.place || "");
           const bib       = clean(r.bib || "");
