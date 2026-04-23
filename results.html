@@ -5,10 +5,92 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Results · Breakaway Timing</title>
   <link rel="stylesheet" href="style.css" />
+  <style>
+    .action-row {
+      display: flex;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+      margin-bottom: 1.5rem;
+    }
+    .action-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 700;
+      font-size: 0.78rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      padding: 0.6rem 1.25rem;
+      border: 1px solid #333;
+      background: #111;
+      color: #888;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .action-btn:hover { border-color: #f5f5f0; color: #f5f5f0; }
+    .action-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+    #podiumView { display: none; }
+
+    .podium-race-label {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 0.75rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: #888;
+      margin-bottom: 2rem;
+    }
+    .podium-category { margin-bottom: 2rem; border: 1px solid #222; }
+    .podium-category-header {
+      background: #111;
+      padding: 0.75rem 1.25rem;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 700;
+      font-size: 0.9rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: #f5f5f0;
+      border-bottom: 1px solid #222;
+    }
+    .podium-places {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1px;
+      background: #222;
+    }
+    .podium-place { background: #0a0a0a; padding: 1.5rem; text-align: center; }
+    .podium-medal { font-size: 1.75rem; display: block; margin-bottom: 0.4rem; }
+    .podium-pos { font-family: 'Bebas Neue', sans-serif; font-size: 2.5rem; line-height: 1; color: #333; }
+    .podium-place:nth-child(1) .podium-pos { color: #FFD700; }
+    .podium-place:nth-child(2) .podium-pos { color: #C0C0C0; }
+    .podium-place:nth-child(3) .podium-pos { color: #CD7F32; }
+    .podium-name { font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 1rem; margin-top: 0.4rem; color: #f5f5f0; }
+    .podium-team { font-size: 0.75rem; color: #666; margin-top: 0.2rem; }
+    .podium-time { font-size: 0.85rem; color: #888; margin-top: 0.35rem; font-family: monospace; }
+    .podium-empty { font-size: 0.8rem; color: #444; font-style: italic; }
+
+    @media print {
+      nav, footer, .controls-row, .action-row, .status-bar, #tableView { display: none !important; }
+      #podiumView { display: block !important; }
+      .page-header { padding: 2rem 1.5rem 1rem; }
+      body { background: white; color: black; }
+      .podium-category { border-color: #ccc; page-break-inside: avoid; }
+      .podium-category-header { background: #eee; color: black; border-color: #ccc; }
+      .podium-places { background: #ccc; }
+      .podium-place { background: white; }
+      .podium-pos { color: #ccc !important; }
+      .podium-place:nth-child(1) .podium-pos { color: #B8860B !important; }
+      .podium-place:nth-child(2) .podium-pos { color: #888 !important; }
+      .podium-place:nth-child(3) .podium-pos { color: #8B4513 !important; }
+      .podium-name { color: black; }
+      .podium-race-label { color: #666; }
+      .podium-time { color: #444; }
+    }
+  </style>
 </head>
 <body>
 
-  <!-- NAV -->
   <nav>
     <a class="nav-logo" href="index.html">
       <img src="logo.jpg" alt="Breakaway Timing" />
@@ -22,7 +104,6 @@
     </ul>
   </nav>
 
-  <!-- PAGE HEADER -->
   <div class="page-header">
     <div class="page-header-inner">
       <p class="section-label">Live &amp; Historical</p>
@@ -30,10 +111,8 @@
     </div>
   </div>
 
-  <!-- RESULTS -->
   <div class="results-section">
 
-    <!-- Controls -->
     <div class="controls-row">
       <select class="styled-select" id="raceDropdown">
         <option value="LIVE">🔴 Live Results</option>
@@ -43,39 +122,41 @@
       </select>
     </div>
 
-    <!-- Status bar -->
+    <div class="action-row">
+      <button class="action-btn" id="btnDownloadCSV" disabled>⬇ Download CSV</button>
+      <button class="action-btn" id="btnDownloadPDF" disabled>⬇ Download PDF</button>
+      <button class="action-btn" id="btnPodium"      disabled>🏆 Show Podiums</button>
+      <button class="action-btn" id="btnPrintPodium" disabled>🖨 Print Podiums</button>
+    </div>
+
     <div class="status-bar">
       <span id="lastUpdated">Last updated: —</span>
       <span id="liveIndicator"><span class="live-dot"></span> Live</span>
     </div>
 
-    <!-- Table -->
-    <div class="results-table-wrap">
-      <table id="resultsTable">
-        <thead>
-          <tr>
-            <th>#</th>
-            <th>Bib</th>
-            <th>Rider</th>
-            <th>Team / Affiliation</th>
-            <th>Category</th>
-            <th>Time</th>
-            <th>Gap</th>
-          </tr>
-        </thead>
-        <tbody id="resultsBody">
-          <tr>
-            <td colspan="7" style="text-align:center; padding: 3rem; color: var(--mid);">
-              Waiting for results...
-            </td>
-          </tr>
-        </tbody>
-      </table>
+    <div id="tableView">
+      <div class="results-table-wrap">
+        <table id="resultsTable">
+          <thead>
+            <tr>
+              <th>#</th><th>Bib</th><th>Rider</th>
+              <th>Team / Affiliation</th><th>Category</th><th>Time</th><th>Gap</th>
+            </tr>
+          </thead>
+          <tbody id="resultsBody">
+            <tr><td colspan="7" style="text-align:center;padding:3rem;color:var(--mid);">Waiting for results...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div id="podiumView">
+      <p class="podium-race-label" id="podiumRaceLabel"></p>
+      <div id="podiumContent"></div>
     </div>
 
   </div>
 
-  <!-- FOOTER -->
   <footer>
     <div class="footer-logo">Breakaway Timing</div>
     <ul class="footer-links">
@@ -93,17 +174,26 @@
 
     let lastGeneratedAt  = null;
     let lastPayload      = null;
+    let currentRows      = [];
     let selectedCategory = "ALL";
     let selectedRace     = "LIVE";
     let pollingTimer     = null;
+    let podiumVisible    = false;
 
-    const raceDropdown    = document.getElementById("raceDropdown");
+    const raceDropdown     = document.getElementById("raceDropdown");
     const categoryDropdown = document.getElementById("categoryDropdown");
-    const resultsBody     = document.getElementById("resultsBody");
-    const lastUpdatedEl   = document.getElementById("lastUpdated");
-    const liveIndicator   = document.getElementById("liveIndicator");
+    const resultsBody      = document.getElementById("resultsBody");
+    const lastUpdatedEl    = document.getElementById("lastUpdated");
+    const liveIndicator    = document.getElementById("liveIndicator");
+    const tableView        = document.getElementById("tableView");
+    const podiumView       = document.getElementById("podiumView");
+    const podiumContent    = document.getElementById("podiumContent");
+    const podiumRaceLabel  = document.getElementById("podiumRaceLabel");
+    const btnCSV           = document.getElementById("btnDownloadCSV");
+    const btnPDF           = document.getElementById("btnDownloadPDF");
+    const btnPodium        = document.getElementById("btnPodium");
+    const btnPrint         = document.getElementById("btnPrintPodium");
 
-    // ── INIT ──
     loadRaceIndex();
     startPolling();
 
@@ -114,7 +204,7 @@
       lastPayload      = null;
       categoryDropdown.innerHTML = '<option value="ALL">All Categories</option>';
       categoryDropdown.value = "ALL";
-
+      hidePodium();
       if (selectedRace === "LIVE") {
         liveIndicator.style.display = "";
         startPolling();
@@ -128,18 +218,116 @@
     categoryDropdown.addEventListener("change", () => {
       selectedCategory = categoryDropdown.value || "ALL";
       if (lastPayload) renderResults(lastPayload);
+      hidePodium();
     });
 
-    // ── RACE INDEX ──
+    btnPodium.addEventListener("click", () => { podiumVisible ? hidePodium() : showPodium(); });
+
+    btnPrint.addEventListener("click", () => {
+      if (!podiumVisible) showPodium();
+      setTimeout(() => window.print(), 300);
+    });
+
+    function showPodium() {
+      if (!lastPayload) return;
+      buildPodium(lastPayload);
+      tableView.style.display  = "none";
+      podiumView.style.display = "block";
+      btnPodium.textContent    = "📋 Show Table";
+      podiumVisible = true;
+    }
+
+    function hidePodium() {
+      tableView.style.display  = "block";
+      podiumView.style.display = "none";
+      btnPodium.textContent    = "🏆 Show Podiums";
+      podiumVisible = false;
+    }
+
+    function buildPodium(data) {
+      const label = selectedRace === "LIVE"
+        ? "Live Results — " + new Date(data.generatedAt).toLocaleTimeString()
+        : (data.raceLabel || data.raceId);
+      podiumRaceLabel.textContent = label;
+
+      const byCategory = {};
+      const events = toArray(data.events);
+
+      for (const ev of events) {
+        for (const r of toArray(ev.results)) {
+          const place    = clean(r.place || "");
+          const bib      = clean(r.bib || "");
+          const category = clean(r.category || "Uncategorized");
+          const firstName = clean(r.firstName || "");
+          const lastName  = clean(r.lastName || "");
+          const rider    = (firstName && lastName) ? firstName + " " + lastName : (lastName || firstName);
+          const team     = clean(r.team || r.affiliation || "");
+          const time     = clean(r.time || "");
+
+          if (isHeader(bib) || isHeader(rider)) continue;
+          if (!place && !bib && !rider) continue;
+          if (selectedCategory !== "ALL" && category !== selectedCategory) continue;
+
+          if (!byCategory[category]) byCategory[category] = [];
+          byCategory[category].push({ place, rider, team, time });
+        }
+      }
+
+      const medals    = ["🥇", "🥈", "🥉"];
+      const positions = ["1st", "2nd", "3rd"];
+
+      podiumContent.innerHTML = Object.keys(byCategory).sort().map(cat => {
+        const top3 = byCategory[cat].slice(0, 3);
+        const places = [0, 1, 2].map(i => {
+          const r = top3[i];
+          if (!r) return `<div class="podium-place"><span class="podium-medal">${medals[i]}</span><div class="podium-pos">${positions[i]}</div><div class="podium-empty">—</div></div>`;
+          return `<div class="podium-place">
+            <span class="podium-medal">${medals[i]}</span>
+            <div class="podium-pos">${positions[i]}</div>
+            <div class="podium-name">${r.rider}</div>
+            ${r.team ? `<div class="podium-team">${r.team}</div>` : ""}
+            ${r.time ? `<div class="podium-time">${r.time}</div>` : ""}
+          </div>`;
+        }).join("");
+        return `<div class="podium-category"><div class="podium-category-header">${cat}</div><div class="podium-places">${places}</div></div>`;
+      }).join("");
+    }
+
+    btnCSV.addEventListener("click", () => {
+      if (!currentRows.length) return;
+      const headers = ["Place","Bib","Rider","Team","Category","Time","Gap"];
+      const rows    = currentRows.map(r => [r.catPlace, r.bib, r.rider, r.team, r.category, r.time, r.gap]);
+      const csv     = [headers, ...rows].map(row => row.map(v => `"${String(v).replace(/"/g,'""')}"`).join(",")).join("\n");
+      const name    = (lastPayload ? (lastPayload.raceLabel || lastPayload.raceId || "results") : "results").replace(/\s+/g,"_");
+      const cat     = selectedCategory !== "ALL" ? `_${selectedCategory}` : "";
+      downloadBlob(`${name}${cat}.csv`, "text/csv", csv);
+    });
+
+    btnPDF.addEventListener("click", () => {
+      if (!currentRows.length) return;
+      const raceName = lastPayload ? (lastPayload.raceLabel || lastPayload.raceId || "Results") : "Results";
+      const catLabel = selectedCategory !== "ALL" ? ` — ${selectedCategory}` : "";
+      const title    = `${raceName}${catLabel}`;
+      const rows     = currentRows.map(r => `<tr><td>${r.catPlace}</td><td>${r.bib}</td><td>${r.rider}</td><td>${r.team}</td><td>${r.category}</td><td>${r.time}</td><td>${r.gap}</td></tr>`).join("");
+      const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"/><title>${title}</title>
+        <style>body{font-family:Arial,sans-serif;font-size:11px;margin:20px}h1{font-size:18px;margin-bottom:4px}.sub{color:#666;font-size:10px;margin-bottom:16px}table{width:100%;border-collapse:collapse}th{background:#222;color:#fff;padding:6px 8px;text-align:left;font-size:10px;letter-spacing:.05em;text-transform:uppercase}td{padding:5px 8px;border-bottom:1px solid #eee}tr:nth-child(even)td{background:#f9f9f9}.ft{margin-top:16px;font-size:9px;color:#999}</style>
+        </head><body>
+        <h1>${title}</h1><div class="sub">${lastUpdatedEl.textContent} · Breakaway Timing</div>
+        <table><thead><tr><th>#</th><th>Bib</th><th>Rider</th><th>Team</th><th>Category</th><th>Time</th><th>Gap</th></tr></thead><tbody>${rows}</tbody></table>
+        <div class="ft">Generated by Breakaway Timing · breakawaytiming.com</div>
+        </body></html>`;
+      const win = window.open("", "_blank");
+      win.document.write(html);
+      win.document.close();
+      setTimeout(() => win.print(), 500);
+    });
+
     function loadRaceIndex() {
       fetch(FIREBASE_URL + "/race_index.json")
         .then(r => r.json())
         .then(index => {
           if (!index) return;
-          const races = Object.values(index).sort((a, b) =>
-            (b.generatedAt || "").localeCompare(a.generatedAt || "")
-          );
-          races.forEach(r => {
+          Object.values(index).sort((a,b) => (b.generatedAt||"").localeCompare(a.generatedAt||"")).forEach(r => {
             const opt = document.createElement("option");
             opt.value = r.raceId;
             opt.textContent = r.raceLabel || r.raceId;
@@ -150,7 +338,6 @@
         .catch(err => console.warn("Failed to load race index:", err));
     }
 
-    // ── HISTORIC RACE ──
     function loadHistoricRace(raceId) {
       lastUpdatedEl.textContent = "Loading...";
       showPlaceholder();
@@ -161,22 +348,11 @@
           lastPayload = data;
           renderResults(data);
         })
-        .catch(err => {
-          console.warn("Failed to load historic race:", err);
-          lastUpdatedEl.textContent = "Failed to load race data.";
-        });
+        .catch(err => { console.warn(err); lastUpdatedEl.textContent = "Failed to load."; });
     }
 
-    // ── POLLING ──
-    function startPolling() {
-      stopPolling();
-      refreshResults();
-      pollingTimer = setInterval(refreshResults, REFRESH_MS);
-    }
-
-    function stopPolling() {
-      if (pollingTimer) { clearInterval(pollingTimer); pollingTimer = null; }
-    }
+    function startPolling() { stopPolling(); refreshResults(); pollingTimer = setInterval(refreshResults, REFRESH_MS); }
+    function stopPolling()  { if (pollingTimer) { clearInterval(pollingTimer); pollingTimer = null; } }
 
     function refreshResults() {
       fetch(FIREBASE_URL + "/live_race.json")
@@ -191,33 +367,22 @@
         .catch(err => console.warn("Auto-refresh failed:", err));
     }
 
-    // ── RENDER ──
     function renderResults(data) {
-      const label = selectedRace === "LIVE"
+      lastUpdatedEl.textContent = selectedRace === "LIVE"
         ? "Last updated: " + new Date(data.generatedAt).toLocaleTimeString()
         : "Race: " + (data.raceLabel || data.raceId);
-      lastUpdatedEl.textContent = label;
 
-      const out         = [];
-      // Firebase can return arrays as objects with numeric keys — normalize both
-      const toArray = v => {
-        if (!v) return [];
-        if (Array.isArray(v)) return v;
-        return Object.values(v);
-      };
-
-      const events      = toArray(data.events);
+      const out = [];
       const categorySet = new Set();
 
-      for (const ev of events) {
-        const results = toArray(ev.results);
-        for (const r of results) {
+      for (const ev of toArray(data.events)) {
+        for (const r of toArray(ev.results)) {
           const place     = clean(r.place || "");
           const bib       = clean(r.bib || "");
           const time      = clean(r.time || "");
           const firstName = clean(r.firstName || "");
           const lastName  = clean(r.lastName || "");
-          const rider     = (firstName && lastName) ? (firstName + " " + lastName) : (lastName || firstName);
+          const rider     = (firstName && lastName) ? firstName + " " + lastName : (lastName || firstName);
           const team      = clean(r.team || r.affiliation || "");
           const category  = clean(r.category || "");
           const gap       = clean(r.gap || "");
@@ -226,62 +391,55 @@
           if (selectedCategory !== "ALL" && category !== selectedCategory) continue;
           if (isHeader(bib) || isHeader(rider)) continue;
           if (!place && !bib && !rider && !time) continue;
-
           out.push({ place, bib, rider, team, category, time, gap });
         }
       }
 
       updateCategoryDropdown(Array.from(categorySet).sort());
 
-      if (out.length === 0) { showPlaceholder(); return; }
+      if (out.length === 0) { showPlaceholder(); setEnabled(false); return; }
 
-      resultsBody.innerHTML = out.map((row, i) => `
+      out.forEach((row, i) => { row.catPlace = i + 1; });
+      currentRows = out;
+
+      resultsBody.innerHTML = out.map(row => `
         <tr>
-          <td>${i + 1}</td>
-          <td>${row.bib}</td>
-          <td>${row.rider}</td>
-          <td>${row.team}</td>
+          <td>${row.catPlace}</td><td>${row.bib}</td><td>${row.rider}</td><td>${row.team}</td>
           <td>${row.category ? `<span class="badge">${row.category}</span>` : ""}</td>
-          <td>${row.time}</td>
-          <td style="color:var(--mid)">${row.gap}</td>
-        </tr>
-      `).join("");
+          <td>${row.time}</td><td style="color:var(--mid)">${row.gap}</td>
+        </tr>`).join("");
+
+      setEnabled(true);
+      if (podiumVisible) buildPodium(data);
     }
+
+    function setEnabled(v) { [btnCSV, btnPDF, btnPodium, btnPrint].forEach(b => b.disabled = !v); }
 
     function updateCategoryDropdown(categories) {
       const current = Array.from(categoryDropdown.options).map(o => o.value).join(",");
-      const next    = ["ALL", ...categories].join(",");
-      if (current === next) return;
-
+      if (current === ["ALL",...categories].join(",")) return;
       const prev = categoryDropdown.value;
       categoryDropdown.innerHTML = '<option value="ALL">All Categories</option>';
-      categories.forEach(c => {
-        const opt = document.createElement("option");
-        opt.value = c; opt.textContent = c;
-        categoryDropdown.appendChild(opt);
-      });
+      categories.forEach(c => { const o = document.createElement("option"); o.value = c; o.textContent = c; categoryDropdown.appendChild(o); });
       categoryDropdown.value = categories.includes(prev) ? prev : "ALL";
       selectedCategory = categoryDropdown.value;
     }
 
     function showPlaceholder() {
-      resultsBody.innerHTML = `
-        <tr>
-          <td colspan="7" style="text-align:center; padding:3rem; color:var(--mid);">
-            Waiting for results...
-          </td>
-        </tr>`;
+      currentRows = [];
+      resultsBody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:3rem;color:var(--mid);">Waiting for results...</td></tr>`;
     }
 
-    function clean(v) {
-      const s = String(v ?? "").trim();
-      return (s === "#N/A" || s.toUpperCase() === "N/A") ? "" : s;
+    function downloadBlob(filename, mime, content) {
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(new Blob([content], { type: mime }));
+      a.download = filename;
+      a.click();
     }
 
-    function isHeader(v) {
-      const s = String(v || "").trim().toLowerCase();
-      return ["bib","first name","last name","firstname","lastname"].includes(s);
-    }
+    function toArray(v) { if (!v) return []; if (Array.isArray(v)) return v; return Object.values(v); }
+    function clean(v)   { const s = String(v ?? "").trim(); return (s === "#N/A" || s.toUpperCase() === "N/A") ? "" : s; }
+    function isHeader(v){ return ["bib","first name","last name","firstname","lastname"].includes(String(v||"").trim().toLowerCase()); }
   </script>
 
 </body>
