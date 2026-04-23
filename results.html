@@ -71,21 +71,21 @@
     .podium-empty { font-size: 0.8rem; color: #444; font-style: italic; }
 
     @media print {
-      nav, footer, .controls-row, .action-row, .status-bar, #tableView { display: none !important; }
+      nav, footer, .controls-row, .action-row, .status-bar, #tableView,
+      .podium-medal, .podium-pos, .podium-team { display: none !important; }
       #podiumView { display: block !important; }
-      .page-header { padding: 2rem 1.5rem 1rem; }
-      body { background: white; color: black; }
-      .podium-category { border-color: #ccc; page-break-inside: avoid; }
-      .podium-category-header { background: #eee; color: black; border-color: #ccc; }
-      .podium-places { background: #ccc; }
-      .podium-place { background: white; }
-      .podium-pos { color: #ccc !important; }
-      .podium-place:nth-child(1) .podium-pos { color: #B8860B !important; }
-      .podium-place:nth-child(2) .podium-pos { color: #888 !important; }
-      .podium-place:nth-child(3) .podium-pos { color: #8B4513 !important; }
-      .podium-name { color: black; }
-      .podium-race-label { color: #666; }
-      .podium-time { color: #444; }
+      .page-header { display: none !important; }
+      body { background: white; color: black; font-family: Arial, sans-serif; font-size: 11px; margin: 0; padding: 12px; }
+      .podium-race-label { font-size: 10px; color: #444; margin-bottom: 8px; display: block; }
+      .podium-category { border: none; margin-bottom: 0; page-break-inside: avoid; }
+      .podium-category-header { background: none; color: black; border: none; border-bottom: 1px solid #000; padding: 4px 0; font-size: 10px; font-weight: bold; letter-spacing: 0.05em; }
+      .podium-places { display: block; background: none; }
+      .podium-place { background: none; padding: 2px 0 2px 8px; text-align: left; border: none; }
+      .podium-name { font-size: 11px; color: black; font-weight: normal; margin: 0; display: inline; }
+      .podium-name::before { content: attr(data-pos) ". "; font-weight: bold; }
+      .podium-time { font-size: 10px; color: #444; margin: 0; display: inline; margin-left: 6px; }
+      .podium-empty { font-size: 10px; color: #999; }
+      #podiumContent { columns: 2; column-gap: 24px; }
     }
   </style>
 </head>
@@ -284,7 +284,7 @@
           return `<div class="podium-place">
             <span class="podium-medal">${medals[i]}</span>
             <div class="podium-pos">${positions[i]}</div>
-            <div class="podium-name">${r.rider}</div>
+            <div class="podium-name" data-pos="${i+1}">${r.rider}</div>
             ${r.team ? `<div class="podium-team">${r.team}</div>` : ""}
             ${r.time ? `<div class="podium-time">${r.time}</div>` : ""}
           </div>`;
