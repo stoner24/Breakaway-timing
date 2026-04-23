@@ -123,11 +123,12 @@
     </div>
 
     <div class="action-row">
-      <button class="action-btn" id="btnDownloadCSV" disabled>⬇ Download CSV</button>
-      <button class="action-btn" id="btnDownloadPDF" disabled>⬇ Download PDF</button>
-      <button class="action-btn" id="btnPrintResults" disabled>🖨 Print Results</button>
-      <button class="action-btn" id="btnPodium"      disabled>🏆 Show Podiums</button>
-      <button class="action-btn" id="btnPrintPodium" disabled>🖨 Print Podiums</button>
+      <button class="action-btn" id="btnDownloadCSV"    disabled>⬇ Download CSV</button>
+      <button class="action-btn" id="btnDownloadPDF"    disabled>⬇ Download PDF</button>
+      <button class="action-btn" id="btnUSAC"           disabled>⬇ USA Cycling Export</button>
+      <button class="action-btn" id="btnPrintResults"   disabled>🖨 Print Results</button>
+      <button class="action-btn" id="btnPodium"         disabled>🏆 Show Podiums</button>
+      <button class="action-btn" id="btnPrintPodium"    disabled>🖨 Print Podiums</button>
     </div>
 
     <div class="status-bar">
@@ -192,6 +193,7 @@
     const podiumRaceLabel  = document.getElementById("podiumRaceLabel");
     const btnCSV           = document.getElementById("btnDownloadCSV");
     const btnPDF           = document.getElementById("btnDownloadPDF");
+    const btnUSAC          = document.getElementById("btnUSAC");
     const btnPrintResults  = document.getElementById("btnPrintResults");
     const btnPodium        = document.getElementById("btnPodium");
     const btnPrint         = document.getElementById("btnPrintPodium");
@@ -228,6 +230,11 @@
     btnPrint.addEventListener("click", () => {
       if (!lastPayload) return;
       printPodiumList(lastPayload);
+    });
+
+    btnUSAC.addEventListener("click", () => {
+      if (!lastPayload) return;
+      downloadUSAC(lastPayload);
     });
 
     btnPrintResults.addEventListener("click", () => {
@@ -420,7 +427,71 @@
       if (podiumVisible) buildPodium(data);
     }
 
-    function setEnabled(v) { [btnCSV, btnPDF, btnPrintResults, btnPodium, btnPrint].forEach(b => b.disabled = !v); }
+    function setEnabled(v) { [btnCSV, btnPDF, btnUSAC, btnPrintResults, btnPodium, btnPrint].forEach(b => b.disabled = !v); }
+
+    function downloadUSAC(data) {
+      // USA Cycling template columns:
+      // Race Date, Race discipline, Race Category, Race Gender, Race Class,
+      // Race Age Group, Rider License, Rider First Name, Rider Last Name, Rider Place
+
+      // Parse race date from generatedAt or raceLabel
+      let raceDate = "";
+      if (data.generatedAt) {
+        const d = new Date(data.generatedAt);
+        raceDate = (d.getMonth() + 1) + "/" + d.getDate() + "/" + d.getFullYear();
+      }
+
+      const headers = [
+        "Race Date","Race discipline","Race Category","Race Gender","Race Class",
+        "Race Age Group","Rider License","Rider First Name","Rider Last Name","Rider Place"
+      ];
+
+      const rows = [];
+      let firstRow = true;
+
+      for (const ev of toArray(data.events)) {
+        for (const r of toArray(ev.results)) {
+          const place     = clean(r.place || "");
+          const bib       = clean(r.bib || "");
+          const firstName = clean(r.firstName || "");
+          const lastName  = clean(r.lastName || "");
+          const category  = clean(r.category || "");
+          const usac      = clean(r.usac || "");
+          const status    = clean(r.status || "");
+
+          if (isHeader(bib) || (!place && !bib && !firstName && !lastName)) continue;
+          if (selectedCategory !== "ALL" && category !== selectedCategory) continue;
+
+          // Rider Place: use place if numeric, otherwise use status (DNF/DNS/DQ)
+          let riderPlace = place;
+          if (!riderPlace && status) riderPlace = status;
+
+          rows.push([
+            firstRow ? raceDate : "",   // Race Date — only on first row per template
+            "",                          // Race discipline — leave blank, user fills in
+            category,                    // Race Category
+            "",                          // Race Gender — leave blank
+            "",                          // Race Class — leave blank
+            "",                          // Race Age Group — leave blank
+            usac,                        // Rider License (USAC number)
+            firstName,                   // Rider First Name
+            lastName,                    // Rider Last Name
+            riderPlace                   // Rider Place
+          ]);
+          firstRow = false;
+        }
+      }
+
+      if (rows.length === 0) return;
+
+      const csv = [headers, ...rows]
+        .map(row => row.map(v => `"${String(v).replace(/"/g, '""')}"`).join(","))
+        .join("\n");
+
+      const name = (data.raceLabel || data.raceId || "results").replace(/\s+/g, "_");
+      const cat  = selectedCategory !== "ALL" ? `_${selectedCategory}` : "";
+      downloadBlob(`${name}${cat}_USAC.csv`, "text/csv", csv);
+    }
 
     function printResultsByCategory(data) {
       const byCategory = {};
