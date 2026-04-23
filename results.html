@@ -76,15 +76,15 @@
       #podiumView { display: block !important; }
       .page-header { display: none !important; }
       body { background: white; color: black; font-family: Arial, sans-serif; font-size: 11px; margin: 0; padding: 12px; }
-      .podium-race-label { font-size: 10px; color: #444; margin-bottom: 8px; display: block; }
+      .podium-race-label { font-size: 10px; color: #000; margin-bottom: 8px; display: block; }
       .podium-category { border: none; margin-bottom: 0; page-break-inside: avoid; }
       .podium-category-header { background: none; color: black; border: none; border-bottom: 1px solid #000; padding: 4px 0; font-size: 10px; font-weight: bold; letter-spacing: 0.05em; }
       .podium-places { display: block; background: none; }
       .podium-place { background: none; padding: 2px 0 2px 8px; text-align: left; border: none; }
       .podium-name { font-size: 11px; color: black; font-weight: normal; margin: 0; display: inline; }
       .podium-name::before { content: attr(data-pos) ". "; font-weight: bold; }
-      .podium-time { font-size: 10px; color: #444; margin: 0; display: inline; margin-left: 6px; }
-      .podium-empty { font-size: 10px; color: #999; }
+      .podium-time { font-size: 10px; color: #000; margin: 0; display: inline; margin-left: 6px; }
+      .podium-empty { font-size: 10px; color: #000; }
       #podiumContent { columns: 2; column-gap: 24px; }
     }
   </style>
@@ -317,7 +317,7 @@
       const title    = `${raceName}${catLabel}`;
       const rows     = currentRows.map(r => `<tr><td>${r.catPlace}</td><td>${r.bib}</td><td>${r.rider}</td><td>${r.team}</td><td>${r.category}</td><td>${r.time}</td><td>${r.gap}</td></tr>`).join("");
       const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"/><title>${title}</title>
-        <style>body{font-family:Arial,sans-serif;font-size:11px;margin:20px}h1{font-size:18px;margin-bottom:4px}.sub{color:#666;font-size:10px;margin-bottom:16px}table{width:100%;border-collapse:collapse}th{background:#222;color:#fff;padding:6px 8px;text-align:left;font-size:10px;letter-spacing:.05em;text-transform:uppercase}td{padding:5px 8px;border-bottom:1px solid #eee}tr:nth-child(even)td{background:#f9f9f9}.ft{margin-top:16px;font-size:9px;color:#999}</style>
+        <style>body{font-family:Arial,sans-serif;font-size:11px;margin:20px}h1{font-size:18px;margin-bottom:4px}.sub{color:#000;font-size:10px;margin-bottom:16px}table{width:100%;border-collapse:collapse}th{background:#000;color:#fff;padding:6px 8px;text-align:left;font-size:10px;letter-spacing:.05em;text-transform:uppercase}td{padding:5px 8px;border-bottom:1px solid #000}tr:nth-child(even)td{background:white}.ft{margin-top:16px;font-size:9px;color:#000}</style>
         </head><body>
         <h1>${title}</h1><div class="sub">${lastUpdatedEl.textContent} · Breakaway Timing</div>
         <table><thead><tr><th>#</th><th>Bib</th><th>Rider</th><th>Team</th><th>Category</th><th>Time</th><th>Gap</th></tr></thead><tbody>${rows}</tbody></table>
@@ -568,17 +568,17 @@
         <style>
           body { font-family: Arial, sans-serif; font-size: 11px; margin: 16px; color: #000; }
           h2 { font-size: 13px; margin: 0 0 4px; }
-          .sub { font-size: 9px; color: #666; margin-bottom: 12px; }
+          .sub { font-size: 9px; color: #000; margin-bottom: 12px; }
           .grid { columns: 2; column-gap: 20px; }
           .cat { break-inside: avoid; margin-bottom: 10px; }
           .cat-header { font-weight: bold; font-size: 10px; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid #000; padding-bottom: 2px; margin-bottom: 4px; }
           table { width: 100%; border-collapse: collapse; }
           td { padding: 2px 4px; font-size: 11px; }
-          .pos { width: 28px; font-weight: bold; color: #333; }
-          .time { width: 70px; text-align: right; color: #555; font-family: monospace; }
-          .team { color: #666; font-size: 10px; }
+          .pos { width: 28px; font-weight: bold; color: #000; }
+          .time { width: 70px; text-align: right; color: #000; font-family: monospace; }
+          .team { color: #000; font-size: 10px; }
           .name { }
-          .footer { margin-top: 12px; font-size: 9px; color: #999; border-top: 1px solid #ccc; padding-top: 6px; }
+          .footer { margin-top: 12px; font-size: 9px; color: #000; border-top: 1px solid #000; padding-top: 6px; }
         </style></head><body>
         <h2>Podium Results — ${raceName}</h2>
         <div class="sub">Breakaway Timing · breakawaytiming.com</div>
