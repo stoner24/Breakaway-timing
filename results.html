@@ -466,7 +466,7 @@
       const sections = Object.keys(byCategory).sort().map(cat => {
         const top3 = byCategory[cat].slice(0, 3);
         const rows = top3.map((r, i) =>
-          `<tr><td class="pos">${positions[i]}</td><td class="name">${r.rider}</td><td class="time">${r.time}</td></tr>`
+          `<tr><td class="pos">${positions[i]}</td><td class="name">${r.rider}${r.team ? `<span class="team"> — ${r.team}</span>` : ""}</td><td class="time">${r.time}</td></tr>`
         ).join("");
         return `<div class="cat"><div class="cat-header">${cat}</div><table>${rows}</table></div>`;
       }).join("");
@@ -484,6 +484,7 @@
           td { padding: 2px 4px; font-size: 11px; }
           .pos { width: 28px; font-weight: bold; color: #333; }
           .time { width: 70px; text-align: right; color: #555; font-family: monospace; }
+          .team { color: #666; font-size: 10px; }
           .name { }
           .footer { margin-top: 12px; font-size: 9px; color: #999; border-top: 1px solid #ccc; padding-top: 6px; }
         </style></head><body>
