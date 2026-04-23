@@ -125,6 +125,7 @@
     <div class="action-row">
       <button class="action-btn" id="btnDownloadCSV" disabled>⬇ Download CSV</button>
       <button class="action-btn" id="btnDownloadPDF" disabled>⬇ Download PDF</button>
+      <button class="action-btn" id="btnPrintResults" disabled>🖨 Print Results</button>
       <button class="action-btn" id="btnPodium"      disabled>🏆 Show Podiums</button>
       <button class="action-btn" id="btnPrintPodium" disabled>🖨 Print Podiums</button>
     </div>
@@ -191,6 +192,7 @@
     const podiumRaceLabel  = document.getElementById("podiumRaceLabel");
     const btnCSV           = document.getElementById("btnDownloadCSV");
     const btnPDF           = document.getElementById("btnDownloadPDF");
+    const btnPrintResults  = document.getElementById("btnPrintResults");
     const btnPodium        = document.getElementById("btnPodium");
     const btnPrint         = document.getElementById("btnPrintPodium");
 
@@ -226,6 +228,11 @@
     btnPrint.addEventListener("click", () => {
       if (!lastPayload) return;
       printPodiumList(lastPayload);
+    });
+
+    btnPrintResults.addEventListener("click", () => {
+      if (!lastPayload) return;
+      printResultsByCategory(lastPayload);
     });
 
     function showPodium() {
@@ -413,7 +420,92 @@
       if (podiumVisible) buildPodium(data);
     }
 
-    function setEnabled(v) { [btnCSV, btnPDF, btnPodium, btnPrint].forEach(b => b.disabled = !v); }
+    function setEnabled(v) { [btnCSV, btnPDF, btnPrintResults, btnPodium, btnPrint].forEach(b => b.disabled = !v); }
+
+    function printResultsByCategory(data) {
+      const byCategory = {};
+      for (const ev of toArray(data.events)) {
+        for (const r of toArray(ev.results)) {
+          const place     = clean(r.place || "");
+          const bib       = clean(r.bib || "");
+          const category  = clean(r.category || "Uncategorized");
+          const firstName = clean(r.firstName || "");
+          const lastName  = clean(r.lastName || "");
+          const rider     = (firstName && lastName) ? firstName + " " + lastName : (lastName || firstName);
+          const team      = clean(r.team || r.affiliation || "");
+          const time      = clean(r.time || "");
+          const gap       = clean(r.gap || "");
+          if (isHeader(bib) || isHeader(rider)) continue;
+          if (!place && !bib && !rider && !time) continue;
+          if (selectedCategory !== "ALL" && category !== selectedCategory) continue;
+          if (!byCategory[category]) byCategory[category] = [];
+          byCategory[category].push({ place, bib, rider, team, time, gap });
+        }
+      }
+
+      const raceName = selectedRace === "LIVE"
+        ? "Live Results — " + new Date(data.generatedAt).toLocaleTimeString()
+        : (data.raceLabel || data.raceId);
+
+      const pages = Object.keys(byCategory).sort().map((cat, idx) => {
+        const results = byCategory[cat];
+        const rows = results.map((r, i) => `
+          <tr class="${i % 2 === 0 ? "even" : ""}">
+            <td class="place">${i + 1}</td>
+            <td class="bib">${r.bib}</td>
+            <td class="name">${r.rider}${r.team ? `<span class="team"><br>${r.team}</span>` : ""}</td>
+            <td class="time">${r.time}</td>
+            <td class="gap">${r.gap}</td>
+          </tr>`).join("");
+        const pageBreak = idx > 0 ? 'style="page-break-before: always;"' : "";
+        return `
+          <div class="page" ${pageBreak}>
+            <div class="page-header">
+              <div class="race-name">${raceName}</div>
+              <div class="cat-name">${cat}</div>
+              <div class="meta">Breakaway Timing · breakawaytiming.com</div>
+            </div>
+            <table>
+              <thead>
+                <tr><th>#</th><th>Bib</th><th>Rider / Team</th><th>Time</th><th>Gap</th></tr>
+              </thead>
+              <tbody>${rows}</tbody>
+            </table>
+            <div class="footer">${results.length} finisher${results.length !== 1 ? "s" : ""} · Printed ${new Date().toLocaleString()}</div>
+          </div>`;
+      }).join("");
+
+      const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"/>
+        <title>Results — ${raceName}</title>
+        <style>
+          * { box-sizing: border-box; margin: 0; padding: 0; }
+          body { font-family: Arial, sans-serif; font-size: 11px; color: #000; background: white; }
+          .page { padding: 20px 24px; }
+          .page-header { border-bottom: 2px solid #000; padding-bottom: 8px; margin-bottom: 12px; }
+          .race-name { font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em; color: #666; }
+          .cat-name { font-size: 20px; font-weight: bold; margin: 2px 0; }
+          .meta { font-size: 9px; color: #999; }
+          table { width: 100%; border-collapse: collapse; }
+          thead tr { background: #000; color: #fff; }
+          th { padding: 5px 8px; text-align: left; font-size: 9px; letter-spacing: 0.08em; text-transform: uppercase; }
+          td { padding: 5px 8px; border-bottom: 1px solid #eee; vertical-align: top; }
+          tr.even td { background: #f7f7f7; }
+          .place { width: 30px; font-weight: bold; }
+          .bib { width: 40px; color: #555; }
+          .name { font-weight: 500; }
+          .team { font-size: 9px; color: #888; font-weight: normal; }
+          .time { width: 80px; font-family: monospace; }
+          .gap { width: 80px; font-family: monospace; color: #666; }
+          .footer { margin-top: 10px; font-size: 9px; color: #999; border-top: 1px solid #ddd; padding-top: 6px; }
+        </style></head><body>
+        ${pages}
+        <script>window.onload = function(){ window.print(); }<\/script>
+        </body></html>`;
+
+      const win = window.open("", "_blank");
+      win.document.write(html);
+      win.document.close();
+    }
 
     function updateCategoryDropdown(categories) {
       const current = Array.from(categoryDropdown.options).map(o => o.value).join(",");
