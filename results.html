@@ -224,8 +224,8 @@
     btnPodium.addEventListener("click", () => { podiumVisible ? hidePodium() : showPodium(); });
 
     btnPrint.addEventListener("click", () => {
-      if (!podiumVisible) showPodium();
-      setTimeout(() => window.print(), 300);
+      if (!lastPayload) return;
+      printPodiumList(lastPayload);
     });
 
     function showPodium() {
@@ -435,6 +435,68 @@
       a.href = URL.createObjectURL(new Blob([content], { type: mime }));
       a.download = filename;
       a.click();
+    }
+
+    function printPodiumList(data) {
+      const byCategory = {};
+      for (const ev of toArray(data.events)) {
+        for (const r of toArray(ev.results)) {
+          const place     = clean(r.place || "");
+          const bib       = clean(r.bib || "");
+          const category  = clean(r.category || "Uncategorized");
+          const firstName = clean(r.firstName || "");
+          const lastName  = clean(r.lastName || "");
+          const rider     = (firstName && lastName) ? firstName + " " + lastName : (lastName || firstName);
+          const team      = clean(r.team || r.affiliation || "");
+          const time      = clean(r.time || "");
+          if (isHeader(bib) || isHeader(rider)) continue;
+          if (!place && !bib && !rider) continue;
+          if (selectedCategory !== "ALL" && category !== selectedCategory) continue;
+          if (!byCategory[category]) byCategory[category] = [];
+          byCategory[category].push({ rider, team, time });
+        }
+      }
+
+      const raceName = selectedRace === "LIVE"
+        ? "Live Results — " + new Date(data.generatedAt).toLocaleTimeString()
+        : (data.raceLabel || data.raceId);
+
+      const positions = ["1st", "2nd", "3rd"];
+
+      const sections = Object.keys(byCategory).sort().map(cat => {
+        const top3 = byCategory[cat].slice(0, 3);
+        const rows = top3.map((r, i) =>
+          `<tr><td class="pos">${positions[i]}</td><td class="name">${r.rider}</td><td class="time">${r.time}</td></tr>`
+        ).join("");
+        return `<div class="cat"><div class="cat-header">${cat}</div><table>${rows}</table></div>`;
+      }).join("");
+
+      const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"/>
+        <title>Podiums — ${raceName}</title>
+        <style>
+          body { font-family: Arial, sans-serif; font-size: 11px; margin: 16px; color: #000; }
+          h2 { font-size: 13px; margin: 0 0 4px; }
+          .sub { font-size: 9px; color: #666; margin-bottom: 12px; }
+          .grid { columns: 2; column-gap: 20px; }
+          .cat { break-inside: avoid; margin-bottom: 10px; }
+          .cat-header { font-weight: bold; font-size: 10px; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid #000; padding-bottom: 2px; margin-bottom: 4px; }
+          table { width: 100%; border-collapse: collapse; }
+          td { padding: 2px 4px; font-size: 11px; }
+          .pos { width: 28px; font-weight: bold; color: #333; }
+          .time { width: 70px; text-align: right; color: #555; font-family: monospace; }
+          .name { }
+          .footer { margin-top: 12px; font-size: 9px; color: #999; border-top: 1px solid #ccc; padding-top: 6px; }
+        </style></head><body>
+        <h2>Podium Results — ${raceName}</h2>
+        <div class="sub">Breakaway Timing · breakawaytiming.com</div>
+        <div class="grid">${sections}</div>
+        <div class="footer">Printed ${new Date().toLocaleString()}</div>
+        <script>window.onload = function(){ window.print(); }<\/script>
+        </body></html>`;
+
+      const win = window.open("", "_blank");
+      win.document.write(html);
+      win.document.close();
     }
 
     function toArray(v) { if (!v) return []; if (Array.isArray(v)) return v; return Object.values(v); }
