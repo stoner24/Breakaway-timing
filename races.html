@@ -197,75 +197,7 @@
         <div>Register</div>
       </div>
 
-      <div class="race-list-row">
-        <div class="race-num">01</div>
-        <div>
-          <div class="race-info-name">Watt Fest</div>
-          <div class="race-info-venue">Tooele, UT</div>
-        </div>
-        <div class="race-date">Mar 21, 2026</div>
-        <div><span style="font-size:0.75rem; color:#555;">TBD</span></div>
-      </div>
-
-      <div class="race-list-row">
-        <div class="race-num">02</div>
-        <div>
-          <div class="race-info-name">Salty Lizard</div>
-          <div class="race-info-venue">Wendover, UT</div>
-        </div>
-        <div class="race-date">Apr 24, 2026</div>
-        <div><a class="register-btn" href="https://www.bikereg.com/73229" target="_blank">Register</a></div>
-      </div>
-
-      <div class="race-list-row">
-        <div class="race-num">03</div>
-        <div>
-          <div class="race-info-name">Wild Horse</div>
-          <div class="race-info-venue">Dell, UT</div>
-        </div>
-        <div class="race-date">May 9, 2026</div>
-        <div><a class="register-btn" href="https://www.bikereg.com/63852" target="_blank">Register</a></div>
-      </div>
-
-      <div class="race-list-row">
-        <div class="race-num">04</div>
-        <div>
-          <div class="race-info-name">East Canyon</div>
-          <div class="race-info-venue">Echo, UT</div>
-        </div>
-        <div class="race-date">May 23, 2026</div>
-        <div><span style="font-size:0.75rem; color:#555;">TBD</span></div>
-      </div>
-
-      <div class="race-list-row">
-        <div class="race-num">05</div>
-        <div>
-          <div class="race-info-name">West Mountain</div>
-          <div class="race-info-venue">Payson, UT</div>
-        </div>
-        <div class="race-date">May 30, 2026</div>
-        <div><span style="font-size:0.75rem; color:#555;">TBD</span></div>
-      </div>
-
-      <div class="race-list-row">
-        <div class="race-num">06</div>
-        <div>
-          <div class="race-info-name">Dirty Dino</div>
-          <div class="race-info-venue">Vernal, UT</div>
-        </div>
-        <div class="race-date">Jun 13, 2026</div>
-        <div><a class="register-btn" href="https://www.bikereg.com/73229" target="_blank">Register</a></div>
-      </div>
-
-      <div class="race-list-row">
-        <div class="race-num">07</div>
-        <div>
-          <div class="race-info-name">Wasatch All-Road</div>
-          <div class="race-info-venue">Heber, UT</div>
-        </div>
-        <div class="race-date">Aug 29, 2026</div>
-        <div><a class="register-btn" href="https://www.bikereg.com/73229" target="_blank">Register</a></div>
-      </div>
+      <div id="raceListBody"></div>
 
     </div>
   </div>
@@ -391,23 +323,64 @@
       popupAnchor: [0, -40]
     });
 
-    races.forEach(race => {
+    // Filter to only upcoming races and renumber from 1
+    const today = new Date();
+    today.setHours(0,0,0,0);
+
+    const upcoming = races.filter(r => new Date(r.date) >= today);
+
+    upcoming.forEach((race, idx) => {
+      const num = idx + 1;
+      const isNext = idx === 0;
+
+      const nextBadge = isNext
+        ? `<div style="display:inline-block; font-size:0.65rem; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; background:#4a7c3f; color:white; padding:2px 8px; margin-bottom:6px;">Next Race</div><br/>`
+        : "";
+
       const marker = L.marker([race.lat, race.lng], { icon: pinIcon }).addTo(map);
 
       marker.bindPopup(`
         <div style="font-family:sans-serif; min-width:200px;">
-          <div style="font-size:0.65rem; letter-spacing:0.15em; text-transform:uppercase; color:#888; margin-bottom:4px;">${race.series}</div>
+          ${nextBadge}
+          <div style="font-size:0.65rem; letter-spacing:0.15em; text-transform:uppercase; color:#888; margin-bottom:4px;">Race ${num} of ${upcoming.length}</div>
           <div style="font-size:1.1rem; font-weight:700; color:#fff; margin-bottom:6px;">${race.name}</div>
           <div style="font-size:0.8rem; color:#aaa; margin-bottom:2px;">${race.venue}</div>
           <div style="font-size:0.8rem; color:#aaa; margin-bottom:2px;">${race.location}</div>
           <div style="font-size:0.8rem; color:#ccc; margin-top:6px; margin-bottom:8px;">${race.date}</div>
-          <a href="${race.register}" target="_blank" style="display:inline-block; font-size:0.7rem; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; padding:5px 12px; border:1px solid #4a7c3f; color:#4a7c3f; text-decoration:none;">Register →</a>
+          ${race.register ? `<a href="${race.register}" target="_blank" style="display:inline-block; font-size:0.7rem; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; padding:5px 12px; border:1px solid #4a7c3f; color:#4a7c3f; text-decoration:none;">Register →</a>` : ""}
         </div>
       `, {
         className: "dark-popup",
         maxWidth: 260
       });
     });
+
+    // Build race list dynamically
+    const raceList = document.getElementById("raceListBody");
+    if (raceList) {
+      raceList.innerHTML = upcoming.map((race, idx) => {
+        const num = String(idx + 1).padStart(2, "0");
+        const isNext = idx === 0;
+        const nextTag = isNext ? `<span style="font-family:'Barlow Condensed',sans-serif; font-size:0.65rem; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; background:#4a7c3f; color:white; padding:1px 8px; margin-left:8px;">Next</span>` : "";
+        const regBtn = race.register
+          ? `<a class="register-btn" href="${race.register}" target="_blank">Register</a>`
+          : `<span style="font-size:0.75rem; color:#555;">TBD</span>`;
+        return `
+          <div class="race-list-row">
+            <div class="race-num">${num}</div>
+            <div>
+              <div class="race-info-name">${race.name}${nextTag}</div>
+              <div class="race-info-venue">${race.venue}</div>
+            </div>
+            <div class="race-date">${race.date}</div>
+            <div>${regBtn}</div>
+          </div>`;
+      }).join("");
+
+      if (upcoming.length === 0) {
+        raceList.innerHTML = `<div style="padding:2rem 1.5rem; color:#555; font-size:0.9rem;">No upcoming races scheduled. Check back soon.</div>`;
+      }
+    }
 
     const style = document.createElement("style");
     style.textContent = `
