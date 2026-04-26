@@ -54,7 +54,6 @@
   /* MAP */
   #map {
     position:absolute; top:56px; left:0; right:var(--sidebar); bottom:0; z-index:1;
-    filter: brightness(0.85) saturate(0.7) hue-rotate(190deg);
   }
 
   /* SIDEBAR */
@@ -226,8 +225,18 @@ const db = getDatabase(app);
 
 // ── MAP INIT ─────────────────────────────────────────────────────────────────
 const map = L.map('map', { zoomControl: true }).setView([40.45, -111.73], 13);
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-  attribution: '© OpenStreetMap contributors', maxZoom: 19
+
+// Dark base layer — no labels (Stadia Alidade Smooth Dark)
+L.tileLayer('https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}{r}.png', {
+  attribution: '© Stadia Maps © OpenMapTiles © OpenStreetMap contributors',
+  maxZoom: 20
+}).addTo(map);
+
+// Labels-only overlay — town names, road names on top
+L.tileLayer('https://tiles.stadiamaps.com/tiles/stamen_toner_labels/{z}/{x}/{y}{r}.png', {
+  attribution: '',
+  maxZoom: 20,
+  opacity: 0.55
 }).addTo(map);
 
 // Fix z-index of zoom controls
@@ -500,23 +509,31 @@ function clearMarkers() {
 function drawGpx(points) {
   const latlngs = points.map(p => [p.lat, p.lng]);
 
-  // Outer glow line (wider, dimmer)
+  // Outer glow line (wider, softer)
   const glowLine = L.polyline(latlngs, {
-    color: '#f5a623',
-    weight: 6,
-    opacity: 0.2,
+    color: '#ffcc00',
+    weight: 14,
+    opacity: 0.18,
     lineJoin: 'round',
     lineCap: 'round'
   }).addTo(map);
 
-  // Main course line
-  const mainLine = L.polyline(latlngs, {
+  // Mid glow
+  const midGlow = L.polyline(latlngs, {
     color: '#f5a623',
-    weight: 2.5,
-    opacity: 0.85,
+    weight: 7,
+    opacity: 0.35,
     lineJoin: 'round',
-    lineCap: 'round',
-    dashArray: null
+    lineCap: 'round'
+  }).addTo(map);
+
+  // Main course line — bright and crisp
+  const mainLine = L.polyline(latlngs, {
+    color: '#ffcc00',
+    weight: 3,
+    opacity: 1,
+    lineJoin: 'round',
+    lineCap: 'round'
   }).addTo(map);
 
   // Start marker
@@ -539,7 +556,7 @@ function drawGpx(points) {
     })
   }).addTo(map);
 
-  gpxLayer = { glowLine, mainLine, startMarker, finishMarker };
+  gpxLayer = { glowLine, midGlow, mainLine, startMarker, finishMarker };
 
   // Fit map to course bounds, with some padding for sidebar
   map.fitBounds(mainLine.getBounds(), { paddingTopLeft: [0, 60], paddingBottomRight: [280, 20] });
@@ -548,6 +565,7 @@ function drawGpx(points) {
 function clearGpx() {
   if (gpxLayer) {
     map.removeLayer(gpxLayer.glowLine);
+    map.removeLayer(gpxLayer.midGlow);
     map.removeLayer(gpxLayer.mainLine);
     map.removeLayer(gpxLayer.startMarker);
     map.removeLayer(gpxLayer.finishMarker);
