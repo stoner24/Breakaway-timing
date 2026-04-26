@@ -245,13 +245,13 @@ import { getDatabase, ref, set, push, onValue, update, remove } from 'https://ww
 
 // ── FIREBASE CONFIG ──────────────────────────────────────────────────────────
 const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_PROJECT.firebaseapp.com",
-  databaseURL: "https://YOUR_PROJECT-default-rtdb.firebaseio.com",
-  projectId: "YOUR_PROJECT",
-  storageBucket: "YOUR_PROJECT.appspot.com",
-  messagingSenderId: "YOUR_SENDER_ID",
-  appId: "YOUR_APP_ID"
+  apiKey: "AIzaSy...",              // → YOUR_API_KEY
+  authDomain: "myproject.firebaseapp.com",  // → YOUR_PROJECT = "myproject"
+  databaseURL: "https://myproject-default-rtdb.firebaseio.com",
+  projectId: "myproject",           // → YOUR_PROJECT again
+  storageBucket: "myproject.appspot.com",
+  messagingSenderId: "123456789",   // → YOUR_SENDER_ID
+  appId: "1:123456789:web:abc123"   // → YOUR_APP_ID
 };
 
 const app = initializeApp(firebaseConfig);
