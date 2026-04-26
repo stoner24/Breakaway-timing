@@ -16,19 +16,23 @@
     --condensed: 'Barlow Condensed', sans-serif;
     --body: 'Barlow', sans-serif;
     --sidebar: 260px;
+    --topbar-h: 56px;
   }
   * { margin:0; padding:0; box-sizing:border-box; }
   html, body { height:100%; background:var(--bg); color:var(--text); font-family:var(--body); overflow:hidden; }
 
   /* TOPBAR */
   .topbar {
-    position:absolute; top:0; left:0; right:0; height:56px; z-index:500;
-    display:flex; align-items:center; gap:12px; padding:0 20px;
+    position:absolute; top:0; left:0; right:0; z-index:500;
     background:var(--bg); border-bottom:2px solid var(--orange);
   }
+  .topbar-row1 {
+    display:flex; align-items:center; gap:10px; padding:0 16px; height:var(--topbar-h);
+  }
   .logo-hex {
-    width:34px; height:34px; clip-path:polygon(50% 0%,93% 25%,93% 75%,50% 100%,7% 25%,7% 75%);
-    background:var(--orange); display:flex; align-items:center; justify-content:center; flex-shrink:0;
+    width:34px; height:34px; flex-shrink:0;
+    clip-path:polygon(50% 0%,93% 25%,93% 75%,50% 100%,7% 25%,7% 75%);
+    background:var(--orange); display:flex; align-items:center; justify-content:center;
   }
   .logo-hex svg { width:20px; height:20px; fill:#0c0e0f; }
   .brand-top { font-family:var(--condensed); font-size:16px; font-weight:900; letter-spacing:2px; text-transform:uppercase; color:var(--orange); line-height:1; }
@@ -36,10 +40,21 @@
   .topbar-spacer { flex:1; }
 
   /* LIVE INDICATOR */
-  .live-badge { display:flex; align-items:center; gap:7px; padding:5px 12px; background:var(--bg3); border:1px solid var(--border); }
-  .live-dot { width:8px; height:8px; background:var(--green); border-radius:50%; animation:pulse-dot 1.8s infinite; }
+  .live-badge { display:flex; align-items:center; gap:6px; padding:4px 10px; background:var(--bg3); border:1px solid var(--border); flex-shrink:0; }
+  .live-dot { width:8px; height:8px; background:var(--green); border-radius:50%; animation:pulse-dot 1.8s infinite; flex-shrink:0; }
   @keyframes pulse-dot { 0%,100%{box-shadow:0 0 0 0 rgba(57,211,83,0.6)} 50%{box-shadow:0 0 0 6px rgba(57,211,83,0)} }
-  .live-text { font-family:var(--condensed); font-size:13px; font-weight:700; letter-spacing:2px; color:var(--green); text-transform:uppercase; }
+  .live-text { font-family:var(--condensed); font-size:12px; font-weight:700; letter-spacing:2px; color:var(--green); text-transform:uppercase; }
+
+  /* RACE SELECT ROW — always visible, full width on mobile */
+  .topbar-row2 {
+    display:none; /* hidden on desktop, shown on mobile */
+    padding:0 16px 10px;
+  }
+  .topbar-row2 .select-wrap { width:100%; }
+  .topbar-row2 .styled-select { width:100%; }
+
+  /* RACE SELECT inline on desktop */
+  .topbar-select-desktop { display:flex; align-items:center; }
 
   /* RACE SELECT */
   .select-wrap { position:relative; }
@@ -47,18 +62,27 @@
   .styled-select {
     background:var(--bg3); border:2px solid var(--border); border-top:2px solid #3a3d40;
     color:var(--text); font-family:var(--body); font-size:14px;
-    padding:7px 30px 7px 12px; outline:none; appearance:none; cursor:pointer;
+    padding:7px 30px 7px 12px; outline:none; appearance:none; cursor:pointer; min-width:180px;
   }
   .styled-select:focus { border-color:var(--orange); }
 
+  /* RIDERS TOGGLE BUTTON — mobile only */
+  .riders-btn {
+    display:none; align-items:center; gap:6px; padding:4px 10px;
+    background:var(--bg3); border:1px solid var(--border); cursor:pointer;
+    font-family:var(--condensed); font-size:12px; font-weight:700; letter-spacing:2px;
+    color:var(--text-dim); text-transform:uppercase; flex-shrink:0;
+  }
+  .riders-btn.has-riders { color:var(--orange); border-color:var(--orange); }
+
   /* MAP */
   #map {
-    position:absolute; top:56px; left:0; right:var(--sidebar); bottom:0; z-index:1;
+    position:absolute; top:var(--topbar-h); left:0; right:var(--sidebar); bottom:0; z-index:1;
   }
 
   /* SIDEBAR */
   .sidebar {
-    position:absolute; top:56px; right:0; width:var(--sidebar); bottom:0; z-index:400;
+    position:absolute; top:var(--topbar-h); right:0; width:var(--sidebar); bottom:0; z-index:400;
     background:var(--bg2); border-left:2px solid var(--border); display:flex; flex-direction:column; overflow:hidden;
   }
   .sidebar-header { padding:14px 16px; border-bottom:1px solid var(--border); flex-shrink:0; }
@@ -117,7 +141,7 @@
 
   /* EMPTY STATE */
   .empty-overlay {
-    position:absolute; top:56px; left:0; right:var(--sidebar); bottom:0; z-index:300;
+    position:absolute; top:var(--topbar-h); left:0; right:var(--sidebar); bottom:0; z-index:300;
     display:flex; align-items:center; justify-content:center;
     background:rgba(12,14,15,0.85); pointer-events:none;
   }
@@ -128,7 +152,7 @@
 
   /* SCHEDULE BLACKOUT OVERLAY */
   .blackout-overlay {
-    position:absolute; top:56px; left:0; right:var(--sidebar); bottom:0; z-index:450;
+    position:absolute; top:var(--topbar-h); left:0; right:var(--sidebar); bottom:0; z-index:450;
     display:none; align-items:center; justify-content:center;
     background:rgba(12,14,15,0.96);
   }
@@ -140,11 +164,34 @@
   .blackout-next { font-family:var(--condensed); font-size:18px; font-weight:700; color:var(--orange); margin-top:16px; letter-spacing:2px; }
   .blackout-countdown { font-family:var(--mono); font-size:28px; color:var(--orange); margin-top:8px; letter-spacing:4px; }
 
+  /* MOBILE RIDER DRAWER — slides up from bottom */
+  .rider-drawer {
+    position:absolute; bottom:0; left:0; right:0; z-index:600;
+    background:var(--bg2); border-top:2px solid var(--orange);
+    max-height:55vh; display:flex; flex-direction:column;
+    transform:translateY(100%); transition:transform 0.3s ease;
+    display:none;
+  }
+  .rider-drawer.open { transform:translateY(0); }
+  .drawer-handle {
+    display:flex; align-items:center; justify-content:space-between;
+    padding:12px 16px; border-bottom:1px solid var(--border); flex-shrink:0; cursor:pointer;
+  }
+  .drawer-title { font-family:var(--condensed); font-size:14px; font-weight:700; letter-spacing:3px; text-transform:uppercase; color:var(--orange); }
+  .drawer-close { font-family:var(--mono); font-size:11px; color:var(--text-dim); }
+  .drawer-list { overflow-y:auto; flex:1; }
+
+  /* ── RESPONSIVE ── */
   @media(max-width:700px) {
-    :root { --sidebar: 0px; }
+    :root { --sidebar: 0px; --topbar-h: 96px; }
     .sidebar { display:none; }
-    #map { right:0; }
-    .empty-overlay, .blackout-overlay { right:0; }
+    #map { right:0; top:var(--topbar-h); }
+    .empty-overlay, .blackout-overlay { right:0; top:var(--topbar-h); }
+    .topbar-select-desktop { display:none; }
+    .topbar-row2 { display:block; }
+    .riders-btn { display:flex; }
+    .rider-drawer { display:flex; }
+    .brand-sub { display:none; }
   }
 </style>
 </head>
@@ -152,22 +199,40 @@
 
 <!-- TOPBAR -->
 <div class="topbar">
-  <div class="logo-hex">
-    <svg viewBox="0 0 24 24"><path d="M13 3L4 14h7l-2 7 9-11h-7l2-7z"/></svg>
+  <div class="topbar-row1">
+    <div class="logo-hex">
+      <svg viewBox="0 0 24 24"><path d="M13 3L4 14h7l-2 7 9-11h-7l2-7z"/></svg>
+    </div>
+    <div>
+      <div class="brand-top">Breakaway Timing</div>
+      <div class="brand-sub">Live Spectator Map</div>
+    </div>
+    <div class="topbar-spacer"></div>
+    <!-- Desktop: race select inline -->
+    <div class="topbar-select-desktop">
+      <div class="select-wrap">
+        <select class="styled-select" id="raceSelectDesktop" onchange="selectRace(this.value)">
+          <option value="">— Select Race —</option>
+        </select>
+      </div>
+    </div>
+    <!-- Mobile: riders drawer toggle -->
+    <button class="riders-btn" id="ridersBtn" onclick="toggleDrawer()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="7" r="4"/><path d="M12 14c-5 0-8 2.5-8 4v1h16v-1c0-1.5-3-4-8-4z"/></svg>
+      Riders
+    </button>
+    <div class="live-badge">
+      <div class="live-dot"></div>
+      <div class="live-text">Live</div>
+    </div>
   </div>
-  <div>
-    <div class="brand-top">Breakaway Timing</div>
-    <div class="brand-sub">Live Spectator Map</div>
-  </div>
-  <div class="topbar-spacer"></div>
-  <div class="select-wrap">
-    <select class="styled-select" id="raceSelect" onchange="selectRace(this.value)">
-      <option value="">— Select Race —</option>
-    </select>
-  </div>
-  <div class="live-badge">
-    <div class="live-dot"></div>
-    <div class="live-text">Live</div>
+  <!-- Mobile: race select on second row -->
+  <div class="topbar-row2">
+    <div class="select-wrap">
+      <select class="styled-select" id="raceSelectMobile" onchange="selectRace(this.value)">
+        <option value="">— Select Race —</option>
+      </select>
+    </div>
   </div>
 </div>
 
@@ -194,13 +259,22 @@
   </div>
 </div>
 
-<!-- SIDEBAR -->
+<!-- SIDEBAR (desktop) -->
 <div class="sidebar">
   <div class="sidebar-header">
     <div class="sidebar-title">Riders</div>
     <div class="rider-count" id="riderCount">0 active</div>
   </div>
   <div class="sidebar-list" id="sidebarList"></div>
+</div>
+
+<!-- MOBILE RIDER DRAWER -->
+<div class="rider-drawer" id="riderDrawer">
+  <div class="drawer-handle" onclick="toggleDrawer()">
+    <div class="drawer-title">Riders <span id="drawerCount" style="color:var(--text-dim);font-weight:400"></span></div>
+    <div class="drawer-close">✕ CLOSE</div>
+  </div>
+  <div class="drawer-list" id="drawerList"></div>
 </div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -253,19 +327,21 @@ let gpxLayer = null;
 
 // ── RACES ────────────────────────────────────────────────────────────────────
 onValue(ref(db, 'config/races'), (snap) => {
-  const sel = document.getElementById('raceSelect');
-  const prev = sel.value;
-  sel.innerHTML = '<option value="">— Select Race —</option>';
   const data = snap.val();
-  if (data) {
-    Object.entries(data).forEach(([id, race]) => {
-      const opt = document.createElement('option');
-      opt.value = id;
-      opt.textContent = race.name || id;
-      sel.appendChild(opt);
-    });
-  }
-  if (prev) sel.value = prev;
+  ['raceSelectDesktop', 'raceSelectMobile'].forEach(id => {
+    const sel = document.getElementById(id);
+    const prev = sel.value;
+    sel.innerHTML = '<option value="">— Select Race —</option>';
+    if (data) {
+      Object.entries(data).forEach(([id2, race]) => {
+        const opt = document.createElement('option');
+        opt.value = id2;
+        opt.textContent = race.name || id2;
+        sel.appendChild(opt);
+      });
+    }
+    if (prev) sel.value = prev;
+  });
 });
 
 // ── SELECT RACE ───────────────────────────────────────────────────────────────
@@ -451,25 +527,23 @@ function makeTooltip(bib, r, state, mins, acc) {
 
 function renderSidebar() {
   const now = Date.now();
-  const list = document.getElementById('sidebarList');
   const bibs = Object.keys(riderData).sort((a, b) => parseInt(a) - parseInt(b));
   let activeCount = 0;
 
-  list.innerHTML = bibs.map(bib => {
+  const rows = bibs.map(bib => {
     const r = riderData[bib];
     const hasPos = r.latest && r.latest.lat;
     const mins = hasPos ? Math.round((now - r.latest.ts) / 60000) : null;
 
     let dotClass = 'dot-inactive';
-    let state = 'inactive';
-    if (r.adminStop) { dotClass = 'dot-paused'; state = 'paused'; }
-    else if (r.active && hasPos && mins <= 10) { dotClass = 'dot-live'; state = 'live'; activeCount++; }
-    else if (r.active) { dotClass = 'dot-stale'; state = 'stale'; }
+    if (r.adminStop) { dotClass = 'dot-paused'; }
+    else if (r.active && hasPos && mins <= 10) { dotClass = 'dot-live'; activeCount++; }
+    else if (r.active) { dotClass = 'dot-stale'; }
 
     const pingStr = mins !== null ? (mins < 1 ? 'Just now' : `${mins}m ago`) : 'No position';
     const accStr = hasPos ? `±${Math.round(r.latest.acc)}m` : '';
 
-    return `<div class="rider-row" onclick="flyTo('${bib}')">
+    return `<div class="rider-row" onclick="flyTo('${bib}');closeDrawer()">
       <div class="rider-dot ${dotClass}"></div>
       <div class="rider-info">
         <div class="rider-bib">#${bib}</div>
@@ -479,7 +553,15 @@ function renderSidebar() {
     </div>`;
   }).join('');
 
+  document.getElementById('sidebarList').innerHTML = rows;
+  document.getElementById('drawerList').innerHTML = rows;
   document.getElementById('riderCount').textContent = `${activeCount} active · ${bibs.length} total`;
+  document.getElementById('drawerCount').textContent = `(${activeCount} active)`;
+
+  // Update riders button style
+  const btn = document.getElementById('ridersBtn');
+  if (activeCount > 0) btn.classList.add('has-riders');
+  else btn.classList.remove('has-riders');
 }
 
 function flyTo(bib) {
@@ -497,6 +579,13 @@ function flyTo(bib) {
 }
 
 window.flyTo = flyTo;
+
+function toggleDrawer() {
+  document.getElementById('riderDrawer').classList.toggle('open');
+}
+function closeDrawer() {
+  document.getElementById('riderDrawer').classList.remove('open');
+}
 
 function clearMarkers() {
   Object.values(markers).forEach(m => map.removeLayer(m));
