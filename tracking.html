@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Live Tracking · Breakaway Timing</title>
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    .tracking-hero {
+      padding: 10rem 3rem 5rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .tracking-hero-inner {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    .tracking-cards {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1px;
+      background: var(--border);
+      border: 1px solid var(--border);
+      margin-top: 4rem;
+      max-width: 1200px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    .tracking-card {
+      background: var(--black);
+      padding: 3.5rem;
+      display: flex;
+      flex-direction: column;
+      transition: background 0.2s;
+      text-decoration: none;
+      color: inherit;
+    }
+    .tracking-card:hover { background: #111; }
+    .card-number {
+      font-family: var(--font-display);
+      font-size: 5rem;
+      color: var(--border);
+      line-height: 1;
+      margin-bottom: 1.5rem;
+    }
+    .card-icon {
+      font-size: 2.5rem;
+      margin-bottom: 1.5rem;
+      display: block;
+    }
+    .card-title {
+      font-family: var(--font-display);
+      font-size: 2.8rem;
+      line-height: 1;
+      letter-spacing: 0.02em;
+      margin-bottom: 1rem;
+      color: var(--white);
+    }
+    .card-desc {
+      font-size: 0.95rem;
+      color: var(--mid);
+      line-height: 1.7;
+      flex: 1;
+      margin-bottom: 2rem;
+    }
+    .card-cta {
+      display: inline-block;
+      font-family: var(--font-heading);
+      font-weight: 700;
+      font-size: 0.8rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      padding: 0.85rem 2rem;
+      border: 2px solid var(--white);
+      color: var(--white);
+      align-self: flex-start;
+      transition: background 0.2s, color 0.2s;
+    }
+    .tracking-card:hover .card-cta {
+      background: var(--white);
+      color: var(--black);
+    }
+    .card-tag {
+      display: inline-block;
+      font-family: var(--font-heading);
+      font-size: 0.65rem;
+      font-weight: 700;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      padding: 0.2rem 0.7rem;
+      border: 1px solid var(--border);
+      color: var(--mid);
+      margin-bottom: 1.5rem;
+      align-self: flex-start;
+    }
+    .how-it-works {
+      padding: 6rem 3rem;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    .steps-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1px;
+      background: var(--border);
+      border: 1px solid var(--border);
+      margin-top: 3rem;
+    }
+    .step-card {
+      background: var(--black);
+      padding: 2.5rem;
+    }
+    .step-num {
+      font-family: var(--font-display);
+      font-size: 3.5rem;
+      color: var(--border);
+      line-height: 1;
+      margin-bottom: 1rem;
+    }
+    .step-card h3 {
+      font-family: var(--font-heading);
+      font-weight: 700;
+      font-size: 1.1rem;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      margin-bottom: 0.75rem;
+    }
+    .step-card p {
+      font-size: 0.9rem;
+      color: var(--mid);
+      line-height: 1.7;
+    }
+    @media (max-width: 768px) {
+      .tracking-cards { grid-template-columns: 1fr; }
+      .steps-grid { grid-template-columns: 1fr; }
+      .tracking-hero { padding: 8rem 1.5rem 3rem; }
+      .tracking-card { padding: 2.5rem 1.5rem; }
+      .how-it-works { padding: 4rem 1.5rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- NAV -->
+  <nav>
+    <a class="nav-logo" href="index.html">
+      <img src="logo.jpg" alt="Breakaway Timing" />
+      <span>Breakaway Timing</span>
+    </a>
+    <ul class="nav-links">
+      <li><a href="index.html">Home</a></li>
+      <li><a href="races.html">Races</a></li>
+      <li><a href="results.html">Results</a></li>
+      <li><a href="tracking.html" class="active">Live Tracking</a></li>
+      <li><a href="about.html">About</a></li>
+      <li><a href="contact.html">Contact</a></li>
+    </ul>
+  </nav>
+
+  <!-- HERO -->
+  <div class="tracking-hero">
+    <div class="tracking-hero-inner">
+      <p class="section-label">GPS Live Tracking</p>
+      <h1 class="section-title">Live On<br>Course</h1>
+      <p style="color: var(--mid); max-width: 520px; margin-top: 1rem; font-size: 1rem; line-height: 1.8;">
+        Real-time GPS tracking for riders and spectators. Enable tracking on your phone before the race — your position updates live on the spectator map every 5 minutes.
+      </p>
+    </div>
+
+    <div class="tracking-cards">
+
+      <!-- RIDER TRACKER -->
+      <a class="tracking-card" href="tracker.html">
+        <div class="card-number">01</div>
+        <span class="card-tag">For Riders</span>
+        <div class="card-title">Track My<br>Ride</div>
+        <p class="card-desc">
+          Enable GPS tracking from your phone before the race starts. Enter your bib number, select your event, and go. Your position updates automatically — no app download required.
+        </p>
+        <div class="card-cta">Start Tracking →</div>
+      </a>
+
+      <!-- SPECTATOR MAP -->
+      <a class="tracking-card" href="map.html">
+        <div class="card-number">02</div>
+        <span class="card-tag">For Spectators</span>
+        <div class="card-title">Live<br>Map</div>
+        <p class="card-desc">
+          Watch riders move across the course in real time. See every bib number, last ping time, and GPS accuracy. Click any rider to zoom in. Updates automatically — no refresh needed.
+        </p>
+        <div class="card-cta">Open Map →</div>
+      </a>
+
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- HOW IT WORKS -->
+  <div class="how-it-works">
+    <p class="section-label">How It Works</p>
+    <h2 class="section-title">Three Steps<br>to Live</h2>
+
+    <div class="steps-grid">
+      <div class="step-card">
+        <div class="step-num">01</div>
+        <h3>Enter Your Bib</h3>
+        <p>Open the tracker on your phone before the race. Enter your bib number, select the event, and optionally add your name so spectators can find you on the map.</p>
+      </div>
+      <div class="step-card">
+        <div class="step-num">02</div>
+        <h3>Hit Start</h3>
+        <p>Tap Start Tracking and allow location access when prompted. Your phone will ping your GPS position every 5 minutes automatically. Keep the screen on or it will continue in the background.</p>
+      </div>
+      <div class="step-card">
+        <div class="step-num">03</div>
+        <h3>You're Live</h3>
+        <p>Your dot appears on the spectator map in real time. Friends and family can watch from anywhere. Tracking runs for up to 24 hours and stops automatically when the session expires.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- CTA -->
+  <section class="section" style="text-align:center; padding: 5rem 3rem;">
+    <p class="section-label">Questions?</p>
+    <h2 class="section-title">Need Help<br>Getting Set Up?</h2>
+    <p style="color: var(--mid); max-width: 480px; margin: 1rem auto 2.5rem; font-size: 1rem;">
+      If you're a race director looking to enable live tracking for your event, get in touch and we'll walk you through the setup.
+    </p>
+    <a href="contact.html" class="btn btn-solid">Contact Us</a>
+  </section>
+
+  <!-- FOOTER -->
+  <footer>
+    <div class="footer-logo">Breakaway Timing</div>
+    <ul class="footer-links">
+      <li><a href="index.html">Home</a></li>
+      <li><a href="races.html">Races</a></li>
+      <li><a href="results.html">Results</a></li>
+      <li><a href="tracking.html">Live Tracking</a></li>
+      <li><a href="about.html">About</a></li>
+      <li><a href="contact.html">Contact</a></li>
+    </ul>
+    <p class="footer-copy">© 2026 Breakaway Timing · breakawayracetiming@gmail.com</p>
+  </footer>
+
+</body>
+</html>
