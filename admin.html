@@ -111,6 +111,10 @@
   .btn-red:hover { background:#c94040; }
   .btn-green { background:var(--green); color:#0c0e0f; }
   .btn-blue { background:var(--blue); color:#0c0e0f; }
+  .gpx-panel {
+    background:var(--bg3); border-top:2px solid var(--green);
+    padding:20px; margin-bottom:24px;
+  }
 
   /* ADD EVENT PANEL */
   .add-event-panel {
@@ -337,6 +341,32 @@
     <div style="margin-top:10px;font-family:var(--mono);font-size:11px;color:var(--text-dim)" id="addEventMsg"></div>
   </div>
 
+  <!-- GPX COURSE OVERLAY PANEL -->
+  <div class="gpx-panel" id="gpxPanel" style="display:none">
+    <div class="schedule-header">
+      <div>
+        <div class="schedule-title" style="color:var(--green)">🗺 Course GPX Overlay</div>
+        <div style="font-family:var(--mono);font-size:11px;color:var(--text-dim);margin-top:4px;">
+          Upload a GPX file to draw the course route on the spectator map.
+        </div>
+      </div>
+      <div id="gpxStatusBadge" class="schedule-status sched-inactive">NO COURSE</div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr auto auto;gap:12px;align-items:end;margin-top:16px;">
+      <div>
+        <div class="field-label">GPX File</div>
+        <input type="file" accept=".gpx" id="gpxFileInput" class="styled-input" style="padding:8px;cursor:pointer;">
+      </div>
+      <button class="btn btn-green" onclick="uploadGpx()" style="height:42px;align-self:end">UPLOAD COURSE</button>
+      <button class="btn btn-ghost" onclick="removeGpx()" style="height:42px;align-self:end;border-color:var(--red);color:var(--red)">REMOVE</button>
+    </div>
+    <div style="margin-top:10px;font-family:var(--mono);font-size:11px;color:var(--text-dim)" id="gpxMsg"></div>
+    <div id="gpxInfo" style="margin-top:12px;font-family:var(--mono);font-size:11px;color:var(--text-dim);display:none">
+      <span style="color:var(--green)">✓ Course loaded:</span> <span id="gpxPointCount"></span> track points · <span id="gpxFileName"></span>
+    </div>
+  </div>
+
   <!-- SCHEDULING PANEL -->
   <div class="schedule-panel" id="schedulePanel">
     <div class="schedule-header">
@@ -519,8 +549,11 @@ window.toggleAddPanel = function() {
 window.selectRace = function(raceId) {
   currentRaceId = raceId;
   if (raceListener) { off(ref(db, `tracker/${currentRaceId}`)); raceListener = null; }
-  if (!raceId) { renderEmpty('No event selected.'); return; }
+  const gpxPanel = document.getElementById('gpxPanel');
+  if (!raceId) { renderEmpty('No event selected.'); gpxPanel.style.display = 'none'; return; }
+  gpxPanel.style.display = 'block';
   loadSchedule(raceId);
+  loadGpxStatus(raceId);
   raceListener = onValue(ref(db, `tracker/${raceId}`), (snap) => {
     currentRiders = snap.val() || {};
     autoExpireCheck();
@@ -848,6 +881,79 @@ window.confirmRemove = async function() {
 window.closeDialog = function() {
   document.getElementById('confirmDialog').classList.remove('open');
   pendingRemoveBib = null;
+};
+
+// ── GPX COURSE OVERLAY ────────────────────────────────────────────────────────
+function loadGpxStatus(raceId) {
+  onValue(ref(db, `config/gpx/${raceId}/meta`), (snap) => {
+    const meta = snap.val();
+    const badge = document.getElementById('gpxStatusBadge');
+    const info = document.getElementById('gpxInfo');
+    if (meta && meta.fileName) {
+      badge.className = 'schedule-status sched-active';
+      badge.textContent = '✓ COURSE LOADED';
+      info.style.display = 'block';
+      document.getElementById('gpxPointCount').textContent = meta.pointCount || '?';
+      document.getElementById('gpxFileName').textContent = meta.fileName;
+    } else {
+      badge.className = 'schedule-status sched-inactive';
+      badge.textContent = 'NO COURSE';
+      info.style.display = 'none';
+    }
+  });
+}
+
+window.uploadGpx = async function() {
+  if (!currentRaceId) { alert('Select an event first.'); return; }
+  const file = document.getElementById('gpxFileInput').files[0];
+  const msg = document.getElementById('gpxMsg');
+  if (!file) { msg.style.color = 'var(--red)'; msg.textContent = 'Please select a GPX file.'; return; }
+
+  msg.style.color = 'var(--text-dim)'; msg.textContent = 'Parsing GPX...';
+
+  const text = await file.text();
+  const parser = new DOMParser();
+  const xml = parser.parseFromString(text, 'application/xml');
+
+  // Extract track points from trkpt or wpt elements
+  const trkpts = Array.from(xml.querySelectorAll('trkpt, wpt'));
+  if (trkpts.length === 0) {
+    msg.style.color = 'var(--red)'; msg.textContent = 'No track points found in GPX file.';
+    return;
+  }
+
+  // Sample points if too many (Firebase has size limits — keep under 2000 points)
+  const MAX_POINTS = 2000;
+  let points = trkpts.map(pt => ({
+    lat: parseFloat(pt.getAttribute('lat')),
+    lng: parseFloat(pt.getAttribute('lon'))
+  })).filter(p => !isNaN(p.lat) && !isNaN(p.lng));
+
+  if (points.length > MAX_POINTS) {
+    const step = Math.ceil(points.length / MAX_POINTS);
+    points = points.filter((_, i) => i % step === 0);
+    msg.textContent = `Sampled to ${points.length} points for performance...`;
+  }
+
+  // Write to Firebase as array of {lat,lng}
+  await set(ref(db, `config/gpx/${currentRaceId}/points`), points);
+  await set(ref(db, `config/gpx/${currentRaceId}/meta`), {
+    fileName: file.name,
+    pointCount: points.length,
+    uploadedAt: Date.now()
+  });
+
+  msg.style.color = 'var(--green)';
+  msg.textContent = `✓ Course uploaded — ${points.length} points from "${file.name}"`;
+  document.getElementById('gpxFileInput').value = '';
+};
+
+window.removeGpx = async function() {
+  if (!currentRaceId) return;
+  if (!confirm('Remove the course overlay for this event?')) return;
+  await remove(ref(db, `config/gpx/${currentRaceId}`));
+  document.getElementById('gpxMsg').style.color = 'var(--text-dim)';
+  document.getElementById('gpxMsg').textContent = 'Course removed.';
 };
 </script>
 </body>

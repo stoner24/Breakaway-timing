@@ -240,6 +240,7 @@ let riderData = {};
 let scheduleWindows = [];
 let scheduleActive = true; // default true = no schedule = always visible
 let blackoutInterval = null;
+let gpxLayer = null;
 
 // ── RACES ────────────────────────────────────────────────────────────────────
 onValue(ref(db, 'config/races'), (snap) => {
@@ -262,8 +263,18 @@ onValue(ref(db, 'config/races'), (snap) => {
 window.selectRace = function(raceId) {
   currentRaceId = raceId;
   clearMarkers();
+  clearGpx();
   riderData = {};
   if (!raceId) return;
+
+  // Listen to GPX course overlay
+  onValue(ref(db, `config/gpx/${raceId}/points`), (snap) => {
+    clearGpx();
+    const points = snap.val();
+    if (points && Array.isArray(points) && points.length > 0) {
+      drawGpx(points);
+    }
+  });
 
   // Listen to schedule state from admin
   onValue(ref(db, `config/schedules/${raceId}`), (snap) => {
@@ -483,6 +494,65 @@ function clearMarkers() {
   markers = {};
   document.getElementById('sidebarList').innerHTML = '';
   document.getElementById('riderCount').textContent = '0 active';
+}
+
+// ── GPX COURSE OVERLAY ────────────────────────────────────────────────────────
+function drawGpx(points) {
+  const latlngs = points.map(p => [p.lat, p.lng]);
+
+  // Outer glow line (wider, dimmer)
+  const glowLine = L.polyline(latlngs, {
+    color: '#f5a623',
+    weight: 6,
+    opacity: 0.2,
+    lineJoin: 'round',
+    lineCap: 'round'
+  }).addTo(map);
+
+  // Main course line
+  const mainLine = L.polyline(latlngs, {
+    color: '#f5a623',
+    weight: 2.5,
+    opacity: 0.85,
+    lineJoin: 'round',
+    lineCap: 'round',
+    dashArray: null
+  }).addTo(map);
+
+  // Start marker
+  const startPt = latlngs[0];
+  const startMarker = L.marker(startPt, {
+    icon: L.divIcon({
+      className: '',
+      html: `<div style="background:#39d353;color:#0c0e0f;font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:10px;padding:3px 7px;letter-spacing:1px;white-space:nowrap;">START</div>`,
+      iconAnchor: [20, 10]
+    })
+  }).addTo(map);
+
+  // Finish marker
+  const endPt = latlngs[latlngs.length - 1];
+  const finishMarker = L.marker(endPt, {
+    icon: L.divIcon({
+      className: '',
+      html: `<div style="background:#e5534b;color:#fff;font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:10px;padding:3px 7px;letter-spacing:1px;white-space:nowrap;">FINISH</div>`,
+      iconAnchor: [22, 10]
+    })
+  }).addTo(map);
+
+  gpxLayer = { glowLine, mainLine, startMarker, finishMarker };
+
+  // Fit map to course bounds, with some padding for sidebar
+  map.fitBounds(mainLine.getBounds(), { paddingTopLeft: [0, 60], paddingBottomRight: [280, 20] });
+}
+
+function clearGpx() {
+  if (gpxLayer) {
+    map.removeLayer(gpxLayer.glowLine);
+    map.removeLayer(gpxLayer.mainLine);
+    map.removeLayer(gpxLayer.startMarker);
+    map.removeLayer(gpxLayer.finishMarker);
+    gpxLayer = null;
+  }
 }
 
 // ── PERIODIC REFRESH ──────────────────────────────────────────────────────────
