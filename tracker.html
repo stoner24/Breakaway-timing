@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#0c0e0f">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Breakaway Timing — Live Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;900&family=Barlow:wght@400;500;600&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0c0e0f;
+    --bg2: #131618;
+    --bg3: #1a1d1f;
+    --orange: #f5a623;
+    --orange-dim: #b87c1a;
+    --green: #39d353;
+    --red: #e5534b;
+    --text: #e8eaeb;
+    --text-dim: #6b7280;
+    --mono: 'Share Tech Mono', monospace;
+    --condensed: 'Barlow Condensed', sans-serif;
+    --body: 'Barlow', sans-serif;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { height: 100%; background: var(--bg); color: var(--text); font-family: var(--body); overflow-x: hidden; }
+
+  /* TOPBAR */
+  .topbar {
+    display: flex; align-items: center; gap: 12px;
+    padding: 14px 20px; background: var(--bg2);
+    border-bottom: 2px solid var(--orange);
+    position: sticky; top: 0; z-index: 100;
+  }
+  .logo-hex {
+    width: 38px; height: 38px; position: relative; flex-shrink: 0;
+    clip-path: polygon(50% 0%, 93% 25%, 93% 75%, 50% 100%, 7% 25%, 7% 75%);
+    background: var(--orange); display: flex; align-items: center; justify-content: center;
+  }
+  .logo-hex svg { width: 22px; height: 22px; fill: #0c0e0f; }
+  .brand { display: flex; flex-direction: column; }
+  .brand-top { font-family: var(--condensed); font-size: 18px; font-weight: 900; letter-spacing: 2px; text-transform: uppercase; color: var(--orange); line-height: 1; }
+  .brand-sub { font-family: var(--mono); font-size: 9px; color: var(--text-dim); letter-spacing: 1.5px; text-transform: uppercase; }
+
+  /* SCREENS */
+  .screen { display: none; min-height: calc(100vh - 70px); flex-direction: column; }
+  .screen.active { display: flex; }
+
+  /* SCREEN 1 — INPUT */
+  .input-screen { padding: 32px 20px; align-items: stretch; }
+  .section-label {
+    font-family: var(--condensed); font-size: 11px; font-weight: 700; letter-spacing: 3px;
+    text-transform: uppercase; color: var(--orange); margin-bottom: 10px;
+  }
+  .field-group { margin-bottom: 24px; }
+  .bib-input {
+    width: 100%; background: var(--bg3); border: 2px solid #2a2d30; border-top: 2px solid var(--orange);
+    color: var(--text); font-family: var(--condensed); font-size: 64px; font-weight: 900;
+    letter-spacing: 4px; text-align: center; padding: 20px; outline: none;
+    -moz-appearance: textfield; appearance: textfield;
+    transition: border-color 0.2s;
+  }
+  .bib-input::-webkit-inner-spin-button, .bib-input::-webkit-outer-spin-button { -webkit-appearance: none; }
+  .bib-input:focus { border-color: var(--orange); }
+  .styled-select, .styled-input {
+    width: 100%; background: var(--bg3); border: 2px solid #2a2d30; border-top: 2px solid #3a3d40;
+    color: var(--text); font-family: var(--body); font-size: 16px;
+    padding: 14px 16px; outline: none; appearance: none;
+    transition: border-color 0.2s;
+  }
+  .styled-select:focus, .styled-input:focus { border-color: var(--orange); }
+  .styled-input::placeholder { color: var(--text-dim); }
+  .select-wrap { position: relative; }
+  .select-wrap::after {
+    content: '▼'; position: absolute; right: 16px; top: 50%; transform: translateY(-50%);
+    color: var(--orange); font-size: 10px; pointer-events: none;
+  }
+  .start-btn {
+    width: 100%; padding: 20px; margin-top: 8px;
+    background: var(--orange); color: #0c0e0f;
+    font-family: var(--condensed); font-size: 22px; font-weight: 900;
+    letter-spacing: 4px; text-transform: uppercase; border: none; cursor: pointer;
+    transition: background 0.15s, transform 0.1s;
+    display: flex; align-items: center; justify-content: center; gap: 10px;
+  }
+  .start-btn:hover { background: #ffbc45; }
+  .start-btn:active { transform: scale(0.98); }
+  .start-btn:disabled { background: var(--bg3); color: var(--text-dim); cursor: not-allowed; }
+  .error-msg { color: var(--red); font-size: 13px; margin-top: 8px; font-family: var(--mono); display: none; }
+
+  /* SCREEN 2 — LIVE */
+  .live-screen { padding: 20px; gap: 16px; }
+  .status-card {
+    background: var(--bg3); border-top: 3px solid var(--orange);
+    padding: 20px;
+  }
+  .status-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px; }
+  .bib-display {
+    font-family: var(--condensed); font-size: 72px; font-weight: 900;
+    color: var(--orange); line-height: 1; letter-spacing: 2px;
+  }
+  .bib-display span { font-size: 18px; color: var(--text-dim); display: block; letter-spacing: 3px; font-weight: 600; }
+  .status-pill {
+    padding: 6px 14px; font-family: var(--condensed); font-size: 13px; font-weight: 700;
+    letter-spacing: 2px; text-transform: uppercase;
+  }
+  .pill-live { background: var(--green); color: #0c0e0f; animation: pulse-pill 2s infinite; }
+  .pill-acquiring { background: var(--orange); color: #0c0e0f; }
+  .pill-error { background: var(--red); color: #fff; }
+  .pill-paused { background: var(--red); color: #fff; }
+  @keyframes pulse-pill { 0%,100%{opacity:1} 50%{opacity:0.7} }
+
+  .stat-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; margin-bottom: 16px; background: #1f2326; }
+  .stat-cell { background: var(--bg2); padding: 12px 14px; }
+  .stat-label { font-family: var(--mono); font-size: 9px; color: var(--text-dim); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 4px; }
+  .stat-val { font-family: var(--condensed); font-size: 22px; font-weight: 700; color: var(--text); }
+  .stat-val.ok { color: var(--green); }
+  .stat-val.warn { color: var(--orange); }
+  .stat-val.bad { color: var(--red); }
+
+  /* COUNTDOWN */
+  .countdown-block { background: var(--bg2); padding: 14px; }
+  .countdown-label { font-family: var(--mono); font-size: 9px; color: var(--text-dim); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 8px; display: flex; justify-content: space-between; }
+  .countdown-bar-outer { width: 100%; height: 6px; background: #2a2d30; }
+  .countdown-bar-inner { height: 100%; background: var(--orange); transition: width 1s linear; }
+  .countdown-time { font-family: var(--condensed); font-size: 28px; font-weight: 700; color: var(--orange); margin-top: 8px; letter-spacing: 2px; }
+
+  /* ADMIN STOP BANNER */
+  .admin-banner {
+    background: var(--red); color: #fff; padding: 14px 20px; text-align: center;
+    font-family: var(--condensed); font-size: 18px; font-weight: 700; letter-spacing: 3px;
+    text-transform: uppercase; display: none;
+    animation: flash-red 1s infinite;
+  }
+  @keyframes flash-red { 0%,100%{background:var(--red)} 50%{background:#9e2a25} }
+
+  .stop-btn {
+    width: 100%; padding: 18px; background: transparent; border: 2px solid var(--red);
+    color: var(--red); font-family: var(--condensed); font-size: 18px; font-weight: 700;
+    letter-spacing: 4px; text-transform: uppercase; cursor: pointer;
+    transition: background 0.15s; margin-top: auto;
+  }
+  .stop-btn:hover { background: rgba(229,83,75,0.15); }
+
+  .event-name-display { font-family: var(--body); font-size: 14px; color: var(--text-dim); margin-top: 4px; }
+
+  .gps-icon { display: inline-block; width: 8px; height: 8px; background: var(--green); border-radius: 50%; margin-right: 6px; animation: blink 1.5s infinite; }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.2} }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="logo-hex">
+    <svg viewBox="0 0 24 24"><path d="M13 3L4 14h7l-2 7 9-11h-7l2-7z"/></svg>
+  </div>
+  <div class="brand">
+    <div class="brand-top">Breakaway Timing</div>
+    <div class="brand-sub">Live GPS Tracker</div>
+  </div>
+</div>
+
+<!-- ADMIN STOP BANNER -->
+<div class="admin-banner" id="adminBanner">⛔ TRACKING PAUSED BY RACE DIRECTOR</div>
+
+<!-- SCREEN 1: INPUT -->
+<div class="screen active input-screen" id="screen1">
+  <div class="field-group">
+    <div class="section-label">Bib Number</div>
+    <input type="number" class="bib-input" id="bibInput" placeholder="000" min="1" max="9999" inputmode="numeric">
+    <div class="error-msg" id="bibError">Please enter a valid bib number.</div>
+  </div>
+
+  <div class="field-group">
+    <div class="section-label">Event</div>
+    <div class="select-wrap">
+      <select class="styled-select" id="raceSelect">
+        <option value="">Loading events...</option>
+      </select>
+    </div>
+    <div class="error-msg" id="raceError">Please select an event.</div>
+  </div>
+
+  <div class="field-group">
+    <div class="section-label">Your Name <span style="color:var(--text-dim);font-weight:400">(optional)</span></div>
+    <input type="text" class="styled-input" id="nameInput" placeholder="Rider name">
+  </div>
+
+  <button class="start-btn" id="startBtn" onclick="startTracking()">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="#0c0e0f"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/></svg>
+    Start Tracking
+  </button>
+</div>
+
+<!-- SCREEN 2: LIVE -->
+<div class="screen live-screen" id="screen2">
+  <div class="status-card">
+    <div class="status-header">
+      <div>
+        <div class="bib-display" id="liveBib"><span>BIB</span>---</div>
+        <div class="event-name-display" id="liveEventName"></div>
+      </div>
+      <div class="status-pill pill-acquiring" id="statusPill">ACQUIRING</div>
+    </div>
+
+    <div class="stat-row">
+      <div class="stat-cell">
+        <div class="stat-label">Last Ping</div>
+        <div class="stat-val" id="lastPingVal">—</div>
+      </div>
+      <div class="stat-cell">
+        <div class="stat-label">GPS Accuracy</div>
+        <div class="stat-val" id="accuracyVal">—</div>
+      </div>
+      <div class="stat-cell">
+        <div class="stat-label">Pings Sent</div>
+        <div class="stat-val" id="pingsVal">0</div>
+      </div>
+      <div class="stat-cell">
+        <div class="stat-label">Status</div>
+        <div class="stat-val" id="gpsStatusVal"><span class="gps-icon"></span>Watching</div>
+      </div>
+    </div>
+
+    <div class="countdown-block">
+      <div class="countdown-label">
+        <span>Session Expires In</span>
+        <span id="countdownPct">100%</span>
+      </div>
+      <div class="countdown-bar-outer">
+        <div class="countdown-bar-inner" id="countdownBar" style="width:100%"></div>
+      </div>
+      <div class="countdown-time" id="countdownTime">24:00:00</div>
+    </div>
+  </div>
+
+  <button class="stop-btn" onclick="stopTracking()">■ Stop Tracking</button>
+</div>
+
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+import { getDatabase, ref, set, push, onValue, update, remove } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
+
+// ── FIREBASE CONFIG ──────────────────────────────────────────────────────────
+const firebaseConfig = {
+  apiKey: "YOUR_API_KEY",
+  authDomain: "YOUR_PROJECT.firebaseapp.com",
+  databaseURL: "https://YOUR_PROJECT-default-rtdb.firebaseio.com",
+  projectId: "YOUR_PROJECT",
+  storageBucket: "YOUR_PROJECT.appspot.com",
+  messagingSenderId: "YOUR_SENDER_ID",
+  appId: "YOUR_APP_ID"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+
+// ── STATE ────────────────────────────────────────────────────────────────────
+let watchId = null;
+let forceInterval = null;
+let countdownInterval = null;
+let wakeLock = null;
+let adminStopListener = null;
+let currentBib = null;
+let currentRaceId = null;
+let startedAt = null;
+let expiresAt = null;
+let pingCount = 0;
+let isPaused = false;
+
+// ── LOAD RACES ───────────────────────────────────────────────────────────────
+const racesRef = ref(db, 'config/races');
+onValue(racesRef, (snap) => {
+  const sel = document.getElementById('raceSelect');
+  sel.innerHTML = '<option value="">— Select Event —</option>';
+  const data = snap.val();
+  if (data) {
+    Object.entries(data).forEach(([id, race]) => {
+      const opt = document.createElement('option');
+      opt.value = id;
+      opt.textContent = race.name || id;
+      sel.appendChild(opt);
+    });
+  } else {
+    sel.innerHTML = '<option value="">No events available</option>';
+  }
+});
+
+// ── START TRACKING ───────────────────────────────────────────────────────────
+window.startTracking = async function() {
+  const bib = document.getElementById('bibInput').value.trim();
+  const raceId = document.getElementById('raceSelect').value;
+  const name = document.getElementById('nameInput').value.trim();
+
+  document.getElementById('bibError').style.display = 'none';
+  document.getElementById('raceError').style.display = 'none';
+
+  if (!bib || isNaN(bib) || parseInt(bib) < 1) {
+    document.getElementById('bibError').style.display = 'block';
+    return;
+  }
+  if (!raceId) {
+    document.getElementById('raceError').style.display = 'block';
+    return;
+  }
+
+  currentBib = bib;
+  currentRaceId = raceId;
+  startedAt = Date.now();
+  expiresAt = startedAt + 86400000;
+
+  const raceNameEl = document.querySelector(`#raceSelect option[value="${raceId}"]`);
+  const raceName = raceNameEl ? raceNameEl.textContent : raceId;
+
+  document.getElementById('liveBib').innerHTML = `<span>BIB</span>${bib}`;
+  document.getElementById('liveEventName').textContent = raceName;
+
+  // Write initial record
+  const riderRef = ref(db, `tracker/${raceId}/${bib}`);
+  await set(riderRef, {
+    bib, name: name || 'Anonymous', race: raceId, raceName,
+    startedAt, expiresAt, active: true, adminStop: false
+  });
+
+  // Listen for adminStop
+  const adminRef = ref(db, `tracker/${raceId}/${bib}/adminStop`);
+  adminStopListener = onValue(adminRef, (snap) => {
+    const stopped = snap.val();
+    if (stopped === true && !isPaused) {
+      isPaused = true;
+      pauseGPS();
+      document.getElementById('adminBanner').style.display = 'block';
+      setPill('paused');
+    } else if (stopped === false && isPaused) {
+      isPaused = false;
+      document.getElementById('adminBanner').style.display = 'none';
+      resumeGPS();
+    }
+  });
+
+  // Switch screens
+  document.getElementById('screen1').classList.remove('active');
+  document.getElementById('screen2').classList.add('active');
+
+  // Wake Lock
+  try {
+    wakeLock = await navigator.wakeLock.request('screen');
+  } catch(e) { /* not supported */ }
+
+  startGPS();
+  startCountdown();
+};
+
+function startGPS() {
+  setPill('acquiring');
+  if (!navigator.geolocation) {
+    setPill('error');
+    document.getElementById('gpsStatusVal').textContent = 'GPS N/A';
+    return;
+  }
+
+  watchId = navigator.geolocation.watchPosition(handlePosition, handleGPSError, {
+    enableHighAccuracy: true, timeout: 30000, maximumAge: 0
+  });
+
+  // Force ping every 5 minutes even if position unchanged
+  forceInterval = setInterval(() => {
+    navigator.geolocation.getCurrentPosition(handlePosition, handleGPSError, {
+      enableHighAccuracy: true, timeout: 15000, maximumAge: 0
+    });
+  }, 5 * 60 * 1000);
+}
+
+function pauseGPS() {
+  if (watchId !== null) { navigator.geolocation.clearWatch(watchId); watchId = null; }
+  clearInterval(forceInterval);
+}
+
+function resumeGPS() {
+  startGPS();
+  setPill('live');
+}
+
+async function handlePosition(pos) {
+  if (isPaused) return;
+  const { latitude: lat, longitude: lng, accuracy: acc } = pos.coords;
+  const ts = Date.now();
+
+  pingCount++;
+  document.getElementById('pingsVal').textContent = pingCount;
+
+  const accuracyEl = document.getElementById('accuracyVal');
+  accuracyEl.textContent = `±${Math.round(acc)}m`;
+  accuracyEl.className = 'stat-val ' + (acc < 10 ? 'ok' : acc < 30 ? 'warn' : 'bad');
+
+  const now = new Date();
+  document.getElementById('lastPingVal').textContent =
+    now.toLocaleTimeString('en-US', { hour12: false, hour:'2-digit', minute:'2-digit', second:'2-digit' });
+
+  setPill('live');
+
+  const latestRef = ref(db, `tracker/${currentRaceId}/${currentBib}/latest`);
+  await set(latestRef, { lat, lng, acc, ts });
+
+  const histRef = ref(db, `tracker/${currentRaceId}/${currentBib}/history/${ts}`);
+  await set(histRef, { lat, lng, acc, ts });
+}
+
+function handleGPSError(err) {
+  setPill('error');
+  document.getElementById('gpsStatusVal').textContent = 'GPS Error';
+}
+
+function setPill(state) {
+  const pill = document.getElementById('statusPill');
+  pill.className = 'status-pill';
+  const map = { live: ['pill-live','LIVE'], acquiring: ['pill-acquiring','ACQUIRING'], error: ['pill-error','ERROR'], paused: ['pill-paused','PAUSED'] };
+  pill.classList.add(map[state][0]);
+  pill.textContent = map[state][1];
+}
+
+function startCountdown() {
+  const totalMs = 86400000;
+  countdownInterval = setInterval(() => {
+    const remaining = expiresAt - Date.now();
+    if (remaining <= 0) {
+      clearInterval(countdownInterval);
+      stopTracking(true);
+      return;
+    }
+    const pct = (remaining / totalMs) * 100;
+    document.getElementById('countdownBar').style.width = pct + '%';
+    document.getElementById('countdownPct').textContent = Math.round(pct) + '%';
+
+    const h = Math.floor(remaining / 3600000);
+    const m = Math.floor((remaining % 3600000) / 60000);
+    const s = Math.floor((remaining % 60000) / 1000);
+    document.getElementById('countdownTime').textContent =
+      String(h).padStart(2,'0') + ':' + String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
+  }, 1000);
+}
+
+window.stopTracking = async function(expired = false) {
+  pauseGPS();
+  clearInterval(countdownInterval);
+
+  if (wakeLock) { try { await wakeLock.release(); } catch(e){} }
+
+  if (currentBib && currentRaceId) {
+    const riderRef = ref(db, `tracker/${currentRaceId}/${currentBib}`);
+    await update(riderRef, { active: false, stoppedAt: Date.now() });
+  }
+
+  // Reset state
+  watchId = null; forceInterval = null; pingCount = 0; isPaused = false;
+  currentBib = null; currentRaceId = null;
+
+  document.getElementById('screen2').classList.remove('active');
+  document.getElementById('screen1').classList.add('active');
+  document.getElementById('adminBanner').style.display = 'none';
+  document.getElementById('bibInput').value = '';
+  document.getElementById('nameInput').value = '';
+};
+</script>
+</body>
+</html>
