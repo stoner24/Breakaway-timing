@@ -300,17 +300,19 @@ const db = getDatabase(app);
 // ── MAP INIT ─────────────────────────────────────────────────────────────────
 const map = L.map('map', { zoomControl: true }).setView([40.45, -111.73], 13);
 
-// Dark base layer — no labels (Stadia Alidade Smooth Dark)
-L.tileLayer('https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}{r}.png', {
-  attribution: '© Stadia Maps © OpenMapTiles © OpenStreetMap contributors',
+// Dark base layer — CARTO Dark Matter (no API key required)
+L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png', {
+  attribution: '© OpenStreetMap contributors © CARTO',
+  subdomains: 'abcd',
   maxZoom: 20
 }).addTo(map);
 
-// Labels-only overlay — town names, road names on top
-L.tileLayer('https://tiles.stadiamaps.com/tiles/stamen_toner_labels/{z}/{x}/{y}{r}.png', {
+// Labels-only overlay — CARTO labels on top (town names, roads)
+L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_only_labels/{z}/{x}/{y}{r}.png', {
   attribution: '',
+  subdomains: 'abcd',
   maxZoom: 20,
-  opacity: 0.55
+  opacity: 0.8
 }).addTo(map);
 
 // Fix z-index of zoom controls
