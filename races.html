@@ -14,7 +14,6 @@
       position: relative;
       overflow: hidden;
     }
-
     .map-tooltip {
       position: absolute;
       background: #0a0a0a;
@@ -25,127 +24,24 @@
       min-width: 220px;
       display: none;
     }
-
     .map-tooltip.visible { display: block; }
-
-    .tooltip-series {
-      font-family: 'Barlow Condensed', sans-serif;
-      font-size: 0.65rem;
-      letter-spacing: 0.2em;
-      text-transform: uppercase;
-      color: #888;
-      margin-bottom: 0.25rem;
-    }
-
-    .tooltip-name {
-      font-family: 'Bebas Neue', sans-serif;
-      font-size: 1.4rem;
-      letter-spacing: 0.05em;
-      color: #f5f5f0;
-      line-height: 1.1;
-      margin-bottom: 0.4rem;
-    }
-
-    .tooltip-detail {
-      font-size: 0.8rem;
-      color: #888;
-      margin-bottom: 0.2rem;
-    }
-
+    .tooltip-series { font-family: 'Barlow Condensed', sans-serif; font-size: 0.65rem; letter-spacing: 0.2em; text-transform: uppercase; color: #888; margin-bottom: 0.25rem; }
+    .tooltip-name { font-family: 'Bebas Neue', sans-serif; font-size: 1.4rem; letter-spacing: 0.05em; color: #f5f5f0; line-height: 1.1; margin-bottom: 0.4rem; }
+    .tooltip-detail { font-size: 0.8rem; color: #888; margin-bottom: 0.2rem; }
     .tooltip-detail span { color: #f5f5f0; }
-
-    .tooltip-link {
-      display: inline-block;
-      margin-top: 0.6rem;
-      font-family: 'Barlow Condensed', sans-serif;
-      font-size: 0.7rem;
-      font-weight: 700;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      color: #f5f5f0;
-      border: 1px solid #444;
-      padding: 0.3rem 0.75rem;
-      transition: all 0.2s;
-      pointer-events: all;
-    }
-
+    .tooltip-link { display: inline-block; margin-top: 0.6rem; font-family: 'Barlow Condensed', sans-serif; font-size: 0.7rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: #f5f5f0; border: 1px solid #444; padding: 0.3rem 0.75rem; transition: all 0.2s; pointer-events: all; }
     .tooltip-link:hover { border-color: #f5f5f0; background: #f5f5f0; color: #0a0a0a; }
-
-    /* Race list table */
-    .race-list {
-      margin-top: 2.5rem;
-    }
-
-    .race-list-header {
-      display: grid;
-      grid-template-columns: 60px 1fr 160px 120px;
-      gap: 1rem;
-      padding: 0.75rem 1.5rem;
-      background: #111;
-      font-family: 'Barlow Condensed', sans-serif;
-      font-size: 0.7rem;
-      font-weight: 600;
-      letter-spacing: 0.15em;
-      text-transform: uppercase;
-      color: #888;
-      border: 1px solid #222;
-      border-bottom: none;
-    }
-
-    .race-list-row {
-      display: grid;
-      grid-template-columns: 60px 1fr 160px 120px;
-      gap: 1rem;
-      padding: 1rem 1.5rem;
-      border: 1px solid #222;
-      border-bottom: none;
-      transition: background 0.15s;
-      align-items: center;
-    }
-
+    .race-list { margin-top: 2.5rem; }
+    .race-list-header { display: grid; grid-template-columns: 60px 1fr 160px 120px; gap: 1rem; padding: 0.75rem 1.5rem; background: #111; font-family: 'Barlow Condensed', sans-serif; font-size: 0.7rem; font-weight: 600; letter-spacing: 0.15em; text-transform: uppercase; color: #888; border: 1px solid #222; border-bottom: none; }
+    .race-list-row { display: grid; grid-template-columns: 60px 1fr 160px 120px; gap: 1rem; padding: 1rem 1.5rem; border: 1px solid #222; border-bottom: none; transition: background 0.15s; align-items: center; }
     .race-list-row:last-child { border-bottom: 1px solid #222; }
     .race-list-row:hover { background: #111; }
-
-    .race-num {
-      font-family: 'Bebas Neue', sans-serif;
-      font-size: 1.5rem;
-      color: #444;
-    }
-
-    .race-info-name {
-      font-family: 'Barlow Condensed', sans-serif;
-      font-weight: 700;
-      font-size: 1rem;
-      letter-spacing: 0.03em;
-      color: #f5f5f0;
-    }
-
-    .race-info-venue {
-      font-size: 0.8rem;
-      color: #888;
-      margin-top: 0.15rem;
-    }
-
-    .race-date {
-      font-size: 0.85rem;
-      color: #888;
-    }
-
-    .register-btn {
-      display: inline-block;
-      font-family: 'Barlow Condensed', sans-serif;
-      font-weight: 700;
-      font-size: 0.72rem;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      padding: 0.45rem 1rem;
-      border: 1px solid #333;
-      color: #888;
-      transition: all 0.2s;
-    }
-
+    .race-num { font-family: 'Bebas Neue', sans-serif; font-size: 1.5rem; color: #444; }
+    .race-info-name { font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 1rem; letter-spacing: 0.03em; color: #f5f5f0; }
+    .race-info-venue { font-size: 0.8rem; color: #888; margin-top: 0.15rem; }
+    .race-date { font-size: 0.85rem; color: #888; }
+    .register-btn { display: inline-block; font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 0.72rem; letter-spacing: 0.12em; text-transform: uppercase; padding: 0.45rem 1rem; border: 1px solid #333; color: #888; transition: all 0.2s; }
     .register-btn:hover { border-color: #f5f5f0; color: #f5f5f0; }
-
     @media (max-width: 768px) {
       #map { height: 380px; }
       .race-list-header { display: none; }
@@ -157,7 +53,6 @@
 </head>
 <body>
 
-  <!-- NAV -->
   <nav>
     <a class="nav-logo" href="index.html">
       <img src="logo.jpg" alt="Breakaway Timing" />
@@ -167,12 +62,17 @@
       <li><a href="index.html">Home</a></li>
       <li><a href="races.html" class="active">Races</a></li>
       <li><a href="results.html">Results</a></li>
+      <li><a href="tracking.html">Live Tracking</a></li>
+      <li><a href="announcer.html">Announcer</a></li>
       <li><a href="about.html">About</a></li>
       <li><a href="contact.html">Contact</a></li>
+      <li><a href="admin.html">Admin</a></li>
     </ul>
+    <button class="nav-toggle" id="navToggle" aria-label="Toggle menu">
+      <span></span><span></span><span></span>
+    </button>
   </nav>
 
-  <!-- PAGE HEADER -->
   <div class="page-header">
     <div class="page-header-inner">
       <p class="section-label">2026 Season</p>
@@ -180,228 +80,99 @@
     </div>
   </div>
 
-  <!-- MAP + RACE LIST -->
   <div class="results-section">
-
-    <!-- MAP -->
-    <div id="map">
-      <div class="map-tooltip" id="tooltip"></div>
-    </div>
-
-    <!-- RACE LIST -->
+    <div id="map"><div class="map-tooltip" id="tooltip"></div></div>
     <div class="race-list">
       <div class="race-list-header">
-        <div>#</div>
-        <div>Race</div>
-        <div>Date</div>
-        <div>Register</div>
+        <div>#</div><div>Race</div><div>Date</div><div>Register</div>
       </div>
-
       <div id="raceListBody"></div>
-
     </div>
   </div>
 
-  <!-- FOOTER -->
   <footer>
     <div class="footer-logo">Breakaway Timing</div>
     <ul class="footer-links">
       <li><a href="index.html">Home</a></li>
       <li><a href="races.html">Races</a></li>
       <li><a href="results.html">Results</a></li>
+      <li><a href="tracking.html">Live Tracking</a></li>
+      <li><a href="announcer.html">Announcer</a></li>
       <li><a href="about.html">About</a></li>
       <li><a href="contact.html">Contact</a></li>
+      <li><a href="admin.html">Admin</a></li>
     </ul>
     <p class="footer-copy">© 2026 Breakaway Timing · breakawayracetiming@gmail.com</p>
   </footer>
 
-  <!-- LEAFLET MAP -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
   <script>
     const races = [
-      {
-        num: "01",
-        name: "Watt Fest",
-        venue: "Tooele, UT",
-        location: "Tooele, UT",
-        date: "Mar 21, 2026",
-        series: "Breakaway Timing",
-        lat: 40.5308,
-        lng: -112.2981,
-        register: ""
-      },
-      {
-        num: "02",
-        name: "Salty Lizard",
-        venue: "Wendover, UT",
-        location: "Wendover, UT",
-        date: "Apr 24, 2026",
-        series: "Breakaway Timing",
-        lat: 40.7375,
-        lng: -114.0369,
-        register: "https://www.bikereg.com/73229"
-      },
-      {
-        num: "03",
-        name: "Wild Horse",
-        venue: "Dell, UT",
-        location: "Dell, UT",
-        date: "May 9, 2026",
-        series: "Breakaway Timing",
-        lat: 40.6318,
-        lng: -113.9641,
-        register: "https://www.bikereg.com/wild-horse-gravel-race"
-      },
-      {
-        num: "04",
-        name: "East Canyon",
-        venue: "Echo, UT",
-        location: "Echo, UT",
-        date: "May 23, 2026",
-        series: "Breakaway Timing",
-        lat: 40.9716,
-        lng: -111.4382,
-        register: ""
-      },
-      {
-        num: "05",
-        name: "West Mountain",
-        venue: "Payson, UT",
-        location: "Payson, UT",
-        date: "May 30, 2026",
-        series: "Breakaway Timing",
-        lat: 40.0441,
-        lng: -111.7329,
-        register: ""
-      },
-      {
-        num: "06",
-        name: "Dirty Dino",
-        venue: "Vernal, UT",
-        location: "Vernal, UT",
-        date: "Jun 13, 2026",
-        series: "Breakaway Timing",
-        lat: 40.4555,
-        lng: -109.5287,
-        register: "https://www.bikereg.com/73229"
-      },
-      {
-        num: "07",
-        name: "Wasatch All-Road",
-        venue: "Heber, UT",
-        location: "Heber, UT",
-        date: "Aug 29, 2026",
-        series: "Breakaway Timing",
-        lat: 40.5069,
-        lng: -111.4133,
-        register: "https://www.bikereg.com/73229"
-      }
+      { num:"01", name:"Watt Fest",        venue:"Tooele, UT",   date:"Mar 21, 2026", lat:40.5308,  lng:-112.2981, register:"" },
+      { num:"02", name:"Salty Lizard",     venue:"Wendover, UT", date:"Apr 24, 2026", lat:40.7375,  lng:-114.0369, register:"https://www.bikereg.com/73229" },
+      { num:"03", name:"Wild Horse",       venue:"Dell, UT",     date:"May 9, 2026",  lat:40.6318,  lng:-113.9641, register:"https://www.bikereg.com/wild-horse-gravel-race" },
+      { num:"04", name:"East Canyon",      venue:"Echo, UT",     date:"May 23, 2026", lat:40.9716,  lng:-111.4382, register:"" },
+      { num:"05", name:"West Mountain",    venue:"Payson, UT",   date:"May 30, 2026", lat:40.0441,  lng:-111.7329, register:"" },
+      { num:"06", name:"Dirty Dino",       venue:"Vernal, UT",   date:"Jun 13, 2026", lat:40.4555,  lng:-109.5287, register:"https://www.bikereg.com/73229" },
+      { num:"07", name:"Wasatch All-Road", venue:"Heber, UT",    date:"Aug 29, 2026", lat:40.5069,  lng:-111.4133, register:"https://www.bikereg.com/73229" }
     ];
 
-    const map = L.map("map", {
-      center: [40.2, -111.8],
-      zoom: 6,
-      zoomControl: true,
-      scrollWheelZoom: false
-    });
-
+    const map = L.map("map", { center:[40.2,-111.8], zoom:6, zoomControl:true, scrollWheelZoom:false });
     L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/">CARTO</a>',
-      subdomains: "abcd",
-      maxZoom: 19
+      attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/">CARTO</a>',
+      subdomains:"abcd", maxZoom:19
     }).addTo(map);
 
-    // Filter to only upcoming races and renumber from 1
-    const today = new Date();
-    today.setHours(0,0,0,0);
-
+    const today = new Date(); today.setHours(0,0,0,0);
     const upcoming = races.filter(r => new Date(r.date) >= today);
 
     upcoming.forEach((race, idx) => {
       const num = idx + 1;
       const isNext = idx === 0;
       const pinColor = isNext ? "#5d9e50" : "#4a7c3f";
-
       const pinIcon = L.divIcon({
         className: "",
-        html: `<svg width="32" height="42" viewBox="0 0 32 42" xmlns="http://www.w3.org/2000/svg">
-          <path d="M16 0C7.16 0 0 7.16 0 16c0 12 16 26 16 26S32 28 32 16C32 7.16 24.84 0 16 0z" fill="${pinColor}" stroke="#2d4d25" stroke-width="1.5"/>
-          <text x="16" y="21" text-anchor="middle" font-family="Arial,sans-serif" font-weight="700" font-size="${num > 9 ? 11 : 13}" fill="white">${num}</text>
-        </svg>`,
-        iconSize: [32, 42],
-        iconAnchor: [16, 42],
-        popupAnchor: [0, -44]
+        html: `<svg width="32" height="42" viewBox="0 0 32 42" xmlns="http://www.w3.org/2000/svg"><path d="M16 0C7.16 0 0 7.16 0 16c0 12 16 26 16 26S32 28 32 16C32 7.16 24.84 0 16 0z" fill="${pinColor}" stroke="#2d4d25" stroke-width="1.5"/><text x="16" y="21" text-anchor="middle" font-family="Arial,sans-serif" font-weight="700" font-size="${num > 9 ? 11 : 13}" fill="white">${num}</text></svg>`,
+        iconSize:[32,42], iconAnchor:[16,42], popupAnchor:[0,-44]
       });
-
-      const nextBadge = isNext
-        ? `<div style="display:inline-block; font-size:0.65rem; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; background:#4a7c3f; color:white; padding:2px 8px; margin-bottom:6px;">Next Race</div><br/>`
-        : "";
-
-      const marker = L.marker([race.lat, race.lng], { icon: pinIcon }).addTo(map);
-
-      marker.bindPopup(`
-        <div style="font-family:sans-serif; min-width:200px;">
+      const nextBadge = isNext ? `<div style="display:inline-block;font-size:0.65rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;background:#4a7c3f;color:white;padding:2px 8px;margin-bottom:6px;">Next Race</div><br/>` : "";
+      L.marker([race.lat, race.lng], { icon:pinIcon }).addTo(map).bindPopup(`
+        <div style="font-family:sans-serif;min-width:200px;">
           ${nextBadge}
-          <div style="font-size:0.65rem; letter-spacing:0.15em; text-transform:uppercase; color:#888; margin-bottom:4px;">Race ${num} of ${upcoming.length}</div>
-          <div style="font-size:1.1rem; font-weight:700; color:#fff; margin-bottom:6px;">${race.name}</div>
-          <div style="font-size:0.8rem; color:#aaa; margin-bottom:2px;">${race.venue}</div>
-          <div style="font-size:0.8rem; color:#aaa; margin-bottom:2px;">${race.location}</div>
-          <div style="font-size:0.8rem; color:#ccc; margin-top:6px; margin-bottom:8px;">${race.date}</div>
-          ${race.register ? `<a href="${race.register}" target="_blank" style="display:inline-block; font-size:0.7rem; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; padding:5px 12px; border:1px solid #4a7c3f; color:#4a7c3f; text-decoration:none;">Register →</a>` : ""}
-        </div>
-      `, {
-        className: "dark-popup",
-        maxWidth: 260
-      });
+          <div style="font-size:0.65rem;letter-spacing:0.15em;text-transform:uppercase;color:#888;margin-bottom:4px;">Race ${num} of ${upcoming.length}</div>
+          <div style="font-size:1.1rem;font-weight:700;color:#fff;margin-bottom:6px;">${race.name}</div>
+          <div style="font-size:0.8rem;color:#aaa;margin-bottom:2px;">${race.venue}</div>
+          <div style="font-size:0.8rem;color:#ccc;margin-top:6px;margin-bottom:8px;">${race.date}</div>
+          ${race.register ? `<a href="${race.register}" target="_blank" style="display:inline-block;font-size:0.7rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;padding:5px 12px;border:1px solid #4a7c3f;color:#4a7c3f;text-decoration:none;">Register →</a>` : ""}
+        </div>`, { className:"dark-popup", maxWidth:260 });
     });
 
-    // Build race list dynamically
     const raceList = document.getElementById("raceListBody");
     if (raceList) {
-      raceList.innerHTML = upcoming.map((race, idx) => {
-        const num = String(idx + 1).padStart(2, "0");
-        const isNext = idx === 0;
-        const nextTag = isNext ? `<span style="font-family:'Barlow Condensed',sans-serif; font-size:0.65rem; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; background:#4a7c3f; color:white; padding:1px 8px; margin-left:8px;">Next</span>` : "";
-        const regBtn = race.register
-          ? `<a class="register-btn" href="${race.register}" target="_blank">Register</a>`
-          : `<span style="font-size:0.75rem; color:#555;">TBD</span>`;
-        return `
-          <div class="race-list-row">
-            <div class="race-num">${num}</div>
-            <div>
-              <div class="race-info-name">${race.name}${nextTag}</div>
-              <div class="race-info-venue">${race.venue}</div>
-            </div>
-            <div class="race-date">${race.date}</div>
-            <div>${regBtn}</div>
-          </div>`;
-      }).join("");
-
-      if (upcoming.length === 0) {
-        raceList.innerHTML = `<div style="padding:2rem 1.5rem; color:#555; font-size:0.9rem;">No upcoming races scheduled. Check back soon.</div>`;
-      }
+      raceList.innerHTML = upcoming.length === 0
+        ? `<div style="padding:2rem 1.5rem;color:#555;font-size:0.9rem;">No upcoming races scheduled. Check back soon.</div>`
+        : upcoming.map((race, idx) => {
+            const num = String(idx+1).padStart(2,"0");
+            const isNext = idx === 0;
+            const nextTag = isNext ? `<span style="font-family:'Barlow Condensed',sans-serif;font-size:0.65rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;background:#4a7c3f;color:white;padding:1px 8px;margin-left:8px;">Next</span>` : "";
+            const regBtn = race.register ? `<a class="register-btn" href="${race.register}" target="_blank">Register</a>` : `<span style="font-size:0.75rem;color:#555;">TBD</span>`;
+            return `<div class="race-list-row"><div class="race-num">${num}</div><div><div class="race-info-name">${race.name}${nextTag}</div><div class="race-info-venue">${race.venue}</div></div><div class="race-date">${race.date}</div><div>${regBtn}</div></div>`;
+          }).join("");
     }
 
-    const style = document.createElement("style");
-    style.textContent = `
-      .dark-popup .leaflet-popup-content-wrapper {
-        background: #0d0d0d;
-        border: 1px solid #333;
-        border-radius: 0;
-        box-shadow: none;
-        color: #f5f5f0;
-      }
-      .dark-popup .leaflet-popup-tip { background: #0d0d0d; }
-      .dark-popup .leaflet-popup-close-button { color: #888 !important; }
-      .leaflet-control-zoom a {
-        background: #111 !important;
-        color: #888 !important;
-        border-color: #333 !important;
-      }
-      .leaflet-control-zoom a:hover { color: #fff !important; }
-    `;
-    document.head.appendChild(style);
+    const s = document.createElement("style");
+    s.textContent = `.dark-popup .leaflet-popup-content-wrapper{background:#0d0d0d;border:1px solid #333;border-radius:0;box-shadow:none;color:#f5f5f0}.dark-popup .leaflet-popup-tip{background:#0d0d0d}.dark-popup .leaflet-popup-close-button{color:#888!important}.leaflet-control-zoom a{background:#111!important;color:#888!important;border-color:#333!important}.leaflet-control-zoom a:hover{color:#fff!important}`;
+    document.head.appendChild(s);
+  </script>
+
+  <script>
+    const toggle = document.getElementById('navToggle');
+    const links  = document.querySelector('.nav-links');
+    if (toggle && links) {
+      toggle.addEventListener('click', () => { toggle.classList.toggle('open'); links.classList.toggle('open'); });
+      links.querySelectorAll('a').forEach(a => a.addEventListener('click', () => { toggle.classList.remove('open'); links.classList.remove('open'); }));
+    }
   </script>
 
 </body>
