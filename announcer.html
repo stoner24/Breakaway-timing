@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Announcer View · Breakaway Timing</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --accent:     #e8ff00;
+      --accent-dim: #1a1e00;
+      --bg:         #0a0a0a;
+      --bg2:        #111;
+      --bg3:        #161616;
+      --border:     #222;
+      --text:       #ffffff;
+      --muted:      #888;
+      --dim:        #444;
+    }
+
+    html, body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; min-height: 100vh; }
+
+    /* ── Header ── */
+    header {
+      background: var(--bg2);
+      border-bottom: 1px solid var(--border);
+      padding: 10px 28px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    .logo { font-family: 'Bebas Neue', sans-serif; font-size: 20px; letter-spacing: 3px; color: var(--accent); }
+    .live-badge { display: flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 500; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; }
+    .live-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--dim); }
+    .live-dot.on { background: var(--accent); animation: pulse 1.4s ease-in-out infinite; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.2} }
+    #clock { font-family: 'Bebas Neue', sans-serif; font-size: 18px; letter-spacing: 2px; color: var(--dim); }
+
+    /* ── Hero card ── */
+    #hero {
+      padding: 32px 32px 24px;
+      border-bottom: 1px solid var(--bg3);
+      min-height: 200px;
+    }
+    .just-finished { font-size: 10px; font-weight: 500; letter-spacing: 2.5px; color: var(--accent); text-transform: uppercase; margin-bottom: 14px; }
+    .racer-row { display: flex; align-items: flex-start; gap: 24px; }
+    .place-block { display: flex; flex-direction: column; align-items: center; min-width: 84px; }
+    #top-place { font-family: 'Bebas Neue', sans-serif; font-size: 100px; line-height: 1; color: var(--accent); }
+    .place-label { font-size: 10px; letter-spacing: 2px; color: var(--dim); text-transform: uppercase; margin-top: -8px; }
+    .racer-info { flex: 1; padding-top: 10px; }
+    #top-name { font-family: 'Bebas Neue', sans-serif; font-size: 66px; line-height: 1; color: var(--text); letter-spacing: 1px; word-break: break-word; }
+    .meta-row { display: flex; align-items: center; gap: 12px; margin-top: 10px; flex-wrap: wrap; }
+    #top-cat { font-size: 12px; font-weight: 500; letter-spacing: 1.5px; text-transform: uppercase; color: #0a0a0a; background: var(--accent); padding: 3px 10px; border-radius: 3px; }
+    #top-team { font-size: 15px; color: var(--muted); }
+    .time-row { display: flex; align-items: baseline; gap: 14px; margin-top: 10px; }
+    #top-time { font-family: 'Bebas Neue', sans-serif; font-size: 38px; letter-spacing: 2px; }
+    #top-gap { font-size: 14px; color: var(--dim); }
+
+    @keyframes slideIn { from{opacity:0;transform:translateY(-10px)} to{opacity:1;transform:translateY(0)} }
+    .slide-in { animation: slideIn .4s cubic-bezier(.22,1,.36,1); }
+
+    /* ── Category filter ── */
+    .filter-bar { display: flex; align-items: center; gap: 10px; padding: 12px 32px; border-bottom: 1px solid var(--bg3); flex-wrap: wrap; }
+    .filter-label { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--dim); }
+    #catFilter { background: var(--bg3); border: 1px solid var(--border); border-radius: 4px; color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 13px; padding: 6px 10px; cursor: pointer; }
+    #catFilter:focus { outline: none; border-color: var(--accent); }
+
+    /* ── Recent list ── */
+    .section-label { padding: 14px 32px 8px; font-size: 10px; letter-spacing: 2px; color: var(--dim); text-transform: uppercase; font-weight: 500; }
+    #recent-list { padding: 0 32px 20px; }
+    .recent-row { display: flex; align-items: center; padding: 9px 0; border-bottom: .5px solid var(--bg3); gap: 14px; }
+    .recent-row:last-child { border-bottom: none; }
+    .r-place { font-family: 'Bebas Neue', sans-serif; font-size: 22px; color: var(--dim); min-width: 30px; }
+    .r-name { font-size: 16px; font-weight: 500; color: #ccc; flex: 1; }
+    .r-cat { font-size: 10px; letter-spacing: 1px; color: var(--accent); background: var(--accent-dim); padding: 2px 7px; border-radius: 2px; text-transform: uppercase; white-space: nowrap; }
+    .r-team { font-size: 12px; color: var(--dim); min-width: 130px; text-align: right; }
+    .r-time { font-family: 'Bebas Neue', sans-serif; font-size: 17px; color: #555; letter-spacing: 1px; min-width: 76px; text-align: right; }
+
+    /* ── Status ── */
+    #status { padding: 10px 32px; font-size: 12px; color: var(--dim); border-top: 1px solid var(--border); }
+
+    /* ── Empty / waiting state ── */
+    #waiting { padding: 60px 32px; text-align: center; color: var(--dim); font-size: 15px; display: none; }
+
+    /* ── Responsive ── */
+    @media (max-width: 600px) {
+      #top-name  { font-size: 44px; }
+      #top-place { font-size: 72px; }
+      .r-team    { display: none; }
+      #hero, #recent-list { padding-left: 20px; padding-right: 20px; }
+      .filter-bar { padding: 10px 20px; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo">Breakaway Timing</div>
+  <div class="live-badge">
+    <div class="live-dot" id="live-dot"></div>
+    <span id="live-label">Connecting…</span>
+  </div>
+  <div id="clock">--:--:--</div>
+</header>
+
+<div id="hero">
+  <div class="just-finished">Just Finished</div>
+  <div id="waiting" style="display:block; padding: 40px 0;">Waiting for live results…</div>
+  <div class="racer-row" id="racer-row" style="display:none">
+    <div class="place-block">
+      <div id="top-place">—</div>
+      <div class="place-label">in cat</div>
+    </div>
+    <div class="racer-info">
+      <div id="top-name"></div>
+      <div class="meta-row">
+        <span id="top-cat"></span>
+        <span id="top-team"></span>
+      </div>
+      <div class="time-row">
+        <div id="top-time"></div>
+        <div id="top-gap"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="filter-bar">
+  <span class="filter-label">Category</span>
+  <select id="catFilter"><option value="ALL">All Categories</option></select>
+</div>
+
+<div class="section-label">Recent Finishers</div>
+<div id="recent-list"></div>
+
+<div id="status">Not yet connected.</div>
+
+<script>
+  /* ── Config ── */
+  const FIREBASE_URL  = "https://breakaway-timing-results-default-rtdb.europe-west1.firebasedatabase.app";
+  const POLL_MS       = 5000;   // poll every 5 s for near-real-time feel
+
+  /* ── State ── */
+  let lastGeneratedAt = null;
+  let allFinishers    = [];     // every finisher received so far, newest first
+  let selectedCat     = "ALL";
+  let knownCats       = new Set();
+  let pollingTimer    = null;
+
+  /* ── Clock ── */
+  function tick() { document.getElementById("clock").textContent = new Date().toTimeString().slice(0,8); }
+  setInterval(tick, 1000); tick();
+
+  /* ── Category filter ── */
+  document.getElementById("catFilter").addEventListener("change", e => {
+    selectedCat = e.target.value;
+    renderHero();
+    renderRecent();
+  });
+
+  /* ── Start polling ── */
+  poll();
+  pollingTimer = setInterval(poll, POLL_MS);
+
+  function poll() {
+    fetch(FIREBASE_URL + "/live_race.json")
+      .then(r => r.json())
+      .then(data => {
+        if (!data || !data.generatedAt) return;
+        if (data.generatedAt === lastGeneratedAt) return;   // nothing new
+        lastGeneratedAt = data.generatedAt;
+        ingestData(data);
+      })
+      .catch(() => setLive(false, "Offline"));
+  }
+
+  /* ── Parse incoming payload ── */
+  function ingestData(data) {
+    setLive(true, "Live");
+    setStatus("Last updated: " + new Date(data.generatedAt).toLocaleTimeString());
+
+    const newFinishers = [];
+
+    for (const ev of toArray(data.events)) {
+      for (const r of toArray(ev.results)) {
+        const place     = clean(r.place     || "");
+        const bib       = clean(r.bib       || "");
+        const firstName = clean(r.firstName || "");
+        const lastName  = clean(r.lastName  || "");
+        const name      = (firstName && lastName) ? firstName + " " + lastName : (lastName || firstName);
+        const team      = clean(r.team || r.affiliation || "");
+        const category  = clean(r.category  || "");
+        const time      = clean(r.time      || "");
+        const gap       = clean(r.gap       || "");
+
+        if (isHeader(bib) || isHeader(name)) continue;
+        if (!place && !bib && !name && !time) continue;
+
+        if (category) knownCats.add(category);
+
+        newFinishers.push({ place, bib, name, team, category, time, gap });
+      }
+    }
+
+    if (newFinishers.length === 0) return;
+
+    // Replace list — sort by time received (place within category ascending)
+    // Keep newest arrival at top: reverse so lowest place = first finisher shown
+    allFinishers = newFinishers.slice().reverse();
+
+    updateCatDropdown();
+    renderHero();
+    renderRecent();
+  }
+
+  /* ── Hero: most recent finisher matching filter ── */
+  function renderHero() {
+    const visible = filtered();
+    if (visible.length === 0) {
+      document.getElementById("racer-row").style.display = "none";
+      document.getElementById("waiting").style.display  = "block";
+      return;
+    }
+    document.getElementById("waiting").style.display    = "none";
+    document.getElementById("racer-row").style.display  = "flex";
+
+    const r    = visible[0];
+    const hero = document.getElementById("hero");
+    hero.classList.remove("slide-in");
+    void hero.offsetWidth;
+    hero.classList.add("slide-in");
+
+    document.getElementById("top-place").textContent = r.place || "—";
+    document.getElementById("top-name").textContent  = r.name.toUpperCase();
+    document.getElementById("top-cat").textContent   = r.category;
+    document.getElementById("top-cat").style.display = r.category ? "inline-block" : "none";
+    document.getElementById("top-team").textContent  = r.team;
+    document.getElementById("top-time").textContent  = r.time;
+    document.getElementById("top-gap").textContent   =
+      (!r.gap || r.gap === "0" || r.gap === "--") ? "Category Leader" : r.gap;
+  }
+
+  /* ── Recent list: skip index 0 (shown in hero) ── */
+  function renderRecent() {
+    const visible = filtered();
+    const list    = document.getElementById("recent-list");
+
+    if (visible.length <= 1) { list.innerHTML = ""; return; }
+
+    list.innerHTML = visible.slice(1, 9).map(r => `
+      <div class="recent-row">
+        <div class="r-place">${r.place || "—"}</div>
+        <div class="r-name">${r.name.toUpperCase()}</div>
+        <span class="r-cat">${r.category}</span>
+        <div class="r-team">${r.team}</div>
+        <div class="r-time">${r.time}</div>
+      </div>`).join("");
+  }
+
+  /* ── Helpers ── */
+  function filtered() {
+    if (selectedCat === "ALL") return allFinishers;
+    return allFinishers.filter(r => r.category === selectedCat);
+  }
+
+  function updateCatDropdown() {
+    const sel  = document.getElementById("catFilter");
+    const prev = sel.value;
+    sel.innerHTML = '<option value="ALL">All Categories</option>';
+    Array.from(knownCats).sort().forEach(c => {
+      const o = document.createElement("option");
+      o.value = c; o.textContent = c;
+      sel.appendChild(o);
+    });
+    sel.value      = knownCats.has(prev) ? prev : "ALL";
+    selectedCat    = sel.value;
+  }
+
+  function setLive(on, label) {
+    document.getElementById("live-dot").className  = "live-dot" + (on ? " on" : "");
+    document.getElementById("live-label").textContent = label;
+  }
+  function setStatus(msg) { document.getElementById("status").textContent = msg; }
+  function toArray(v)     { if (!v) return []; return Array.isArray(v) ? v : Object.values(v); }
+  function clean(v)       { const s = String(v ?? "").trim(); return (s === "#N/A" || s.toUpperCase() === "N/A") ? "" : s; }
+  function isHeader(v)    { return ["bib","first name","last name","firstname","lastname"].includes(String(v||"").trim().toLowerCase()); }
+</script>
+</body>
+</html>
