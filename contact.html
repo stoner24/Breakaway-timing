@@ -9,7 +9,7 @@
 <body>
 
   <!-- NAV -->
-  <nav>
+        <nav>
     <a class="nav-logo" href="index.html">
       <img src="logo.jpg" alt="Breakaway Timing" />
       <span>Breakaway Timing</span>
@@ -18,9 +18,15 @@
       <li><a href="index.html">Home</a></li>
       <li><a href="races.html">Races</a></li>
       <li><a href="results.html">Results</a></li>
+      <li><a href="tracking.html">Live Tracking</a></li>
+      <li><a href="announcer.html">Announcer</a></li>
       <li><a href="about.html">About</a></li>
       <li><a href="contact.html" class="active">Contact</a></li>
+      <li><a href="admin.html">Admin</a></li>
     </ul>
+    <button class="nav-toggle" id="navToggle" aria-label="Toggle menu">
+      <span></span><span></span><span></span>
+    </button>
   </nav>
 
   <!-- PAGE HEADER -->
@@ -91,15 +97,27 @@
   <!-- FOOTER -->
   <footer>
     <div class="footer-logo">Breakaway Timing</div>
-    <ul class="footer-links">
+                <ul class="footer-links">
       <li><a href="index.html">Home</a></li>
       <li><a href="races.html">Races</a></li>
       <li><a href="results.html">Results</a></li>
+      <li><a href="tracking.html">Live Tracking</a></li>
+      <li><a href="announcer.html">Announcer</a></li>
       <li><a href="about.html">About</a></li>
       <li><a href="contact.html">Contact</a></li>
+      <li><a href="admin.html">Admin</a></li>
     </ul>
     <p class="footer-copy">© 2026 Breakaway Timing · breakawayracetiming@gmail.com</p>
   </footer>
+
+  <script>
+    const toggle = document.getElementById('navToggle');
+    const links  = document.querySelector('.nav-links');
+    if (toggle && links) {
+      toggle.addEventListener('click', () => { toggle.classList.toggle('open'); links.classList.toggle('open'); });
+      links.querySelectorAll('a').forEach(a => a.addEventListener('click', () => { toggle.classList.remove('open'); links.classList.remove('open'); }));
+    }
+  </script>
 
 </body>
 </html>
