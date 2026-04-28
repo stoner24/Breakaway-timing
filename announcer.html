@@ -4,43 +4,29 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Announcer View · Breakaway Timing</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="stylesheet" href="style.css" />
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet" />
   <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
     :root {
       --accent:     #e8ff00;
       --accent-dim: #1a1e00;
       --bg:         #0a0a0a;
       --bg2:        #111;
       --bg3:        #161616;
-      --border:     #222;
       --text:       #ffffff;
       --muted:      #888;
       --dim:        #444;
     }
 
-    html, body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; min-height: 100vh; }
+    /* Push content below fixed site nav */
+    .announcer-wrap { padding-top: 69px; }
 
-    /* ── Header ── */
-    header {
-      background: var(--bg2);
-      border-bottom: 1px solid var(--border);
-      padding: 10px 28px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      position: sticky;
-      top: 0;
-      z-index: 10;
-    }
-    .logo { font-family: 'Bebas Neue', sans-serif; font-size: 20px; letter-spacing: 3px; color: var(--accent); }
+    /* ── Live badge (inside site nav) ── */
     .live-badge { display: flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 500; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; }
     .live-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--dim); }
     .live-dot.on { background: var(--accent); animation: pulse 1.4s ease-in-out infinite; }
     @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.2} }
-    #clock { font-family: 'Bebas Neue', sans-serif; font-size: 18px; letter-spacing: 2px; color: var(--dim); }
+    #clock { font-family: 'Bebas Neue', sans-serif; font-size: 16px; letter-spacing: 2px; color: var(--dim); }
 
     /* ── Hero card ── */
     #hero {
@@ -100,15 +86,34 @@
 </head>
 <body>
 
-<header>
-  <div class="logo">Breakaway Timing</div>
-  <div class="live-badge">
-    <div class="live-dot" id="live-dot"></div>
-    <span id="live-label">Connecting…</span>
-  </div>
-  <div id="clock">--:--:--</div>
-</header>
+  <!-- Site nav -->
+  <nav>
+    <a class="nav-logo" href="index.html">
+      <img src="logo.jpg" alt="Breakaway Timing" />
+      <span>Breakaway Timing</span>
+    </a>
+    <ul class="nav-links">
+      <li><a href="index.html">Home</a></li>
+      <li><a href="races.html">Races</a></li>
+      <li><a href="results.html">Results</a></li>
+      <li><a href="announcer.html" class="active">Announcer</a></li>
+      <li><a href="about.html">About</a></li>
+      <li><a href="contact.html">Contact</a></li>
+    </ul>
+    <!-- Live status + clock in nav -->
+    <div style="display:flex;align-items:center;gap:16px;">
+      <div class="live-badge">
+        <div class="live-dot" id="live-dot"></div>
+        <span id="live-label">Connecting…</span>
+      </div>
+      <div id="clock">--:--:--</div>
+    </div>
+    <button class="nav-toggle" id="navToggle" aria-label="Toggle menu">
+      <span></span><span></span><span></span>
+    </button>
+  </nav>
 
+<div class="announcer-wrap">
 <div id="hero">
   <div class="just-finished">Just Finished</div>
   <div id="waiting" style="display:block; padding: 40px 0;">Waiting for live results…</div>
@@ -290,6 +295,25 @@
   function toArray(v)     { if (!v) return []; return Array.isArray(v) ? v : Object.values(v); }
   function clean(v)       { const s = String(v ?? "").trim(); return (s === "#N/A" || s.toUpperCase() === "N/A") ? "" : s; }
   function isHeader(v)    { return ["bib","first name","last name","firstname","lastname"].includes(String(v||"").trim().toLowerCase()); }
+</script>
+
+</div><!-- /.announcer-wrap -->
+
+<script>
+  const toggle = document.getElementById('navToggle');
+  const links  = document.querySelector('.nav-links');
+  if (toggle && links) {
+    toggle.addEventListener('click', () => {
+      toggle.classList.toggle('open');
+      links.classList.toggle('open');
+    });
+    links.querySelectorAll('a').forEach(a => {
+      a.addEventListener('click', () => {
+        toggle.classList.remove('open');
+        links.classList.remove('open');
+      });
+    });
+  }
 </script>
 </body>
 </html>
