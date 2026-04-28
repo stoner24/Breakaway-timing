@@ -60,10 +60,15 @@
     #catFilter:focus { outline: none; border-color: var(--accent); }
 
     /* ── Recent list ── */
-    .section-label { padding: 14px 32px 8px; font-size: 10px; letter-spacing: 2px; color: var(--dim); text-transform: uppercase; font-weight: 500; }
-    #recent-list { padding: 0 32px 20px; }
+    .section-label { padding: 14px 32px 8px; font-size: 10px; letter-spacing: 2px; color: var(--dim); text-transform: uppercase; font-weight: 500; display: flex; align-items: center; }
+    .finisher-count { margin-left: 10px; font-size: 11px; color: #333; font-weight: 400; letter-spacing: 0; text-transform: none; }
+    #recent-list { padding: 0 32px 40px; max-height: 520px; overflow-y: auto; }
+    #recent-list::-webkit-scrollbar { width: 4px; }
+    #recent-list::-webkit-scrollbar-track { background: transparent; }
+    #recent-list::-webkit-scrollbar-thumb { background: #2a2a2a; border-radius: 2px; }
     .recent-row { display: flex; align-items: center; padding: 9px 0; border-bottom: .5px solid var(--bg3); gap: 14px; }
     .recent-row:last-child { border-bottom: none; }
+    .recent-row.newest { background: linear-gradient(90deg, #0f1200 0%, transparent 100%); margin: 0 -32px; padding: 9px 32px; }
     .r-place { font-family: 'Bebas Neue', sans-serif; font-size: 22px; color: var(--dim); min-width: 30px; }
     .r-catplace { font-family: 'Bebas Neue', sans-serif; font-size: 14px; color: var(--accent); min-width: 28px; text-align: right; }
     .r-name { font-size: 16px; font-weight: 500; color: #ccc; flex: 1; }
@@ -145,7 +150,7 @@
   <select id="catFilter"><option value="ALL">All Categories</option></select>
 </div>
 
-<div class="section-label">Recent Finishers</div>
+<div class="section-label">All Finishers <span class="finisher-count" id="finisher-count"></span></div>
 <div id="recent-list"></div>
 
 <div id="status">Not yet connected.</div>
@@ -269,15 +274,18 @@
       (!r.gap || r.gap === "0" || r.gap === "--") ? "Category Leader" : r.gap;
   }
 
-  /* ── Recent list: skip index 0 (shown in hero) ── */
+  /* ── All finishers list: newest at top, all shown ── */
   function renderRecent() {
     const visible = filtered();
     const list    = document.getElementById("recent-list");
+    const countEl = document.getElementById("finisher-count");
 
-    if (visible.length <= 1) { list.innerHTML = ""; return; }
+    countEl.textContent = visible.length ? `${visible.length} finisher${visible.length !== 1 ? "s" : ""}` : "";
 
-    list.innerHTML = visible.slice(1, 9).map(r => `
-      <div class="recent-row">
+    if (visible.length === 0) { list.innerHTML = ""; return; }
+
+    list.innerHTML = visible.map((r, i) => `
+      <div class="recent-row${i === 0 ? " newest" : ""}">
         <div class="r-place">${r.catPlace || r.place || "—"}<span style="font-size:10px;color:var(--dim);margin-left:2px;">cat</span></div>
         <div class="r-catplace" title="Overall place">#${r.place || "—"}</div>
         <div class="r-name">${r.name.toUpperCase()}</div>
