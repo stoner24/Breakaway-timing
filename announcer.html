@@ -22,11 +22,16 @@
     .announcer-wrap { padding-top: 69px; }
 
     /* ── Live badge (inside site nav) ── */
+    .nav-live-status { display: flex; align-items: center; gap: 16px; }
     .live-badge { display: flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 500; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; }
     .live-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--dim); }
     .live-dot.on { background: var(--accent); animation: pulse 1.4s ease-in-out infinite; }
     @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.2} }
     #clock { font-family: 'Bebas Neue', sans-serif; font-size: 16px; letter-spacing: 2px; color: var(--dim); }
+
+    @media (max-width: 640px) {
+      .nav-live-status { display: none; }
+    }
 
     /* ── Hero card ── */
     #hero {
@@ -104,12 +109,14 @@
       <li><a href="index.html">Home</a></li>
       <li><a href="races.html">Races</a></li>
       <li><a href="results.html">Results</a></li>
+      <li><a href="tracking.html">Live Tracking</a></li>
       <li><a href="announcer.html" class="active">Announcer</a></li>
       <li><a href="about.html">About</a></li>
       <li><a href="contact.html">Contact</a></li>
+      <li><a href="admin.html">Admin</a></li>
     </ul>
-    <!-- Live status + clock in nav -->
-    <div style="display:flex;align-items:center;gap:16px;">
+    <!-- Live status + clock — hidden on mobile to save space -->
+    <div class="nav-live-status">
       <div class="live-badge">
         <div class="live-dot" id="live-dot"></div>
         <span id="live-label">Connecting…</span>
