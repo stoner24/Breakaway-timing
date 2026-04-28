@@ -19,10 +19,14 @@
       <li><a href="races.html">Races</a></li>
       <li><a href="results.html">Results</a></li>
       <li><a href="tracking.html">Live Tracking</a></li>
+      <li><a href="announcer.html">Announcer</a></li>
       <li><a href="about.html">About</a></li>
       <li><a href="contact.html">Contact</a></li>
       <li><a href="admin.html">Admin</a></li>
     </ul>
+    <button class="nav-toggle" id="navToggle" aria-label="Toggle menu">
+      <span></span><span></span><span></span>
+    </button>
   </nav>
 
   <!-- HERO -->
@@ -120,11 +124,30 @@
       <li><a href="races.html">Races</a></li>
       <li><a href="results.html">Results</a></li>
       <li><a href="tracking.html">Live Tracking</a></li>
+      <li><a href="announcer.html">Announcer</a></li>
       <li><a href="about.html">About</a></li>
       <li><a href="contact.html">Contact</a></li>
       <li><a href="admin.html">Admin</a></li>
-    </ul>© 2026 Breakaway Timing · breakawayracetiming@gmail.com</p>
+    </ul>
+    <p class="footer-copy">© 2026 Breakaway Timing · breakawayracetiming@gmail.com</p>
   </footer>
+
+  <script>
+    const toggle = document.getElementById('navToggle');
+    const links  = document.querySelector('.nav-links');
+    if (toggle && links) {
+      toggle.addEventListener('click', () => {
+        toggle.classList.toggle('open');
+        links.classList.toggle('open');
+      });
+      links.querySelectorAll('a').forEach(a => {
+        a.addEventListener('click', () => {
+          toggle.classList.remove('open');
+          links.classList.remove('open');
+        });
+      });
+    }
+  </script>
 
 </body>
 </html>
