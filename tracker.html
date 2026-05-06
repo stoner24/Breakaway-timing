@@ -1,468 +1,774 @@
 <!DOCTYPE html>
 <html lang="en">
-<head> 
-<link rel="icon" href="/favicon-16x16.png" type="image/png">
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<meta name="theme-color" content="#0c0e0f">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<title>Breakaway Timing — Live Tracker</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;900&family=Barlow:wght@400;500;600&family=Share+Tech+Mono&display=swap" rel="stylesheet">
-<style>
-  :root {
-    --bg: #0c0e0f;
-    --bg2: #131618;
-    --bg3: #1a1d1f;
-    --orange: #f5a623;
-    --orange-dim: #b87c1a;
-    --green: #39d353;
-    --red: #e5534b;
-    --text: #e8eaeb;
-    --text-dim: #6b7280;
-    --mono: 'Share Tech Mono', monospace;
-    --condensed: 'Barlow Condensed', sans-serif;
-    --body: 'Barlow', sans-serif;
-  }
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  html, body { height: 100%; background: var(--bg); color: var(--text); font-family: var(--body); overflow-x: hidden; }
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#000000" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="BT Tracker" />
+  <link rel="manifest" href="/manifest.json" />
+  <link rel="apple-touch-icon" href="/icons/icon-192.png" />
+  <link rel="icon" href="/favicon-16x16.png" type="image/png" />
+  <title>Race Tracker · Breakaway Timing</title>
 
-  /* TOPBAR */
-  .topbar {
-    display: flex; align-items: center; gap: 12px;
-    padding: 14px 20px; background: var(--bg2);
-    border-bottom: 2px solid var(--orange);
-    position: sticky; top: 0; z-index: 100;
-  }
-  .logo-hex {
-    width: 38px; height: 38px; position: relative; flex-shrink: 0;
-    clip-path: polygon(50% 0%, 93% 25%, 93% 75%, 50% 100%, 7% 25%, 7% 75%);
-    background: var(--orange); display: flex; align-items: center; justify-content: center;
-  }
-  .logo-hex svg { width: 22px; height: 22px; fill: #0c0e0f; }
-  .brand { display: flex; flex-direction: column; }
-  .brand-top { font-family: var(--condensed); font-size: 18px; font-weight: 900; letter-spacing: 2px; text-transform: uppercase; color: var(--orange); line-height: 1; }
-  .brand-sub { font-family: var(--mono); font-size: 9px; color: var(--text-dim); letter-spacing: 1.5px; text-transform: uppercase; }
+  <!-- ── Inline styles — no external CSS dependency ── -->
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-  /* SCREENS */
-  .screen { display: none; min-height: calc(100vh - 70px); flex-direction: column; }
-  .screen.active { display: flex; }
+    :root {
+      --black:   #000;
+      --white:   #fff;
+      --green:   #00e676;
+      --red:     #ff4444;
+      --amber:   #ffab00;
+      --mid:     #888;
+      --border:  #333;
+      --surface: #111;
+      --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    }
 
-  /* SCREEN 1 — INPUT */
-  .input-screen { padding: 32px 20px; align-items: stretch; }
-  .section-label {
-    font-family: var(--condensed); font-size: 11px; font-weight: 700; letter-spacing: 3px;
-    text-transform: uppercase; color: var(--orange); margin-bottom: 10px;
-  }
-  .field-group { margin-bottom: 24px; }
-  .bib-input {
-    width: 100%; background: var(--bg3); border: 2px solid #2a2d30; border-top: 2px solid var(--orange);
-    color: var(--text); font-family: var(--condensed); font-size: 64px; font-weight: 900;
-    letter-spacing: 4px; text-align: center; padding: 20px; outline: none;
-    -moz-appearance: textfield; appearance: textfield;
-    transition: border-color 0.2s;
-  }
-  .bib-input::-webkit-inner-spin-button, .bib-input::-webkit-outer-spin-button { -webkit-appearance: none; }
-  .bib-input:focus { border-color: var(--orange); }
-  .styled-select, .styled-input {
-    width: 100%; background: var(--bg3); border: 2px solid #2a2d30; border-top: 2px solid #3a3d40;
-    color: var(--text); font-family: var(--body); font-size: 16px;
-    padding: 14px 16px; outline: none; appearance: none;
-    transition: border-color 0.2s;
-  }
-  .styled-select:focus, .styled-input:focus { border-color: var(--orange); }
-  .styled-input::placeholder { color: var(--text-dim); }
-  .select-wrap { position: relative; }
-  .select-wrap::after {
-    content: '▼'; position: absolute; right: 16px; top: 50%; transform: translateY(-50%);
-    color: var(--orange); font-size: 10px; pointer-events: none;
-  }
-  .start-btn {
-    width: 100%; padding: 20px; margin-top: 8px;
-    background: var(--orange); color: #0c0e0f;
-    font-family: var(--condensed); font-size: 22px; font-weight: 900;
-    letter-spacing: 4px; text-transform: uppercase; border: none; cursor: pointer;
-    transition: background 0.15s, transform 0.1s;
-    display: flex; align-items: center; justify-content: center; gap: 10px;
-  }
-  .start-btn:hover { background: #ffbc45; }
-  .start-btn:active { transform: scale(0.98); }
-  .start-btn:disabled { background: var(--bg3); color: var(--text-dim); cursor: not-allowed; }
-  .error-msg { color: var(--red); font-size: 13px; margin-top: 8px; font-family: var(--mono); display: none; }
+    html, body {
+      height: 100%;
+      background: var(--black);
+      color: var(--white);
+      font-family: var(--font);
+      -webkit-text-size-adjust: 100%;
+    }
 
-  /* SCREEN 2 — LIVE */
-  .live-screen { padding: 20px; gap: 16px; }
-  .status-card {
-    background: var(--bg3); border-top: 3px solid var(--orange);
-    padding: 20px;
-  }
-  .status-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px; }
-  .bib-display {
-    font-family: var(--condensed); font-size: 72px; font-weight: 900;
-    color: var(--orange); line-height: 1; letter-spacing: 2px;
-  }
-  .bib-display span { font-size: 18px; color: var(--text-dim); display: block; letter-spacing: 3px; font-weight: 600; }
-  .status-pill {
-    padding: 6px 14px; font-family: var(--condensed); font-size: 13px; font-weight: 700;
-    letter-spacing: 2px; text-transform: uppercase;
-  }
-  .pill-live { background: var(--green); color: #0c0e0f; animation: pulse-pill 2s infinite; }
-  .pill-acquiring { background: var(--orange); color: #0c0e0f; }
-  .pill-error { background: var(--red); color: #fff; }
-  .pill-paused { background: var(--red); color: #fff; }
-  @keyframes pulse-pill { 0%,100%{opacity:1} 50%{opacity:0.7} }
+    body {
+      display: flex;
+      flex-direction: column;
+      min-height: 100dvh;
+      padding: env(safe-area-inset-top, 0) env(safe-area-inset-right, 0)
+               env(safe-area-inset-bottom, 0) env(safe-area-inset-left, 0);
+    }
 
-  .stat-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; margin-bottom: 16px; background: #1f2326; }
-  .stat-cell { background: var(--bg2); padding: 12px 14px; }
-  .stat-label { font-family: var(--mono); font-size: 9px; color: var(--text-dim); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 4px; }
-  .stat-val { font-family: var(--condensed); font-size: 22px; font-weight: 700; color: var(--text); }
-  .stat-val.ok { color: var(--green); }
-  .stat-val.warn { color: var(--orange); }
-  .stat-val.bad { color: var(--red); }
+    /* ── Header ── */
+    .header {
+      padding: 1.25rem 1.5rem 1rem;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+    .header-logo {
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--mid);
+    }
 
-  /* COUNTDOWN */
-  .countdown-block { background: var(--bg2); padding: 14px; }
-  .countdown-label { font-family: var(--mono); font-size: 9px; color: var(--text-dim); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 8px; display: flex; justify-content: space-between; }
-  .countdown-bar-outer { width: 100%; height: 6px; background: #2a2d30; }
-  .countdown-bar-inner { height: 100%; background: var(--orange); transition: width 1s linear; }
-  .countdown-time { font-family: var(--condensed); font-size: 28px; font-weight: 700; color: var(--orange); margin-top: 8px; letter-spacing: 2px; }
+    /* ── Main content ── */
+    .main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      padding: 2rem 1.5rem;
+      gap: 1.5rem;
+      max-width: 480px;
+      width: 100%;
+      margin: 0 auto;
+    }
 
-  /* ADMIN STOP BANNER */
-  .admin-banner {
-    background: var(--red); color: #fff; padding: 14px 20px; text-align: center;
-    font-family: var(--condensed); font-size: 18px; font-weight: 700; letter-spacing: 3px;
-    text-transform: uppercase; display: none;
-    animation: flash-red 1s infinite;
-  }
-  @keyframes flash-red { 0%,100%{background:var(--red)} 50%{background:#9e2a25} }
+    .page-title {
+      font-size: 2rem;
+      font-weight: 700;
+      line-height: 1.1;
+      letter-spacing: -0.02em;
+    }
+    .page-subtitle {
+      font-size: 0.9rem;
+      color: var(--mid);
+      line-height: 1.6;
+      margin-top: 0.5rem;
+    }
 
-  .stop-btn {
-    width: 100%; padding: 18px; background: transparent; border: 2px solid var(--red);
-    color: var(--red); font-family: var(--condensed); font-size: 18px; font-weight: 700;
-    letter-spacing: 4px; text-transform: uppercase; cursor: pointer;
-    transition: background 0.15s; margin-top: auto;
-  }
-  .stop-btn:hover { background: rgba(229,83,75,0.15); }
+    /* ── Form ── */
+    .form { display: flex; flex-direction: column; gap: 1rem; }
 
-  .event-name-display { font-family: var(--body); font-size: 14px; color: var(--text-dim); margin-top: 4px; }
+    .field { display: flex; flex-direction: column; gap: 0.4rem; }
+    .field label {
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--mid);
+    }
+    .field input, .field select {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--white);
+      font-family: var(--font);
+      font-size: 1.1rem;
+      padding: 0.85rem 1rem;
+      border-radius: 8px;
+      outline: none;
+      -webkit-appearance: none;
+      appearance: none;
+      width: 100%;
+    }
+    .field input:focus, .field select:focus {
+      border-color: var(--white);
+    }
+    .field input::placeholder { color: var(--border); }
 
-  .gps-icon { display: inline-block; width: 8px; height: 8px; background: var(--green); border-radius: 50%; margin-right: 6px; animation: blink 1.5s infinite; }
-  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.2} }
-</style>
+    /* ── Expiry picker ── */
+    .expiry-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0.5rem;
+    }
+    .expiry-btn {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--mid);
+      font-family: var(--font);
+      font-size: 0.85rem;
+      font-weight: 600;
+      padding: 0.7rem 0;
+      border-radius: 8px;
+      cursor: pointer;
+      text-align: center;
+      transition: border-color 0.15s, color 0.15s, background 0.15s;
+    }
+    .expiry-btn.selected {
+      border-color: var(--white);
+      color: var(--white);
+      background: #1a1a1a;
+    }
+
+    /* ── Start button ── */
+    .btn-start {
+      background: var(--white);
+      color: var(--black);
+      border: none;
+      font-family: var(--font);
+      font-size: 1rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      padding: 1rem;
+      border-radius: 8px;
+      cursor: pointer;
+      width: 100%;
+      margin-top: 0.5rem;
+      transition: opacity 0.15s;
+    }
+    .btn-start:disabled { opacity: 0.3; cursor: not-allowed; }
+    .btn-start:active:not(:disabled) { opacity: 0.8; }
+
+    /* ── Status panel (shown after tracking starts) ── */
+    .status-panel {
+      display: none;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+    .status-panel.visible { display: flex; }
+
+    .status-badge {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 1rem 1.25rem;
+      border-radius: 10px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+    }
+    .status-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--mid);
+      flex-shrink: 0;
+    }
+    .status-dot.active {
+      background: var(--green);
+      box-shadow: 0 0 0 3px rgba(0,230,118,0.15);
+      animation: pulse 2s infinite;
+    }
+    .status-dot.error { background: var(--red); }
+    .status-dot.expired { background: var(--amber); }
+
+    @keyframes pulse {
+      0%, 100% { box-shadow: 0 0 0 3px rgba(0,230,118,0.15); }
+      50%       { box-shadow: 0 0 0 6px rgba(0,230,118,0.05); }
+    }
+
+    .status-text { flex: 1; }
+    .status-label {
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--mid);
+    }
+    .status-value {
+      font-size: 0.95rem;
+      color: var(--white);
+      margin-top: 0.2rem;
+    }
+
+    .info-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.75rem;
+    }
+    .info-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1rem;
+    }
+    .info-card-label {
+      font-size: 0.65rem;
+      font-weight: 700;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--mid);
+    }
+    .info-card-value {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: var(--white);
+      margin-top: 0.3rem;
+    }
+
+    .expiry-countdown {
+      font-size: 0.85rem;
+      color: var(--mid);
+      text-align: center;
+      padding: 0.5rem;
+    }
+    .expiry-countdown span { color: var(--white); font-weight: 600; }
+
+    .btn-stop {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--mid);
+      font-family: var(--font);
+      font-size: 0.85rem;
+      font-weight: 600;
+      padding: 0.85rem;
+      border-radius: 8px;
+      cursor: pointer;
+      width: 100%;
+      transition: border-color 0.15s, color 0.15s;
+    }
+    .btn-stop:hover { border-color: var(--red); color: var(--red); }
+
+    /* ── Install banner ── */
+    .install-banner {
+      display: none;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.85rem 1.25rem;
+      background: #0d1f0d;
+      border: 1px solid #1a3d1a;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      color: #a0c8a0;
+    }
+    .install-banner.visible { display: flex; }
+    .install-banner button {
+      margin-left: auto;
+      background: var(--green);
+      color: var(--black);
+      border: none;
+      font-weight: 700;
+      font-size: 0.75rem;
+      padding: 0.4rem 0.85rem;
+      border-radius: 6px;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    /* ── iOS tip ── */
+    .ios-tip {
+      display: none;
+      font-size: 0.82rem;
+      color: var(--mid);
+      line-height: 1.6;
+      padding: 0.85rem 1rem;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+    }
+    .ios-tip.visible { display: block; }
+    .ios-tip strong { color: var(--white); }
+
+    /* ── Error message ── */
+    .error-msg {
+      display: none;
+      font-size: 0.85rem;
+      color: #ff8080;
+      padding: 0.85rem 1rem;
+      background: #1f0d0d;
+      border: 1px solid #3d1a1a;
+      border-radius: 8px;
+    }
+    .error-msg.visible { display: block; }
+  </style>
 </head>
 <body>
 
-<div class="topbar">
-  <img src="logo.jpg" alt="Breakaway Timing" style="width:42px;height:42px;object-fit:contain;border-radius:50%;flex-shrink:0;">
-  <div class="brand">
-    <div class="brand-top">Breakaway Timing</div>
-    <div class="brand-sub">Live GPS Tracker</div>
-  </div>
-</div>
-
-<!-- ADMIN STOP BANNER -->
-<div class="admin-banner" id="adminBanner">⛔ TRACKING PAUSED BY RACE DIRECTOR</div>
-
-<!-- SCREEN 1: INPUT -->
-<div class="screen active input-screen" id="screen1">
-  <div class="field-group">
-    <div class="section-label">Bib Number</div>
-    <input type="number" class="bib-input" id="bibInput" placeholder="000" min="1" max="9999" inputmode="numeric">
-    <div class="error-msg" id="bibError">Please enter a valid bib number.</div>
+  <div class="header">
+    <span class="header-logo">Breakaway Timing — Race Tracker</span>
   </div>
 
-  <div class="field-group">
-    <div class="section-label">Event</div>
-    <div class="select-wrap">
-      <select class="styled-select" id="raceSelect">
-        <option value="">Loading events...</option>
-      </select>
+  <div class="main">
+
+    <!-- ── Install banner (Android Chrome) ── -->
+    <div class="install-banner" id="installBanner">
+      <span>📲 Install for best background tracking</span>
+      <button id="installBtn">Add to Home Screen</button>
     </div>
-    <div class="error-msg" id="raceError">Please select an event.</div>
-  </div>
 
-  <div class="field-group">
-    <div class="section-label">Your Name <span style="color:var(--text-dim);font-weight:400">(optional)</span></div>
-    <input type="text" class="styled-input" id="nameInput" placeholder="Rider name">
-  </div>
+    <!-- ── iOS tip ── -->
+    <div class="ios-tip" id="iosTip">
+      <strong>iPhone users:</strong> For background tracking, tap the Share button in Safari, then <strong>"Add to Home Screen"</strong> and open from there. Keep the screen on low brightness during your race.
+    </div>
 
-  <button class="start-btn" id="startBtn" onclick="startTracking()">
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="#0c0e0f"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/></svg>
-    Start Tracking
-  </button>
-</div>
+    <!-- ── Setup form (shown before tracking starts) ── -->
+    <div id="setupSection">
+      <h1 class="page-title">Track<br>Your Ride</h1>
+      <p class="page-subtitle">Enter your details below. Your GPS position will update every 5 minutes on the spectator map — even with the screen off.</p>
 
-<!-- SCREEN 2: LIVE -->
-<div class="screen live-screen" id="screen2">
-  <div class="status-card">
-    <div class="status-header">
+      <div class="form" style="margin-top: 1.5rem;" id="trackForm">
+        <div class="field">
+          <label for="bibInput">Bib Number</label>
+          <input type="number" id="bibInput" placeholder="e.g. 42" inputmode="numeric" autocomplete="off" required />
+        </div>
+
+        <div class="field">
+          <label for="nameInput">Your Name (optional)</label>
+          <input type="text" id="nameInput" placeholder="First name or nickname" autocomplete="given-name" />
+        </div>
+
+        <div class="field">
+          <label for="eventSelect">Event</label>
+          <select id="eventSelect">
+            <option value="">— Select your event —</option>
+            <!-- Populated dynamically from Firebase /events -->
+          </select>
+        </div>
+
+        <div class="field">
+          <label>Tracking Duration</label>
+          <div class="expiry-grid" id="expiryGrid">
+            <button type="button" class="expiry-btn" data-hours="4">4 hr</button>
+            <button type="button" class="expiry-btn selected" data-hours="6">6 hr</button>
+            <button type="button" class="expiry-btn" data-hours="8">8 hr</button>
+            <button type="button" class="expiry-btn" data-hours="12">12 hr</button>
+          </div>
+        </div>
+
+        <div class="error-msg" id="formError"></div>
+
+        <button class="btn-start" id="startBtn">Start Tracking →</button>
+      </div>
+    </div>
+
+    <!-- ── Active tracking status panel ── -->
+    <div class="status-panel" id="statusPanel">
       <div>
-        <div class="bib-display" id="liveBib"><span>BIB</span>---</div>
-        <div class="event-name-display" id="liveEventName"></div>
+        <h1 class="page-title">You're<br>Live</h1>
+        <p class="page-subtitle" style="margin-top: 0.5rem;">Your dot is on the spectator map. You can lock your screen.</p>
       </div>
-      <div class="status-pill pill-acquiring" id="statusPill">ACQUIRING</div>
+
+      <div class="status-badge" id="statusBadge">
+        <div class="status-dot active" id="statusDot"></div>
+        <div class="status-text">
+          <div class="status-label">Status</div>
+          <div class="status-value" id="statusValue">Waiting for first ping…</div>
+        </div>
+      </div>
+
+      <div class="info-grid">
+        <div class="info-card">
+          <div class="info-card-label">Bib</div>
+          <div class="info-card-value" id="displayBib">—</div>
+        </div>
+        <div class="info-card">
+          <div class="info-card-label">Name</div>
+          <div class="info-card-value" id="displayName">—</div>
+        </div>
+        <div class="info-card">
+          <div class="info-card-label">Last Ping</div>
+          <div class="info-card-value" id="displayLastPing">—</div>
+        </div>
+        <div class="info-card">
+          <div class="info-card-label">GPS Accuracy</div>
+          <div class="info-card-value" id="displayAccuracy">—</div>
+        </div>
+      </div>
+
+      <div class="expiry-countdown" id="expiryCountdown">
+        Tracking expires in <span id="countdownValue">—</span>
+      </div>
+
+      <button class="btn-stop" id="stopBtn">Stop Tracking</button>
     </div>
 
-    <div class="stat-row">
-      <div class="stat-cell">
-        <div class="stat-label">Last Ping</div>
-        <div class="stat-val" id="lastPingVal">—</div>
-      </div>
-      <div class="stat-cell">
-        <div class="stat-label">GPS Accuracy</div>
-        <div class="stat-val" id="accuracyVal">—</div>
-      </div>
-      <div class="stat-cell">
-        <div class="stat-label">Pings Sent</div>
-        <div class="stat-val" id="pingsVal">0</div>
-      </div>
-      <div class="stat-cell">
-        <div class="stat-label">Status</div>
-        <div class="stat-val" id="gpsStatusVal"><span class="gps-icon"></span>Watching</div>
-      </div>
-    </div>
-
-    <div class="countdown-block">
-      <div class="countdown-label">
-        <span>Session Expires In</span>
-        <span id="countdownPct">100%</span>
-      </div>
-      <div class="countdown-bar-outer">
-        <div class="countdown-bar-inner" id="countdownBar" style="width:100%"></div>
-      </div>
-      <div class="countdown-time" id="countdownTime">24:00:00</div>
-    </div>
   </div>
 
-  <button class="stop-btn" onclick="stopTracking()">■ Stop Tracking</button>
-</div>
+  <!-- ── Firebase SDK ── -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
-<script type="module">
-import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
-import { getDatabase, ref, set, push, onValue, update, remove } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
+  <script>
+    // ════════════════════════════════════════════════════════════════════════
+    // CONFIGURATION — Replace with your Firebase project details
+    // ════════════════════════════════════════════════════════════════════════
+    const FIREBASE_CONFIG = {
+      apiKey:            "AIzaSyCWwav2Ytr1wKSPevsxKYlYb6h6RNWJ5Rc",
+      authDomain:        "breakaway-live-tracking.firebaseapp.com",
+      databaseURL:       "https://breakaway-live-tracking-default-rtdb.firebaseio.com",
+      projectId:         "breakaway-live-tracking",
+      storageBucket:     "breakaway-live-tracking.firebasestorage.app",
+      messagingSenderId: "339351898110",
+      appId:             "1:339351898110:web:4ab4ae53da9da04143e2af",
+      measurementId:     "G-5PW1MM3L1L",
+    };
+    // ════════════════════════════════════════════════════════════════════════
 
-// ── FIREBASE CONFIG ──────────────────────────────────────────────────────────
-const firebaseConfig = {
-  apiKey: "AIzaSyCWwav2Ytr1wKSPevsxKYlYb6h6RNWJ5Rc",
-  authDomain: "breakaway-live-tracking.firebaseapp.com",
-  databaseURL: "https://breakaway-live-tracking-default-rtdb.firebaseio.com",
-  projectId: "breakaway-live-tracking",
-  storageBucket: "breakaway-live-tracking.firebasestorage.app",
-  messagingSenderId: "339351898110",
-  appId: "1:339351898110:web:4ab4ae53da9da04143e2af",
-  measurementId: "G-5PW1MM3L1L"
-};
+    const FIREBASE_DB_URL = FIREBASE_CONFIG.databaseURL;
 
-const app = initializeApp(firebaseConfig);
-const db = getDatabase(app);
+    firebase.initializeApp(FIREBASE_CONFIG);
+    const db = firebase.database();
 
-// ── STATE ────────────────────────────────────────────────────────────────────
-let watchId = null;
-let forceInterval = null;
-let countdownInterval = null;
-let wakeLock = null;
-let adminStopListener = null;
-let currentBib = null;
-let currentRaceId = null;
-let startedAt = null;
-let expiresAt = null;
-let pingCount = 0;
-let isPaused = false;
+    // ── State ────────────────────────────────────────────────────────────────
+    let selectedHours = 6;
+    let sessionData   = null;
+    let countdownTimer = null;
+    let deferredInstallPrompt = null;
+    let sw = null;
 
-// ── LOAD RACES ───────────────────────────────────────────────────────────────
-const racesRef = ref(db, 'config/races');
-onValue(racesRef, (snap) => {
-  const sel = document.getElementById('raceSelect');
-  sel.innerHTML = '<option value="">— Select Event —</option>';
-  const data = snap.val();
-  if (data) {
-    Object.entries(data).forEach(([id, race]) => {
-      const opt = document.createElement('option');
-      opt.value = id;
-      opt.textContent = race.name || id;
-      sel.appendChild(opt);
+    // ── DOM refs ─────────────────────────────────────────────────────────────
+    const setupSection    = document.getElementById('setupSection');
+    const statusPanel     = document.getElementById('statusPanel');
+    const bibInput        = document.getElementById('bibInput');
+    const nameInput       = document.getElementById('nameInput');
+    const eventSelect     = document.getElementById('eventSelect');
+    const startBtn        = document.getElementById('startBtn');
+    const stopBtn         = document.getElementById('stopBtn');
+    const formError       = document.getElementById('formError');
+    const statusDot       = document.getElementById('statusDot');
+    const statusValue     = document.getElementById('statusValue');
+    const displayBib      = document.getElementById('displayBib');
+    const displayName     = document.getElementById('displayName');
+    const displayLastPing = document.getElementById('displayLastPing');
+    const displayAccuracy = document.getElementById('displayAccuracy');
+    const countdownValue  = document.getElementById('countdownValue');
+    const installBanner   = document.getElementById('installBanner');
+    const installBtn      = document.getElementById('installBtn');
+    const iosTip          = document.getElementById('iosTip');
+
+    // ── Load events from Firebase ────────────────────────────────────────────
+    db.ref('events').once('value').then(snap => {
+      const events = snap.val() || {};
+      Object.entries(events).forEach(([key, ev]) => {
+        if (!ev.active) return;
+        const opt = document.createElement('option');
+        opt.value = key;
+        opt.textContent = ev.name;
+        eventSelect.appendChild(opt);
+      });
     });
-  } else {
-    sel.innerHTML = '<option value="">No events available</option>';
-  }
-});
 
-// ── START TRACKING ───────────────────────────────────────────────────────────
-window.startTracking = async function() {
-  const bib = document.getElementById('bibInput').value.trim();
-  const raceId = document.getElementById('raceSelect').value;
-  const name = document.getElementById('nameInput').value.trim();
-
-  document.getElementById('bibError').style.display = 'none';
-  document.getElementById('raceError').style.display = 'none';
-
-  if (!bib || isNaN(bib) || parseInt(bib) < 1) {
-    document.getElementById('bibError').style.display = 'block';
-    return;
-  }
-  if (!raceId) {
-    document.getElementById('raceError').style.display = 'block';
-    return;
-  }
-
-  currentBib = bib;
-  currentRaceId = raceId;
-  startedAt = Date.now();
-  expiresAt = startedAt + 86400000;
-
-  const raceNameEl = document.querySelector(`#raceSelect option[value="${raceId}"]`);
-  const raceName = raceNameEl ? raceNameEl.textContent : raceId;
-
-  document.getElementById('liveBib').innerHTML = `<span>BIB</span>${bib}`;
-  document.getElementById('liveEventName').textContent = raceName;
-
-  // Write initial record
-  const riderRef = ref(db, `tracker/${raceId}/${bib}`);
-  await set(riderRef, {
-    bib, name: name || 'Anonymous', race: raceId, raceName,
-    startedAt, expiresAt, active: true, adminStop: false
-  });
-
-  // Listen for adminStop
-  const adminRef = ref(db, `tracker/${raceId}/${bib}/adminStop`);
-  adminStopListener = onValue(adminRef, (snap) => {
-    const stopped = snap.val();
-    if (stopped === true && !isPaused) {
-      isPaused = true;
-      pauseGPS();
-      document.getElementById('adminBanner').style.display = 'block';
-      setPill('paused');
-    } else if (stopped === false && isPaused) {
-      isPaused = false;
-      document.getElementById('adminBanner').style.display = 'none';
-      resumeGPS();
-    }
-  });
-
-  // Switch screens
-  document.getElementById('screen1').classList.remove('active');
-  document.getElementById('screen2').classList.add('active');
-
-  // Wake Lock
-  try {
-    wakeLock = await navigator.wakeLock.request('screen');
-  } catch(e) { /* not supported */ }
-
-  startGPS();
-  startCountdown();
-};
-
-function startGPS() {
-  setPill('acquiring');
-  if (!navigator.geolocation) {
-    setPill('error');
-    document.getElementById('gpsStatusVal').textContent = 'GPS N/A';
-    return;
-  }
-
-  watchId = navigator.geolocation.watchPosition(handlePosition, handleGPSError, {
-    enableHighAccuracy: true, timeout: 30000, maximumAge: 0
-  });
-
-  // Force ping every 5 minutes even if position unchanged
-  forceInterval = setInterval(() => {
-    navigator.geolocation.getCurrentPosition(handlePosition, handleGPSError, {
-      enableHighAccuracy: true, timeout: 15000, maximumAge: 0
+    // ── Expiry button selection ───────────────────────────────────────────────
+    document.getElementById('expiryGrid').addEventListener('click', (e) => {
+      const btn = e.target.closest('.expiry-btn');
+      if (!btn) return;
+      document.querySelectorAll('.expiry-btn').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+      selectedHours = parseInt(btn.dataset.hours);
     });
-  }, 5 * 60 * 1000);
-}
 
-function pauseGPS() {
-  if (watchId !== null) { navigator.geolocation.clearWatch(watchId); watchId = null; }
-  clearInterval(forceInterval);
-}
+    // ── iOS detection ─────────────────────────────────────────────────────────
+    const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
+    if (isIOS && !isStandalone) iosTip.classList.add('visible');
 
-function resumeGPS() {
-  startGPS();
-  setPill('live');
-}
+    // ── PWA install prompt (Android Chrome) ──────────────────────────────────
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredInstallPrompt = e;
+      if (!isStandalone) installBanner.classList.add('visible');
+    });
+    installBtn.addEventListener('click', async () => {
+      if (!deferredInstallPrompt) return;
+      deferredInstallPrompt.prompt();
+      const { outcome } = await deferredInstallPrompt.userChoice;
+      if (outcome === 'accepted') installBanner.classList.remove('visible');
+    });
 
-async function handlePosition(pos) {
-  if (isPaused) return;
-  const { latitude: lat, longitude: lng, accuracy: acc } = pos.coords;
-  const ts = Date.now();
-
-  pingCount++;
-  document.getElementById('pingsVal').textContent = pingCount;
-
-  const accuracyEl = document.getElementById('accuracyVal');
-  accuracyEl.textContent = `±${Math.round(acc)}m`;
-  accuracyEl.className = 'stat-val ' + (acc < 10 ? 'ok' : acc < 30 ? 'warn' : 'bad');
-
-  const now = new Date();
-  document.getElementById('lastPingVal').textContent =
-    now.toLocaleTimeString('en-US', { hour12: false, hour:'2-digit', minute:'2-digit', second:'2-digit' });
-
-  setPill('live');
-
-  const latestRef = ref(db, `tracker/${currentRaceId}/${currentBib}/latest`);
-  await set(latestRef, { lat, lng, acc, ts });
-
-  const histRef = ref(db, `tracker/${currentRaceId}/${currentBib}/history/${ts}`);
-  await set(histRef, { lat, lng, acc, ts });
-}
-
-function handleGPSError(err) {
-  setPill('error');
-  document.getElementById('gpsStatusVal').textContent = 'GPS Error';
-}
-
-function setPill(state) {
-  const pill = document.getElementById('statusPill');
-  pill.className = 'status-pill';
-  const map = { live: ['pill-live','LIVE'], acquiring: ['pill-acquiring','ACQUIRING'], error: ['pill-error','ERROR'], paused: ['pill-paused','PAUSED'] };
-  pill.classList.add(map[state][0]);
-  pill.textContent = map[state][1];
-}
-
-function startCountdown() {
-  const totalMs = 86400000;
-  countdownInterval = setInterval(() => {
-    const remaining = expiresAt - Date.now();
-    if (remaining <= 0) {
-      clearInterval(countdownInterval);
-      stopTracking(true);
-      return;
+    // ── Register service worker ───────────────────────────────────────────────
+    async function registerSW() {
+      if (!('serviceWorker' in navigator)) return null;
+      try {
+        const reg = await navigator.serviceWorker.register('/sw.js');
+        await navigator.serviceWorker.ready;
+        return reg;
+      } catch (err) {
+        console.warn('SW registration failed:', err);
+        return null;
+      }
     }
-    const pct = (remaining / totalMs) * 100;
-    document.getElementById('countdownBar').style.width = pct + '%';
-    document.getElementById('countdownPct').textContent = Math.round(pct) + '%';
 
-    const h = Math.floor(remaining / 3600000);
-    const m = Math.floor((remaining % 3600000) / 60000);
-    const s = Math.floor((remaining % 60000) / 1000);
-    document.getElementById('countdownTime').textContent =
-      String(h).padStart(2,'0') + ':' + String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
-  }, 1000);
-}
+    // ── Generate a session ID ─────────────────────────────────────────────────
+    function generateSessionId() {
+      return Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+    }
 
-window.stopTracking = async function(expired = false) {
-  pauseGPS();
-  clearInterval(countdownInterval);
+    // ── Generate a simple write token ────────────────────────────────────────
+    // For production, replace with a Firebase Custom Token from your Cloud Function
+    function generateToken() {
+      return Math.random().toString(36).slice(2) + Date.now().toString(36);
+    }
 
-  if (wakeLock) { try { await wakeLock.release(); } catch(e){} }
+    // ── Start tracking ────────────────────────────────────────────────────────
+    startBtn.addEventListener('click', async () => {
+      showError('');
+      const bib = bibInput.value.trim();
+      if (!bib) { showError('Please enter your bib number.'); return; }
 
-  if (currentBib && currentRaceId) {
-    const riderRef = ref(db, `tracker/${currentRaceId}/${currentBib}`);
-    await update(riderRef, { active: false, stoppedAt: Date.now() });
-  }
+      startBtn.disabled = true;
+      startBtn.textContent = 'Requesting location…';
 
-  // Reset state
-  watchId = null; forceInterval = null; pingCount = 0; isPaused = false;
-  currentBib = null; currentRaceId = null;
+      // Request permission upfront (must be from user gesture)
+      const permResult = await requestLocationPermission();
+      if (!permResult) {
+        startBtn.disabled = false;
+        startBtn.textContent = 'Start Tracking →';
+        showError('Location permission denied. Please allow location access and try again.');
+        return;
+      }
 
-  document.getElementById('screen2').classList.remove('active');
-  document.getElementById('screen1').classList.add('active');
-  document.getElementById('adminBanner').style.display = 'none';
-  document.getElementById('bibInput').value = '';
-  document.getElementById('nameInput').value = '';
-};
-</script>
+      const sessionId = generateSessionId();
+      const token     = generateToken();
+      const expiresAt = Date.now() + selectedHours * 60 * 60 * 1000;
+
+      sessionData = {
+        sessionId,
+        token,
+        bib,
+        name: nameInput.value.trim() || `Bib ${bib}`,
+        expiresAt,
+        firebaseUrl: FIREBASE_DB_URL,
+        event: eventSelect.value,
+      };
+
+      // Save to localStorage so it survives page reload
+      localStorage.setItem('bt_session', JSON.stringify(sessionData));
+
+      // Write initial record to Firebase
+      await db.ref(`riders/${sessionId}`).set({
+        sessionId,
+        bib,
+        name: sessionData.name,
+        event: sessionData.event,
+        expiresAt,
+        active: true,
+        startedAt: Date.now(),
+        lat: null,
+        lng: null,
+        timestamp: null,
+        accuracy: null,
+      });
+
+      // Start the service worker tracker
+      await startServiceWorkerTracking();
+
+      // Show status UI
+      setupSection.style.display = 'none';
+      statusPanel.classList.add('visible');
+      displayBib.textContent  = bib;
+      displayName.textContent = sessionData.name;
+      startCountdown();
+
+      startBtn.disabled = false;
+      startBtn.textContent = 'Start Tracking →';
+    });
+
+    // ── Request location permission ───────────────────────────────────────────
+    function requestLocationPermission() {
+      return new Promise((resolve) => {
+        navigator.geolocation.getCurrentPosition(
+          () => resolve(true),
+          () => resolve(false),
+          { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+        );
+      });
+    }
+
+    // ── Start service worker tracking ─────────────────────────────────────────
+    async function startServiceWorkerTracking() {
+      const reg = await registerSW();
+      sw = reg;
+
+      if (!reg || !reg.active) {
+        // Fallback: use watchPosition in the page (requires tab open)
+        startFallbackTracking();
+        return;
+      }
+
+      // Send session to service worker via MessageChannel
+      const mc = new MessageChannel();
+      mc.port1.onmessage = (e) => console.log('[SW reply]', e.data);
+      reg.active.postMessage({ type: 'START_TRACKING', payload: sessionData }, [mc.port2]);
+
+      // Listen for messages back from SW
+      navigator.serviceWorker.addEventListener('message', handleSWMessage);
+    }
+
+    // ── Fallback: in-page GPS (tab must stay open) ────────────────────────────
+    let watchId = null;
+    function startFallbackTracking() {
+      console.warn('Service worker unavailable — using in-page fallback');
+      const ping = () => {
+        if (!sessionData || Date.now() > sessionData.expiresAt) {
+          if (watchId) navigator.geolocation.clearWatch(watchId);
+          handleExpiry();
+          return;
+        }
+        navigator.geolocation.getCurrentPosition(
+          (pos) => writePingDirect(pos),
+          (err) => console.warn('GPS error:', err),
+          { enableHighAccuracy: true, timeout: 30000, maximumAge: 60000 }
+        );
+      };
+      ping();
+      setInterval(ping, 5 * 60 * 1000);
+    }
+
+    async function writePingDirect(pos) {
+      if (!sessionData) return;
+      await db.ref(`riders/${sessionData.sessionId}`).update({
+        lat: pos.coords.latitude,
+        lng: pos.coords.longitude,
+        accuracy: Math.round(pos.coords.accuracy),
+        timestamp: Date.now(),
+        active: true,
+      });
+      updateLastPing(pos.coords.accuracy);
+    }
+
+    // ── Handle SW messages ────────────────────────────────────────────────────
+    function handleSWMessage(event) {
+      const { type } = event.data;
+      if (type === 'PING_SUCCESS') {
+        updateLastPing(event.data);
+      }
+      if (type === 'SESSION_EXPIRED') {
+        handleExpiry();
+      }
+      if (type === 'PING_ERROR') {
+        statusDot.className = 'status-dot error';
+        statusValue.textContent = 'GPS error — retrying next ping';
+      }
+    }
+
+    function updateLastPing(data) {
+      const now = new Date();
+      statusDot.className = 'status-dot active';
+      statusValue.textContent = `Active — last ping at ${now.toLocaleTimeString()}`;
+      displayLastPing.textContent = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      if (data.accuracy) displayAccuracy.textContent = `±${data.accuracy}m`;
+    }
+
+    // ── Stop tracking ─────────────────────────────────────────────────────────
+    stopBtn.addEventListener('click', async () => {
+      if (!confirm('Stop sharing your GPS location?')) return;
+      await stopTracking(false);
+    });
+
+    async function stopTracking(expired) {
+      if (sw?.active) {
+        const mc = new MessageChannel();
+        sw.active.postMessage({ type: 'STOP_TRACKING' }, [mc.port2]);
+      }
+      if (sessionData) {
+        await db.ref(`riders/${sessionData.sessionId}`).update({ active: false, stoppedAt: Date.now() });
+      }
+      localStorage.removeItem('bt_session');
+      sessionData = null;
+      if (countdownTimer) clearInterval(countdownTimer);
+
+      if (expired) {
+        handleExpiry();
+      } else {
+        // Reset UI
+        statusPanel.classList.remove('visible');
+        setupSection.style.display = '';
+        bibInput.value = '';
+        nameInput.value = '';
+      }
+    }
+
+    // ── Handle session expiry ─────────────────────────────────────────────────
+    function handleExpiry() {
+      statusDot.className = 'status-dot expired';
+      statusValue.textContent = 'Session expired — tracking stopped';
+      countdownValue.textContent = 'Expired';
+      stopBtn.textContent = 'Start a New Session';
+      stopBtn.onclick = () => {
+        statusPanel.classList.remove('visible');
+        setupSection.style.display = '';
+        stopBtn.textContent = 'Stop Tracking';
+        stopBtn.onclick = null;
+      };
+    }
+
+    // ── Expiry countdown ──────────────────────────────────────────────────────
+    function startCountdown() {
+      const update = () => {
+        if (!sessionData) return;
+        const remaining = sessionData.expiresAt - Date.now();
+        if (remaining <= 0) {
+          countdownValue.textContent = 'Expired';
+          clearInterval(countdownTimer);
+          return;
+        }
+        const h = Math.floor(remaining / 3600000);
+        const m = Math.floor((remaining % 3600000) / 60000);
+        countdownValue.textContent = h > 0 ? `${h}h ${m}m` : `${m}m`;
+      };
+      update();
+      countdownTimer = setInterval(update, 30000);
+    }
+
+    // ── Error display ─────────────────────────────────────────────────────────
+    function showError(msg) {
+      formError.textContent = msg;
+      formError.classList.toggle('visible', !!msg);
+    }
+
+    // ── Restore session on page load ──────────────────────────────────────────
+    (async function restoreSession() {
+      const saved = localStorage.getItem('bt_session');
+      if (!saved) return;
+      try {
+        const s = JSON.parse(saved);
+        if (Date.now() > s.expiresAt) {
+          localStorage.removeItem('bt_session');
+          return;
+        }
+        // Check Firebase to confirm session is still active
+        const snap = await db.ref(`riders/${s.sessionId}/active`).once('value');
+        if (!snap.val()) { localStorage.removeItem('bt_session'); return; }
+
+        sessionData = s;
+        setupSection.style.display = 'none';
+        statusPanel.classList.add('visible');
+        displayBib.textContent  = s.bib;
+        displayName.textContent = s.name;
+        statusValue.textContent = 'Reconnected — tracking active';
+        startCountdown();
+        await startServiceWorkerTracking();
+      } catch (e) {
+        localStorage.removeItem('bt_session');
+      }
+    })();
+  </script>
 </body>
 </html>

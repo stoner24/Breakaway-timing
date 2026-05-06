@@ -1,674 +1,345 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <link rel="icon" href="/favicon-16x16.png" type="image/png">
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Breakaway Timing — Live Map</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;900&family=Barlow:wght@400;500;600&family=Share+Tech+Mono&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-<style>
-  :root {
-    --bg: #0c0e0f; --bg2: #131618; --bg3: #1a1d1f;
-    --orange: #f5a623; --green: #39d353; --red: #e5534b; --text: #e8eaeb;
-    --text-dim: #6b7280; --text-mid: #9ca3af; --border: #2a2d30;
-    --mono: 'Share Tech Mono', monospace;
-    --condensed: 'Barlow Condensed', sans-serif;
-    --body: 'Barlow', sans-serif;
-    --sidebar: 260px;
-    --topbar-h: 56px;
-  }
-  * { margin:0; padding:0; box-sizing:border-box; }
-  html, body { height:100%; background:var(--bg); color:var(--text); font-family:var(--body); overflow:hidden; }
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" href="/favicon-16x16.png" type="image/png" />
+  <title>Live Map · Breakaway Timing</title>
 
-  /* TOPBAR */
-  .topbar {
-    position:absolute; top:0; left:0; right:0; z-index:500;
-    background:var(--bg); border-bottom:2px solid var(--orange);
-  }
-  .topbar-row1 {
-    display:flex; align-items:center; gap:10px; padding:0 16px; height:var(--topbar-h);
-  }
-  .logo-hex {
-    width:34px; height:34px; flex-shrink:0;
-    clip-path:polygon(50% 0%,93% 25%,93% 75%,50% 100%,7% 25%,7% 75%);
-    background:var(--orange); display:flex; align-items:center; justify-content:center;
-  }
-  .logo-hex svg { width:20px; height:20px; fill:#0c0e0f; }
-  .brand-top { font-family:var(--condensed); font-size:16px; font-weight:900; letter-spacing:2px; text-transform:uppercase; color:var(--orange); line-height:1; }
-  .brand-sub { font-family:var(--mono); font-size:8px; color:var(--text-dim); letter-spacing:1.5px; text-transform:uppercase; }
-  .topbar-spacer { flex:1; }
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 
-  /* LIVE INDICATOR */
-  .live-badge { display:flex; align-items:center; gap:6px; padding:4px 10px; background:var(--bg3); border:1px solid var(--border); flex-shrink:0; }
-  .live-dot { width:8px; height:8px; background:var(--green); border-radius:50%; animation:pulse-dot 1.8s infinite; flex-shrink:0; }
-  @keyframes pulse-dot { 0%,100%{box-shadow:0 0 0 0 rgba(57,211,83,0.6)} 50%{box-shadow:0 0 0 6px rgba(57,211,83,0)} }
-  .live-text { font-family:var(--condensed); font-size:12px; font-weight:700; letter-spacing:2px; color:var(--green); text-transform:uppercase; }
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --black: #000; --white: #fff; --green: #00e676;
+      --mid: #888; --border: #333; --surface: #111;
+      --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    }
+    html, body { height: 100%; background: var(--black); color: var(--white); font-family: var(--font); }
 
-  /* RACE SELECT ROW — always visible, full width on mobile */
-  .topbar-row2 {
-    display:none; /* hidden on desktop, shown on mobile */
-    padding:0 16px 10px;
-  }
-  .topbar-row2 .select-wrap { width:100%; }
-  .topbar-row2 .styled-select { width:100%; }
+    /* ── Nav ── */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0.9rem 1.5rem;
+      background: rgba(0,0,0,0.85);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+    }
+    .nav-logo { font-size: 0.7rem; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; color: var(--mid); text-decoration: none; }
+    .nav-right { display: flex; align-items: center; gap: 1rem; }
+    .live-badge {
+      display: flex; align-items: center; gap: 0.4rem;
+      font-size: 0.65rem; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase;
+      color: var(--green);
+    }
+    .live-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); animation: pulse 2s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+    .rider-count { font-size: 0.75rem; color: var(--mid); }
 
-  /* RACE SELECT inline on desktop */
-  .topbar-select-desktop { display:flex; align-items:center; }
+    /* ── Map ── */
+    #map { position: fixed; top: 48px; left: 0; right: 0; bottom: 0; }
 
-  /* RACE SELECT */
-  .select-wrap { position:relative; }
-  .select-wrap::after { content:'▼'; position:absolute; right:10px; top:50%; transform:translateY(-50%); color:var(--orange); font-size:9px; pointer-events:none; }
-  .styled-select {
-    background:var(--bg3); border:2px solid var(--border); border-top:2px solid #3a3d40;
-    color:var(--text); font-family:var(--body); font-size:14px;
-    padding:7px 30px 7px 12px; outline:none; appearance:none; cursor:pointer; min-width:180px;
-  }
-  .styled-select:focus { border-color:var(--orange); }
+    /* ── Rider panel ── */
+    .rider-panel {
+      position: fixed; bottom: 0; left: 0; right: 0; z-index: 999;
+      background: rgba(0,0,0,0.92);
+      border-top: 1px solid var(--border);
+      backdrop-filter: blur(12px);
+      transform: translateY(100%);
+      transition: transform 0.3s ease;
+      max-height: 50vh;
+      overflow-y: auto;
+    }
+    .rider-panel.open { transform: translateY(0); }
+    .panel-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 1rem 1.5rem;
+      border-bottom: 1px solid var(--border);
+      position: sticky; top: 0; background: rgba(0,0,0,0.95);
+    }
+    .panel-title { font-size: 0.7rem; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; color: var(--mid); }
+    .panel-close { background: none; border: none; color: var(--mid); font-size: 1.2rem; cursor: pointer; padding: 0 0.25rem; }
+    .riders-list { padding: 0.5rem 0; }
+    .rider-row {
+      display: flex; align-items: center; gap: 1rem;
+      padding: 0.75rem 1.5rem;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .rider-row:hover { background: #0d0d0d; }
+    .rider-bib {
+      width: 40px; height: 40px; border-radius: 6px;
+      background: var(--surface); border: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 700; font-size: 0.9rem; flex-shrink: 0;
+      color: var(--white);
+    }
+    .rider-info { flex: 1; }
+    .rider-name { font-size: 0.9rem; font-weight: 600; }
+    .rider-meta { font-size: 0.75rem; color: var(--mid); margin-top: 0.15rem; }
+    .rider-status { font-size: 0.7rem; }
+    .rider-status.fresh { color: var(--green); }
+    .rider-status.stale { color: var(--amber, #ffab00); }
+    .rider-status.old   { color: #ff6666; }
 
-  /* RIDERS TOGGLE BUTTON — mobile only */
-  .riders-btn {
-    display:none; align-items:center; gap:6px; padding:4px 10px;
-    background:var(--bg3); border:1px solid var(--border); cursor:pointer;
-    font-family:var(--condensed); font-size:12px; font-weight:700; letter-spacing:2px;
-    color:var(--text-dim); text-transform:uppercase; flex-shrink:0;
-  }
-  .riders-btn.has-riders { color:var(--orange); border-color:var(--orange); }
+    /* ── Leaflet custom markers ── */
+    .rider-marker {
+      background: #00e676; border: 2px solid #000;
+      border-radius: 50%; width: 14px; height: 14px;
+    }
+    .rider-marker.stale { background: #ffab00; }
+    .rider-marker.old   { background: #ff6666; }
 
-  /* MAP */
-  #map {
-    position:absolute; top:var(--topbar-h); left:0; right:var(--sidebar); bottom:0; z-index:1;
-  }
+    /* ── Leaflet dark map override ── */
+    .leaflet-tile { filter: brightness(0.6) invert(1) contrast(3) hue-rotate(200deg) saturate(0.3) brightness(0.7); }
+    .leaflet-container { background: #000; }
+    .leaflet-popup-content-wrapper { background: #111; border: 1px solid #333; border-radius: 8px; color: #fff; box-shadow: none; }
+    .leaflet-popup-tip { background: #111; }
+    .leaflet-popup-close-button { color: #888 !important; }
 
-  /* SIDEBAR */
-  .sidebar {
-    position:absolute; top:var(--topbar-h); right:0; width:var(--sidebar); bottom:0; z-index:400;
-    background:var(--bg2); border-left:2px solid var(--border); display:flex; flex-direction:column; overflow:hidden;
-  }
-  .sidebar-header { padding:14px 16px; border-bottom:1px solid var(--border); flex-shrink:0; }
-  .sidebar-title { font-family:var(--condensed); font-size:14px; font-weight:700; letter-spacing:3px; text-transform:uppercase; color:var(--orange); }
-  .rider-count { font-family:var(--mono); font-size:10px; color:var(--text-dim); margin-top:2px; }
-  .sidebar-list { flex:1; overflow-y:auto; }
-  .sidebar-list::-webkit-scrollbar { width:4px; }
-  .sidebar-list::-webkit-scrollbar-track { background:var(--bg); }
-  .sidebar-list::-webkit-scrollbar-thumb { background:var(--border); }
+    /* ── Bottom list toggle ── */
+    .list-toggle {
+      position: fixed; bottom: 1rem; right: 1rem; z-index: 1001;
+      background: var(--white); color: var(--black);
+      border: none; border-radius: 999px;
+      font-family: var(--font); font-weight: 700; font-size: 0.8rem;
+      padding: 0.65rem 1.25rem;
+      cursor: pointer; box-shadow: 0 2px 12px rgba(0,0,0,0.5);
+    }
 
-  .rider-row {
-    display:flex; align-items:center; gap:10px; padding:10px 14px;
-    border-bottom:1px solid var(--border); cursor:pointer; transition:background 0.1s;
-  }
-  .rider-row:hover { background:var(--bg3); }
-  .rider-row.selected { background:var(--bg3); border-left:3px solid var(--orange); }
-
-  .rider-dot { width:10px; height:10px; border-radius:50%; flex-shrink:0; }
-  .dot-live { background:var(--green); animation:pulse-dot 1.8s infinite; }
-  .dot-stale { background:var(--orange); }
-  .dot-paused { background:var(--red); }
-  .dot-inactive { background:var(--text-dim); }
-
-  .rider-info { flex:1; min-width:0; }
-  .rider-bib { font-family:var(--condensed); font-size:20px; font-weight:900; color:var(--orange); line-height:1; }
-  .rider-name { font-family:var(--body); font-size:12px; color:var(--text-mid); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  .rider-meta { font-family:var(--mono); font-size:10px; color:var(--text-dim); margin-top:2px; }
-
-  /* CUSTOM MARKERS */
-  .bib-marker {
-    display:flex; align-items:center; justify-content:center;
-    width:36px; height:36px; position:relative;
-    font-family:var(--condensed); font-weight:900; font-size:13px; letter-spacing:1px;
-  }
-  .bib-marker .marker-bg {
-    position:absolute; inset:0;
-    clip-path:polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%);
-  }
-  .bib-marker.live .marker-bg { background:var(--orange); }
-  .bib-marker.stale .marker-bg { background:#3a3d40; }
-  .bib-marker.paused .marker-bg { background:var(--red); }
-  .bib-marker .marker-label { position:relative; z-index:1; color:#0c0e0f; }
-  .bib-marker.stale .marker-label, .bib-marker.paused .marker-label { color:#fff; }
-
-  /* LEAFLET TOOLTIP OVERRIDE */
-  .leaflet-tooltip { background:var(--bg2) !important; border:1px solid var(--orange) !important; color:var(--text) !important; border-radius:0 !important; font-family:var(--body) !important; padding:0 !important; box-shadow:none !important; }
-  .leaflet-tooltip-left::before, .leaflet-tooltip-right::before { border-right-color:var(--orange) !important; border-left-color:var(--orange) !important; }
-  .tooltip-inner { padding:10px 14px; min-width:160px; }
-  .tooltip-bib { font-family:var(--condensed); font-size:28px; font-weight:900; color:var(--orange); line-height:1; }
-  .tooltip-name { font-family:var(--body); font-size:13px; color:var(--text-mid); margin-bottom:6px; }
-  .tooltip-meta { font-family:var(--mono); font-size:11px; color:var(--text-dim); line-height:1.7; }
-  .tooltip-status { font-family:var(--condensed); font-size:12px; font-weight:700; letter-spacing:2px; margin-top:6px; }
-  .tooltip-live { color:var(--green); }
-  .tooltip-stale { color:var(--orange); }
-  .tooltip-paused { color:var(--red); }
-
-  /* EMPTY STATE */
-  .empty-overlay {
-    position:absolute; top:var(--topbar-h); left:0; right:var(--sidebar); bottom:0; z-index:300;
-    display:flex; align-items:center; justify-content:center;
-    background:rgba(12,14,15,0.85); pointer-events:none;
-  }
-  .empty-box { text-align:center; padding:40px; max-width:320px; }
-  .empty-icon { font-size:48px; margin-bottom:16px; filter:grayscale(1); }
-  .empty-title { font-family:var(--condensed); font-size:26px; font-weight:900; letter-spacing:3px; text-transform:uppercase; color:var(--text-dim); margin-bottom:8px; }
-  .empty-sub { font-family:var(--mono); font-size:11px; color:var(--text-dim); line-height:1.6; }
-
-  /* SCHEDULE BLACKOUT OVERLAY */
-  .blackout-overlay {
-    position:absolute; top:var(--topbar-h); left:0; right:var(--sidebar); bottom:0; z-index:450;
-    display:none; align-items:center; justify-content:center;
-    background:rgba(12,14,15,0.96);
-  }
-  .blackout-overlay.active { display:flex; }
-  .blackout-box { text-align:center; max-width:360px; padding:40px; }
-  .blackout-icon { font-size:52px; margin-bottom:20px; }
-  .blackout-title { font-family:var(--condensed); font-size:32px; font-weight:900; letter-spacing:4px; text-transform:uppercase; color:var(--text-dim); margin-bottom:12px; }
-  .blackout-sub { font-family:var(--mono); font-size:12px; color:var(--text-dim); line-height:1.8; }
-  .blackout-next { font-family:var(--condensed); font-size:18px; font-weight:700; color:var(--orange); margin-top:16px; letter-spacing:2px; }
-  .blackout-countdown { font-family:var(--mono); font-size:28px; color:var(--orange); margin-top:8px; letter-spacing:4px; }
-
-  /* MOBILE RIDER DRAWER — slides up from bottom */
-  .rider-drawer {
-    position:absolute; bottom:0; left:0; right:0; z-index:600;
-    background:var(--bg2); border-top:2px solid var(--orange);
-    max-height:55vh; display:flex; flex-direction:column;
-    transform:translateY(100%); transition:transform 0.3s ease;
-    display:none;
-  }
-  .rider-drawer.open { transform:translateY(0); }
-  .drawer-handle {
-    display:flex; align-items:center; justify-content:space-between;
-    padding:12px 16px; border-bottom:1px solid var(--border); flex-shrink:0; cursor:pointer;
-  }
-  .drawer-title { font-family:var(--condensed); font-size:14px; font-weight:700; letter-spacing:3px; text-transform:uppercase; color:var(--orange); }
-  .drawer-close { font-family:var(--mono); font-size:11px; color:var(--text-dim); }
-  .drawer-list { overflow-y:auto; flex:1; }
-
-  /* ── RESPONSIVE ── */
-  @media(max-width:700px) {
-    :root { --sidebar: 0px; --topbar-h: 96px; }
-    .sidebar { display:none; }
-    #map { right:0; top:var(--topbar-h); }
-    .empty-overlay, .blackout-overlay { right:0; top:var(--topbar-h); }
-    .topbar-select-desktop { display:none; }
-    .topbar-row2 { display:block; }
-    .riders-btn { display:flex; }
-    .rider-drawer { display:flex; }
-    .brand-sub { display:none; }
-  }
-</style>
+    /* ── No riders message ── */
+    .no-riders {
+      display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%,-50%);
+      text-align: center; color: var(--mid); z-index: 500;
+      pointer-events: none;
+    }
+    .no-riders.visible { display: block; }
+    .no-riders h2 { font-size: 1.2rem; font-weight: 600; color: var(--white); }
+    .no-riders p  { font-size: 0.85rem; margin-top: 0.5rem; }
+  </style>
 </head>
 <body>
 
-<!-- TOPBAR -->
-<div class="topbar">
-  <div class="topbar-row1">
-    <img src="logo.jpg" alt="Breakaway Timing" style="width:38px;height:38px;object-fit:contain;border-radius:50%;flex-shrink:0;">
-    <div>
-      <div class="brand-top">Breakaway Timing</div>
-      <div class="brand-sub">Live Spectator Map</div>
+  <nav>
+    <a class="nav-logo" href="index.html">Breakaway Timing</a>
+    <div class="nav-right">
+      <span class="live-badge"><span class="live-dot"></span>Live</span>
+      <span class="rider-count" id="riderCount">0 riders</span>
     </div>
-    <div class="topbar-spacer"></div>
-    <!-- Desktop: race select inline -->
-    <div class="topbar-select-desktop">
-      <div class="select-wrap">
-        <select class="styled-select" id="raceSelectDesktop" onchange="selectRace(this.value)">
-          <option value="">— Select Race —</option>
-        </select>
-      </div>
+  </nav>
+
+  <div id="map"></div>
+
+  <div class="no-riders" id="noRiders">
+    <h2>No active riders</h2>
+    <p>Riders will appear here once they start tracking.</p>
+  </div>
+
+  <button class="list-toggle" id="listToggle">All Riders ↑</button>
+
+  <div class="rider-panel" id="riderPanel">
+    <div class="panel-header">
+      <span class="panel-title">Active Riders</span>
+      <button class="panel-close" id="panelClose">✕</button>
     </div>
-    <!-- Mobile: riders drawer toggle -->
-    <button class="riders-btn" id="ridersBtn" onclick="toggleDrawer()">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="7" r="4"/><path d="M12 14c-5 0-8 2.5-8 4v1h16v-1c0-1.5-3-4-8-4z"/></svg>
-      Riders
-    </button>
-    <div class="live-badge">
-      <div class="live-dot"></div>
-      <div class="live-text">Live</div>
-    </div>
+    <div class="riders-list" id="ridersList"></div>
   </div>
-  <!-- Mobile: race select on second row -->
-  <div class="topbar-row2">
-    <div class="select-wrap">
-      <select class="styled-select" id="raceSelectMobile" onchange="selectRace(this.value)">
-        <option value="">— Select Race —</option>
-      </select>
-    </div>
-  </div>
-</div>
 
-<!-- MAP -->
-<div id="map"></div>
+  <!-- Firebase + Leaflet -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
-<!-- EMPTY OVERLAY -->
-<div class="empty-overlay" id="emptyOverlay">
-  <div class="empty-box">
-    <div class="empty-icon">🗺️</div>
-    <div class="empty-title">No Positions Yet</div>
-    <div class="empty-sub">Waiting for riders to enable GPS tracking. Positions will appear here automatically.</div>
-  </div>
-</div>
+  <script>
+    // ════════════════════════════════════════════════════════════════════════
+    // CONFIGURATION — match your tracker.html config
+    // ════════════════════════════════════════════════════════════════════════
+    const FIREBASE_CONFIG = {
+      apiKey:            "AIzaSyCWwav2Ytr1wKSPevsxKYlYb6h6RNWJ5Rc",
+      authDomain:        "breakaway-live-tracking.firebaseapp.com",
+      databaseURL:       "https://breakaway-live-tracking-default-rtdb.firebaseio.com",
+      projectId:         "breakaway-live-tracking",
+      storageBucket:     "breakaway-live-tracking.firebasestorage.app",
+      messagingSenderId: "339351898110",
+      appId:             "1:339351898110:web:4ab4ae53da9da04143e2af",
+      measurementId:     "G-5PW1MM3L1L",
+    };
+    // ════════════════════════════════════════════════════════════════════════
 
-<!-- SCHEDULE BLACKOUT OVERLAY -->
-<div class="blackout-overlay" id="blackoutOverlay">
-  <div class="blackout-box">
-    <div class="blackout-icon">⏸️</div>
-    <div class="blackout-title">Tracking Inactive</div>
-    <div class="blackout-sub">Live rider positions are not available outside of scheduled race windows.</div>
-    <div class="blackout-next" id="blackoutNext"></div>
-    <div class="blackout-countdown" id="blackoutCountdown"></div>
-  </div>
-</div>
+    firebase.initializeApp(FIREBASE_CONFIG);
+    const db = firebase.database();
 
-<!-- SIDEBAR (desktop) -->
-<div class="sidebar">
-  <div class="sidebar-header">
-    <div class="sidebar-title">Riders</div>
-    <div class="rider-count" id="riderCount">0 active</div>
-  </div>
-  <div class="sidebar-list" id="sidebarList"></div>
-</div>
+    // ── Map init ─────────────────────────────────────────────────────────────
+    const map = L.map('map', { zoomControl: true }).setView([37.1, -113.5], 13);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap',
+      maxZoom: 19,
+    }).addTo(map);
 
-<!-- MOBILE RIDER DRAWER -->
-<div class="rider-drawer" id="riderDrawer">
-  <div class="drawer-handle" onclick="toggleDrawer()">
-    <div class="drawer-title">Riders <span id="drawerCount" style="color:var(--text-dim);font-weight:400"></span></div>
-    <div class="drawer-close">✕ CLOSE</div>
-  </div>
-  <div class="drawer-list" id="drawerList"></div>
-</div>
+    // ── State ─────────────────────────────────────────────────────────────────
+    const markers  = {};    // sessionId → Leaflet marker
+    const riders   = {};    // sessionId → rider data
+    const STALE_MS = 8 * 60 * 1000;   // >8min since ping = stale (amber)
+    const OLD_MS   = 20 * 60 * 1000;  // >20min = probably offline (red)
+    let mapFitted  = false;
 
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script type="module">
-import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
-import { getDatabase, ref, onValue } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
-
-// ── FIREBASE CONFIG ──────────────────────────────────────────────────────────
-const firebaseConfig = {
-  apiKey: "AIzaSyCWwav2Ytr1wKSPevsxKYlYb6h6RNWJ5Rc",
-  authDomain: "breakaway-live-tracking.firebaseapp.com",
-  databaseURL: "https://breakaway-live-tracking-default-rtdb.firebaseio.com",
-  projectId: "breakaway-live-tracking",
-  storageBucket: "breakaway-live-tracking.firebasestorage.app",
-  messagingSenderId: "339351898110",
-  appId: "1:339351898110:web:4ab4ae53da9da04143e2af",
-  measurementId: "G-5PW1MM3L1L"
-};
-
-const app = initializeApp(firebaseConfig);
-const db = getDatabase(app);
-
-// ── MAP INIT ─────────────────────────────────────────────────────────────────
-const map = L.map('map', { zoomControl: true }).setView([40.45, -111.73], 13);
-
-// Dark base layer — CARTO Dark Matter (no API key required)
-L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png', {
-  attribution: '© OpenStreetMap contributors © CARTO',
-  subdomains: 'abcd',
-  maxZoom: 20
-}).addTo(map);
-
-// Labels-only overlay — CARTO labels on top (town names, roads)
-L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_only_labels/{z}/{x}/{y}{r}.png', {
-  attribution: '',
-  subdomains: 'abcd',
-  maxZoom: 20,
-  opacity: 0.8
-}).addTo(map);
-
-// Fix z-index of zoom controls
-document.querySelector('.leaflet-top.leaflet-left').style.zIndex = 10;
-
-// ── STATE ────────────────────────────────────────────────────────────────────
-let currentRaceId = null;
-let markers = {};
-let riderData = {};
-let scheduleWindows = [];
-let scheduleActive = true; // default true = no schedule = always visible
-let blackoutInterval = null;
-let gpxLayer = null;
-
-// ── RACES ────────────────────────────────────────────────────────────────────
-onValue(ref(db, 'config/races'), (snap) => {
-  const data = snap.val();
-  ['raceSelectDesktop', 'raceSelectMobile'].forEach(id => {
-    const sel = document.getElementById(id);
-    const prev = sel.value;
-    sel.innerHTML = '<option value="">— Select Race —</option>';
-    if (data) {
-      Object.entries(data).forEach(([id2, race]) => {
-        const opt = document.createElement('option');
-        opt.value = id2;
-        opt.textContent = race.name || id2;
-        sel.appendChild(opt);
+    // ── Create custom icon ────────────────────────────────────────────────────
+    function makeIcon(staleness) {
+      const cls = staleness === 'old' ? 'old' : staleness === 'stale' ? 'stale' : '';
+      return L.divIcon({
+        className: '',
+        html: `<div class="rider-marker ${cls}"></div>`,
+        iconSize: [14, 14],
+        iconAnchor: [7, 7],
+        popupAnchor: [0, -10],
       });
     }
-    if (prev) sel.value = prev;
-  });
-});
 
-// ── SELECT RACE ───────────────────────────────────────────────────────────────
-window.selectRace = function(raceId) {
-  currentRaceId = raceId;
-  clearMarkers();
-  clearGpx();
-  riderData = {};
-  if (!raceId) return;
-
-  // Listen to GPX course overlay
-  onValue(ref(db, `config/gpx/${raceId}/points`), (snap) => {
-    clearGpx();
-    const points = snap.val();
-    if (points && Array.isArray(points) && points.length > 0) {
-      drawGpx(points);
+    function stalenessClass(timestamp) {
+      if (!timestamp) return 'old';
+      const age = Date.now() - timestamp;
+      if (age < STALE_MS) return 'fresh';
+      if (age < OLD_MS)   return 'stale';
+      return 'old';
     }
-  });
 
-  // Listen to schedule state from admin
-  onValue(ref(db, `config/schedules/${raceId}`), (snap) => {
-    scheduleWindows = [];
-    const data = snap.val();
-    if (data) {
-      Object.entries(data).forEach(([key, win]) => {
-        scheduleWindows.push({ key, ...win });
+    function formatAge(timestamp) {
+      if (!timestamp) return 'No ping yet';
+      const age = Math.floor((Date.now() - timestamp) / 60000);
+      if (age < 1) return 'Just now';
+      if (age === 1) return '1 min ago';
+      return `${age} min ago`;
+    }
+
+    function formatExpiry(expiresAt) {
+      const remaining = expiresAt - Date.now();
+      if (remaining <= 0) return 'Expired';
+      const h = Math.floor(remaining / 3600000);
+      const m = Math.floor((remaining % 3600000) / 60000);
+      return h > 0 ? `Expires in ${h}h ${m}m` : `Expires in ${m}m`;
+    }
+
+    // ── Update/add marker ─────────────────────────────────────────────────────
+    function upsertRider(id, data) {
+      // Skip expired or inactive
+      if (!data.active || Date.now() > data.expiresAt) {
+        removeRider(id);
+        return;
+      }
+
+      riders[id] = data;
+      const stale = stalenessClass(data.timestamp);
+
+      if (data.lat && data.lng) {
+        const latlng = [data.lat, data.lng];
+
+        if (markers[id]) {
+          markers[id].setLatLng(latlng);
+          markers[id].setIcon(makeIcon(stale));
+        } else {
+          markers[id] = L.marker(latlng, { icon: makeIcon(stale) }).addTo(map);
+          if (!mapFitted) {
+            map.setView(latlng, 14);
+            mapFitted = true;
+          }
+        }
+
+        markers[id].bindPopup(`
+          <div style="font-family:-apple-system,sans-serif;padding:4px 0;">
+            <div style="font-size:1rem;font-weight:700;color:#fff;">Bib ${data.bib}</div>
+            <div style="font-size:0.85rem;color:#888;margin-top:2px;">${data.name}</div>
+            <div style="font-size:0.75rem;color:#888;margin-top:6px;">
+              ${formatAge(data.timestamp)}
+              ${data.accuracy ? ` · ±${data.accuracy}m` : ''}
+            </div>
+            <div style="font-size:0.7rem;color:#666;margin-top:2px;">${formatExpiry(data.expiresAt)}</div>
+          </div>
+        `);
+      }
+
+      updateRiderList();
+      updateCount();
+    }
+
+    function removeRider(id) {
+      if (markers[id]) { markers[id].remove(); delete markers[id]; }
+      delete riders[id];
+      updateRiderList();
+      updateCount();
+    }
+
+    // ── Rider list panel ──────────────────────────────────────────────────────
+    function updateRiderList() {
+      const list = document.getElementById('ridersList');
+      const active = Object.values(riders).filter(r => r.active && Date.now() < r.expiresAt);
+
+      list.innerHTML = '';
+      if (!active.length) {
+        list.innerHTML = '<div style="padding:1.5rem;color:#666;font-size:0.85rem;">No active riders</div>';
+        return;
+      }
+
+      active.sort((a, b) => parseInt(a.bib) - parseInt(b.bib)).forEach(rider => {
+        const stale = stalenessClass(rider.timestamp);
+        const row = document.createElement('div');
+        row.className = 'rider-row';
+        row.innerHTML = `
+          <div class="rider-bib">${rider.bib}</div>
+          <div class="rider-info">
+            <div class="rider-name">${rider.name}</div>
+            <div class="rider-meta">${formatAge(rider.timestamp)}${rider.accuracy ? ` · ±${rider.accuracy}m` : ''}</div>
+          </div>
+          <div class="rider-status ${stale}">
+            ${stale === 'fresh' ? '● Live' : stale === 'stale' ? '● Stale' : '● Offline'}
+          </div>
+        `;
+        row.addEventListener('click', () => {
+          if (rider.lat && rider.lng) {
+            map.setView([rider.lat, rider.lng], 15);
+            markers[rider.sessionId]?.openPopup();
+            riderPanel.classList.remove('open');
+          }
+        });
+        list.appendChild(row);
       });
     }
-    updateBlackoutState();
-  });
 
-  // Listen to riders
-  onValue(ref(db, `tracker/${raceId}`), (snap) => {
-    riderData = snap.val() || {};
-    updateBlackoutState();
-    if (isVisible()) renderRiders();
-  });
-};
-
-// ── SCHEDULE VISIBILITY ───────────────────────────────────────────────────────
-function isInScheduleWindow() {
-  if (scheduleWindows.length === 0) return true; // No schedule = always on
-  const now = Date.now();
-  return scheduleWindows.some(w => {
-    if (now >= w.start && now <= w.end) return true;
-    if (w.repeat === 'daily') {
-      const dur = w.end - w.start;
-      const dayMs = 86400000;
-      const elapsed = now - w.start;
-      const cyclePos = ((elapsed % dayMs) + dayMs) % dayMs;
-      return elapsed >= 0 && cyclePos <= dur;
+    function updateCount() {
+      const n = Object.keys(riders).length;
+      document.getElementById('riderCount').textContent = `${n} rider${n !== 1 ? 's' : ''}`;
+      document.getElementById('noRiders').classList.toggle('visible', n === 0);
     }
-    if (w.repeat === 'weekly') {
-      const dur = w.end - w.start;
-      const weekMs = 7 * 86400000;
-      const elapsed = now - w.start;
-      const cyclePos = ((elapsed % weekMs) + weekMs) % weekMs;
-      return elapsed >= 0 && cyclePos <= dur;
-    }
-    return false;
-  });
-}
 
-function isVisible() {
-  return isInScheduleWindow();
-}
+    // ── Panel toggle ──────────────────────────────────────────────────────────
+    const riderPanel = document.getElementById('riderPanel');
+    document.getElementById('listToggle').addEventListener('click', () => {
+      riderPanel.classList.toggle('open');
+    });
+    document.getElementById('panelClose').addEventListener('click', () => {
+      riderPanel.classList.remove('open');
+    });
 
-function updateBlackoutState() {
-  const visible = isVisible();
-  const overlay = document.getElementById('blackoutOverlay');
+    // ── Firebase listener ─────────────────────────────────────────────────────
+    db.ref('riders').on('value', (snap) => {
+      const all = snap.val() || {};
 
-  if (!visible) {
-    overlay.classList.add('active');
-    clearMarkers();
-    document.getElementById('emptyOverlay').style.display = 'none';
-    updateBlackoutCountdown();
-    if (!blackoutInterval) {
-      blackoutInterval = setInterval(() => {
-        updateBlackoutState();
-        updateBlackoutCountdown();
-      }, 10000);
-    }
-  } else {
-    overlay.classList.remove('active');
-    if (blackoutInterval) { clearInterval(blackoutInterval); blackoutInterval = null; }
-    renderRiders();
-  }
-}
+      // Remove riders no longer in DB
+      Object.keys(riders).forEach(id => { if (!all[id]) removeRider(id); });
 
-function updateBlackoutCountdown() {
-  const now = Date.now();
-  const nextWin = scheduleWindows
-    .filter(w => w.start > now)
-    .sort((a, b) => a.start - b.start)[0];
+      // Add/update
+      Object.entries(all).forEach(([id, data]) => upsertRider(id, data));
+    });
 
-  const nextEl = document.getElementById('blackoutNext');
-  const cntEl = document.getElementById('blackoutCountdown');
-
-  if (nextWin) {
-    const ms = nextWin.start - now;
-    const h = Math.floor(ms / 3600000);
-    const m = Math.floor((ms % 3600000) / 60000);
-    const s = Math.floor((ms % 60000) / 1000);
-    nextEl.textContent = `Next window: ${nextWin.label || 'Race Window'}`;
-    cntEl.textContent = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
-  } else if (scheduleWindows.length > 0) {
-    nextEl.textContent = 'All scheduled windows have ended.';
-    cntEl.textContent = '';
-  } else {
-    nextEl.textContent = '';
-    cntEl.textContent = '';
-  }
-}
-
-// ── RENDER RIDERS ─────────────────────────────────────────────────────────────
-function renderRiders() {
-  if (!isVisible()) return;
-  const now = Date.now();
-  const bibs = Object.keys(riderData);
-  const withPos = bibs.filter(bib => riderData[bib].latest && riderData[bib].latest.lat);
-
-  // Update/create markers
-  const activeBibs = new Set();
-  withPos.forEach(bib => {
-    const r = riderData[bib];
-    const { lat, lng, acc, ts } = r.latest;
-    const mins = Math.round((now - ts) / 60000);
-
-    let state = 'live';
-    if (r.adminStop) state = 'paused';
-    else if (!r.active) state = 'stale';
-    else if (mins > 10) state = 'stale';
-
-    if (markers[bib]) {
-      markers[bib].setLatLng([lat, lng]);
-      markers[bib].setIcon(makeBibIcon(bib, state));
-      markers[bib].setTooltipContent(makeTooltip(bib, r, state, mins, acc));
-    } else {
-      const m = L.marker([lat, lng], { icon: makeBibIcon(bib, state) }).addTo(map);
-      m.bindTooltip(makeTooltip(bib, r, state, mins, acc), { permanent: false, direction: 'top' });
-      m.on('click', () => flyTo(bib));
-      markers[bib] = m;
-    }
-    activeBibs.add(bib);
-  });
-
-  // Remove stale markers
-  Object.keys(markers).forEach(bib => {
-    if (!activeBibs.has(bib)) {
-      map.removeLayer(markers[bib]);
-      delete markers[bib];
-    }
-  });
-
-  // Show/hide empty overlay
-  document.getElementById('emptyOverlay').style.display = withPos.length === 0 ? 'flex' : 'none';
-
-  renderSidebar();
-}
-
-function makeBibIcon(bib, state) {
-  return L.divIcon({
-    className: '',
-    html: `<div class="bib-marker ${state}"><div class="marker-bg"></div><div class="marker-label">${bib}</div></div>`,
-    iconSize: [36, 36],
-    iconAnchor: [18, 18]
-  });
-}
-
-function makeTooltip(bib, r, state, mins, acc) {
-  const name = r.name || 'Anonymous';
-  const pingStr = mins < 1 ? 'Just now' : `${mins}m ago`;
-  const accStr = acc ? `±${Math.round(acc)}m` : '?';
-  const stateLabels = { live: 'LIVE', stale: 'STALE', paused: 'PAUSED BY ADMIN' };
-  const stateClass = `tooltip-${state === 'paused' ? 'paused' : state === 'stale' ? 'stale' : 'live'}`;
-  return `<div class="tooltip-inner">
-    <div class="tooltip-bib">#${bib}</div>
-    <div class="tooltip-name">${name}</div>
-    <div class="tooltip-meta">${pingStr} · ${accStr} accuracy</div>
-    <div class="tooltip-status ${stateClass}">${stateLabels[state]}</div>
-  </div>`;
-}
-
-function renderSidebar() {
-  const now = Date.now();
-  const bibs = Object.keys(riderData).sort((a, b) => parseInt(a) - parseInt(b));
-  let activeCount = 0;
-
-  const rows = bibs.map(bib => {
-    const r = riderData[bib];
-    const hasPos = r.latest && r.latest.lat;
-    const mins = hasPos ? Math.round((now - r.latest.ts) / 60000) : null;
-
-    let dotClass = 'dot-inactive';
-    if (r.adminStop) { dotClass = 'dot-paused'; }
-    else if (r.active && hasPos && mins <= 10) { dotClass = 'dot-live'; activeCount++; }
-    else if (r.active) { dotClass = 'dot-stale'; }
-
-    const pingStr = mins !== null ? (mins < 1 ? 'Just now' : `${mins}m ago`) : 'No position';
-    const accStr = hasPos ? `±${Math.round(r.latest.acc)}m` : '';
-
-    return `<div class="rider-row" onclick="flyTo('${bib}');closeDrawer()">
-      <div class="rider-dot ${dotClass}"></div>
-      <div class="rider-info">
-        <div class="rider-bib">#${bib}</div>
-        <div class="rider-name">${r.name || 'Anonymous'}</div>
-        <div class="rider-meta">${pingStr}${accStr ? ' · ' + accStr : ''}</div>
-      </div>
-    </div>`;
-  }).join('');
-
-  document.getElementById('sidebarList').innerHTML = rows;
-  document.getElementById('drawerList').innerHTML = rows;
-  document.getElementById('riderCount').textContent = `${activeCount} active · ${bibs.length} total`;
-  document.getElementById('drawerCount').textContent = `(${activeCount} active)`;
-
-  // Update riders button style
-  const btn = document.getElementById('ridersBtn');
-  if (activeCount > 0) btn.classList.add('has-riders');
-  else btn.classList.remove('has-riders');
-}
-
-function flyTo(bib) {
-  const r = riderData[bib];
-  if (!r || !r.latest) return;
-  map.flyTo([r.latest.lat, r.latest.lng], 16, { duration: 1.2 });
-  if (markers[bib]) markers[bib].openTooltip();
-
-  // Highlight sidebar
-  document.querySelectorAll('.rider-row').forEach(row => row.classList.remove('selected'));
-  const rows = document.querySelectorAll('.rider-row');
-  const bibs = Object.keys(riderData).sort((a, b) => parseInt(a) - parseInt(b));
-  const idx = bibs.indexOf(bib);
-  if (rows[idx]) rows[idx].classList.add('selected');
-}
-
-window.flyTo = flyTo;
-
-function toggleDrawer() {
-  document.getElementById('riderDrawer').classList.toggle('open');
-}
-function closeDrawer() {
-  document.getElementById('riderDrawer').classList.remove('open');
-}
-
-function clearMarkers() {
-  Object.values(markers).forEach(m => map.removeLayer(m));
-  markers = {};
-  document.getElementById('sidebarList').innerHTML = '';
-  document.getElementById('riderCount').textContent = '0 active';
-}
-
-// ── GPX COURSE OVERLAY ────────────────────────────────────────────────────────
-function drawGpx(points) {
-  const latlngs = points.map(p => [p.lat, p.lng]);
-
-  // Outer glow line (wider, softer)
-  const glowLine = L.polyline(latlngs, {
-    color: '#ffcc00',
-    weight: 14,
-    opacity: 0.18,
-    lineJoin: 'round',
-    lineCap: 'round'
-  }).addTo(map);
-
-  // Mid glow
-  const midGlow = L.polyline(latlngs, {
-    color: '#f5a623',
-    weight: 7,
-    opacity: 0.35,
-    lineJoin: 'round',
-    lineCap: 'round'
-  }).addTo(map);
-
-  // Main course line — bright and crisp
-  const mainLine = L.polyline(latlngs, {
-    color: '#ffcc00',
-    weight: 3,
-    opacity: 1,
-    lineJoin: 'round',
-    lineCap: 'round'
-  }).addTo(map);
-
-  // Start marker
-  const startPt = latlngs[0];
-  const startMarker = L.marker(startPt, {
-    icon: L.divIcon({
-      className: '',
-      html: `<div style="background:#39d353;color:#0c0e0f;font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:10px;padding:3px 7px;letter-spacing:1px;white-space:nowrap;">START</div>`,
-      iconAnchor: [20, 10]
-    })
-  }).addTo(map);
-
-  // Finish marker
-  const endPt = latlngs[latlngs.length - 1];
-  const finishMarker = L.marker(endPt, {
-    icon: L.divIcon({
-      className: '',
-      html: `<div style="background:#e5534b;color:#fff;font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:10px;padding:3px 7px;letter-spacing:1px;white-space:nowrap;">FINISH</div>`,
-      iconAnchor: [22, 10]
-    })
-  }).addTo(map);
-
-  gpxLayer = { glowLine, midGlow, mainLine, startMarker, finishMarker };
-
-  // Fit map to course bounds, with some padding for sidebar
-  map.fitBounds(mainLine.getBounds(), { paddingTopLeft: [0, 60], paddingBottomRight: [280, 20] });
-}
-
-function clearGpx() {
-  if (gpxLayer) {
-    map.removeLayer(gpxLayer.glowLine);
-    map.removeLayer(gpxLayer.midGlow);
-    map.removeLayer(gpxLayer.mainLine);
-    map.removeLayer(gpxLayer.startMarker);
-    map.removeLayer(gpxLayer.finishMarker);
-    gpxLayer = null;
-  }
-}
-
-// ── PERIODIC REFRESH ──────────────────────────────────────────────────────────
-// Re-compute stale status every 30 seconds
-setInterval(() => {
-  if (isVisible() && Object.keys(riderData).length > 0) renderRiders();
-  updateBlackoutState();
-}, 30000);
-</script>
+    // ── Periodic stale-check (refresh marker colors every minute) ────────────
+    setInterval(() => {
+      Object.entries(riders).forEach(([id, data]) => {
+        if (markers[id]) markers[id].setIcon(makeIcon(stalenessClass(data.timestamp)));
+      });
+      updateRiderList();
+    }, 60000);
+  </script>
 </body>
 </html>
