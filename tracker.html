@@ -463,14 +463,13 @@
     const installBtn      = document.getElementById('installBtn');
     const iosTip          = document.getElementById('iosTip');
 
-    // ── Load events from Firebase ────────────────────────────────────────────
-    db.ref('events').once('value').then(snap => {
+    // ── Load events from Firebase (matches admin panel config/races path) ────
+    db.ref('config/races').once('value').then(snap => {
       const events = snap.val() || {};
       Object.entries(events).forEach(([key, ev]) => {
-        if (!ev.active) return;
         const opt = document.createElement('option');
         opt.value = key;
-        opt.textContent = ev.name;
+        opt.textContent = ev.name || key;
         eventSelect.appendChild(opt);
       });
     });
@@ -562,19 +561,21 @@
       localStorage.setItem('bt_session', JSON.stringify(sessionData));
 
       // Write initial record to Firebase
-      await db.ref(`riders/${sessionId}`).set({
+      // Path: tracker/{eventId}/{bib} — matches admin panel structure
+      const eventId = sessionData.event || 'default';
+      sessionData.dbPath = `tracker/${eventId}/${bib}`;
+      await db.ref(sessionData.dbPath).set({
         sessionId,
         bib,
         name: sessionData.name,
-        event: sessionData.event,
+        event: eventId,
         expiresAt,
         active: true,
         startedAt: Date.now(),
-        lat: null,
-        lng: null,
-        timestamp: null,
-        accuracy: null,
+        adminStop: false,
+        latest: null,
       });
+      localStorage.setItem('bt_session', JSON.stringify(sessionData));
 
       // Start the service worker tracker
       await startServiceWorkerTracking();
@@ -642,15 +643,18 @@
     }
 
     async function writePingDirect(pos) {
-      if (!sessionData) return;
-      await db.ref(`riders/${sessionData.sessionId}`).update({
-        lat: pos.coords.latitude,
-        lng: pos.coords.longitude,
-        accuracy: Math.round(pos.coords.accuracy),
-        timestamp: Date.now(),
+      if (!sessionData || !sessionData.dbPath) return;
+      await db.ref(sessionData.dbPath).update({
         active: true,
+        expiresAt: sessionData.expiresAt,
+        latest: {
+          lat: pos.coords.latitude,
+          lng: pos.coords.longitude,
+          accuracy: Math.round(pos.coords.accuracy),
+          ts: Date.now(),
+        },
       });
-      updateLastPing(pos.coords.accuracy);
+      updateLastPing({ accuracy: pos.coords.accuracy });
     }
 
     // ── Handle SW messages ────────────────────────────────────────────────────

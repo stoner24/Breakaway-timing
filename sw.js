@@ -89,18 +89,23 @@ function getPosition() {
 
 // ── Write to Firebase REST API ───────────────────────────────────────────────
 async function writeToFirebase(data) {
-  if (!sessionData?.firebaseUrl) return;
+  if (!sessionData?.firebaseUrl || !sessionData?.dbPath) return;
 
-  const url = `${sessionData.firebaseUrl}/riders/${sessionData.sessionId}.json?auth=${sessionData.token}`;
+  // Write GPS update — admin panel reads from latest.lat/lng/ts
+  const url = `${sessionData.firebaseUrl}/${sessionData.dbPath}.json?auth=${sessionData.token}`;
   try {
     await fetch(url, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        ...data,
-        bib: sessionData.bib,
-        name: sessionData.name,
+        active: data.active !== undefined ? data.active : true,
         expiresAt: sessionData.expiresAt,
+        latest: data.lat ? {
+          lat: data.lat,
+          lng: data.lng,
+          accuracy: data.accuracy,
+          ts: data.timestamp,
+        } : null,
       }),
     });
   } catch (err) {
