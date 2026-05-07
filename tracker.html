@@ -257,6 +257,33 @@
     }
     .btn-stop:hover { border-color: var(--red); color: var(--red); }
 
+    /* ── Device tip ── */
+    .device-tip {
+      border-radius: 8px;
+      padding: 0.85rem 1rem;
+      font-size: 0.83rem;
+      line-height: 1.6;
+    }
+    .device-tip.tip-warn {
+      background: #1a1200;
+      border: 1px solid #3d2e00;
+      color: #ffcc80;
+    }
+    .device-tip.tip-good {
+      background: #001a0d;
+      border: 1px solid #003d1a;
+      color: #80ffb3;
+    }
+    .device-tip.tip-info {
+      background: #0d1520;
+      border: 1px solid #1a2d40;
+      color: #80c8ff;
+    }
+    .device-tip strong { color: #fff; }
+    .device-tip ol { margin: 0.4rem 0 0 1.1rem; }
+    .device-tip li { margin-bottom: 0.2rem; }
+    .device-tip a { color: inherit; text-decoration: underline; }
+
     /* ── Install banner ── */
     .install-banner {
       display: none;
@@ -317,16 +344,8 @@
 
   <div class="main">
 
-    <!-- ── Install banner (Android Chrome) ── -->
-    <div class="install-banner" id="installBanner">
-      <span>📲 Install for best background tracking</span>
-      <button id="installBtn">Add to Home Screen</button>
-    </div>
-
-    <!-- ── iOS tip ── -->
-    <div class="ios-tip" id="iosTip">
-      <strong>iPhone users:</strong> For background tracking, tap the Share button in Safari, then <strong>"Add to Home Screen"</strong> and open from there. Keep the screen on low brightness during your race.
-    </div>
+    <!-- ── Device tip banner ── -->
+    <div id="deviceTip" style="display:none"></div>
 
     <!-- ── Setup form (shown before tracking starts) ── -->
     <div id="setupSection">
@@ -483,22 +502,59 @@
       selectedHours = parseInt(btn.dataset.hours);
     });
 
-    // ── iOS detection ─────────────────────────────────────────────────────────
-    const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+    // ── Device detection & tips ──────────────────────────────────────────────
+    const isIOS        = /iphone|ipad|ipod/i.test(navigator.userAgent);
+    const isAndroid    = /android/i.test(navigator.userAgent);
     const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
-    if (isIOS && !isStandalone) iosTip.classList.add('visible');
+    const isGarminLink = () => document.getElementById('liveTrackInput').value.trim().length > 0;
+
+    function renderDeviceTip() {
+      const tip = document.getElementById('deviceTip');
+      tip.innerHTML = '';
+
+      if (isIOS && !isStandalone) {
+        // iPhone, not installed as PWA
+        tip.innerHTML = `<div class="device-tip tip-warn">
+          <strong>⚠️ iPhone: keep screen on during race</strong>
+          <p style="margin-top:0.4rem">iOS suspends background apps, so your GPS will stop pinging if the screen locks.</p>
+          <p style="margin-top:0.4rem"><strong>Best options:</strong></p>
+          <ol>
+            <li>Keep screen on at low brightness (use a battery pack)</li>
+            <li>Install this page: tap <strong>Share → Add to Home Screen</strong>, then reopen from your home screen</li>
+            <li>Use a <strong>Garmin LiveTrack link</strong> below for reliable background tracking</li>
+          </ol>
+        </div>`;
+        tip.style.display = 'block';
+      } else if (isIOS && isStandalone) {
+        // iPhone, installed as PWA — slightly better
+        tip.innerHTML = `<div class="device-tip tip-warn">
+          <strong>⚠️ iPhone: keep screen on during race</strong>
+          <p style="margin-top:0.4rem">Even as an installed app, iOS will pause GPS after a few minutes of screen-off. Keep brightness low or add a <strong>Garmin LiveTrack link</strong> below for reliable background tracking.</p>
+        </div>`;
+        tip.style.display = 'block';
+      } else if (isAndroid && !isStandalone) {
+        // Android, not installed
+        tip.innerHTML = `<div class="device-tip tip-info">
+          <strong>📲 Android tip: install for best tracking</strong>
+          <p style="margin-top:0.4rem">For reliable background tracking with screen off, install this page first. You'll see an <strong>"Add to Home Screen"</strong> prompt below — tap it, then reopen from your home screen.</p>
+        </div>`;
+        tip.style.display = 'block';
+      } else if (isAndroid && isStandalone) {
+        // Android, installed — best case
+        tip.innerHTML = `<div class="device-tip tip-good">
+          <strong>✓ Android: background tracking enabled</strong>
+          <p style="margin-top:0.4rem">Your GPS will keep pinging with the screen off. For best results, go to <strong>Settings → Battery → find your browser → Unrestricted</strong>.</p>
+        </div>`;
+        tip.style.display = 'block';
+      }
+    }
+
+    renderDeviceTip();
 
     // ── PWA install prompt (Android Chrome) ──────────────────────────────────
     window.addEventListener('beforeinstallprompt', (e) => {
       e.preventDefault();
       deferredInstallPrompt = e;
-      if (!isStandalone) installBanner.classList.add('visible');
-    });
-    installBtn.addEventListener('click', async () => {
-      if (!deferredInstallPrompt) return;
-      deferredInstallPrompt.prompt();
-      const { outcome } = await deferredInstallPrompt.userChoice;
-      if (outcome === 'accepted') installBanner.classList.remove('visible');
     });
 
     // ── Register service worker ───────────────────────────────────────────────
