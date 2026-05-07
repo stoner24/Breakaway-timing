@@ -49,16 +49,16 @@
     }
     .event-select:focus { border-color: var(--white); }
 
-    .course-toggle {
+    .course-btn {
       background: transparent; border: 1px solid var(--border);
       color: var(--mid); font-family: var(--font); font-size: 0.7rem;
       font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase;
       padding: 0.45rem 0.85rem; border-radius: 6px; cursor: pointer;
-      white-space: nowrap; transition: border-color 0.15s, color 0.15s;
-      display: none;
+      white-space: nowrap; transition: border-color 0.15s, color 0.15s, background 0.15s;
+      display: flex; align-items: center; gap: 0.4rem;
     }
-    .course-toggle.visible { display: block; }
-    .course-toggle.active { border-color: #ff1744; color: #ff1744; }
+    .course-btn .dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+    .course-btn.active { background: rgba(255,255,255,0.08); }
 
     #map { position: fixed; top: 90px; left: 0; right: 0; bottom: 0; }
 
@@ -128,10 +128,10 @@
       background: rgba(0,0,0,0.85); border: 1px solid var(--border);
       border-radius: 8px; padding: 0.5rem 0.85rem;
       font-size: 0.72rem; color: var(--mid);
-      display: none; align-items: center; gap: 0.5rem;
+      align-items: center;
     }
-    .course-legend.visible { display: flex; }
-    .course-line { width: 20px; height: 3px; background: #ff1744; border-radius: 2px; flex-shrink: 0; }
+    .legend-item { display:flex; align-items:center; gap:0.4rem; }
+    .legend-line { width: 18px; height: 3px; border-radius: 2px; flex-shrink: 0; }
   </style>
 </head>
 <body>
@@ -148,7 +148,7 @@
       <select class="event-select" id="eventSelect" onchange="selectEvent(this.value)">
         <option value="">— Select Event —</option>
       </select>
-      <button class="course-toggle" id="courseToggle" onclick="toggleCourse()">Course Off</button>
+      <div id="courseToggles" style="display:flex;gap:0.5rem;flex-wrap:wrap;"></div>
     </div>
   </div>
 
@@ -159,10 +159,7 @@
     <p>Choose an event to see riders and the course.</p>
   </div>
 
-  <div class="course-legend" id="courseLegend">
-    <div class="course-line"></div>
-    <span id="courseLegendName">Course route</span>
-  </div>
+  <div class="course-legend" id="courseLegend" style="display:none;flex-wrap:wrap;gap:0.5rem 1rem;"></div>
 
   <button class="list-toggle" id="listToggle">Riders ↑</button>
 
@@ -269,66 +266,89 @@
       document.getElementById('panelTitle').textContent = optLabel || 'Riders';
     };
 
-    // ── Course GPX ────────────────────────────────────────────────────────────
-    function loadCourse(eventId) {
-      const courseToggle = document.getElementById('courseToggle');
-      const legend       = document.getElementById('courseLegend');
+    // ── Course GPX — multiple courses per event ──────────────────────────────
+    const COURSE_COLORS = ['#ff1744', '#2979ff', '#ff6d00', '#00e676', '#d500f9'];
+    const courseLayers  = {};   // courseId → { layer, visible, color, name }
 
-      db.ref(`config/gpx/${eventId}/meta`).once('value').then(snap => {
-        const meta = snap.val();
-        if (!meta || !meta.fileName) {
-          courseToggle.classList.remove('visible');
-          legend.classList.remove('visible');
-          return;
-        }
-        db.ref(`config/gpx/${eventId}/points`).once('value').then(ptSnap => {
-          const pts = ptSnap.val();
+    function loadCourse(eventId) {
+      // Clear existing courses
+      Object.values(courseLayers).forEach(c => { if (c.layer) c.layer.remove(); });
+      Object.keys(courseLayers).forEach(k => delete courseLayers[k]);
+      document.getElementById('courseToggles').innerHTML = '';
+      document.getElementById('courseLegend').style.display = 'none';
+      document.getElementById('courseLegend').innerHTML = '';
+
+      db.ref(`config/gpx/${eventId}`).once('value').then(snap => {
+        const data = snap.val();
+        if (!data) return;
+
+        // Filter out legacy single-course 'meta' and 'points' keys
+        const courses = Object.entries(data).filter(([k]) => k !== 'meta' && k !== 'points' && data[k].meta);
+        if (!courses.length) return;
+
+        courses.forEach(([courseId, course], i) => {
+          const pts   = course.points;
+          const meta  = course.meta;
+          const color = COURSE_COLORS[i % COURSE_COLORS.length];
+          const name  = meta?.name || courseId;
           if (!pts || !pts.length) return;
-          drawCourse(pts);
-          courseToggle.classList.add('visible', 'active');
-          courseToggle.classList.add('active');
-          courseToggle.textContent = 'Course On';
-          courseVisible = true;
-          document.getElementById('courseLegendName').textContent = meta.fileName.replace('.gpx','');
-          legend.classList.add('visible');
+
+          // Draw polyline
+          const layer = L.polyline(pts.map(p => [p.lat, p.lng]), {
+            color, weight: 4, opacity: 0.9, smoothFactor: 1,
+          }).addTo(map);
+
+          courseLayers[courseId] = { layer, visible: true, color, name };
+
+          // Fit map to first course
+          if (!mapFitted) {
+            map.fitBounds(layer.getBounds(), { padding: [40, 40] });
+            mapFitted = true;
+          }
+
+          // Add toggle button
+          const btn = document.createElement('button');
+          btn.className = 'course-btn active';
+          btn.style.borderColor = color;
+          btn.style.color = color;
+          btn.innerHTML = `<span class="dot" style="background:${color}"></span>${name}`;
+          btn.addEventListener('click', () => toggleCourseLayer(courseId, btn));
+          document.getElementById('courseToggles').appendChild(btn);
+
+          // Add legend item
+          const legend = document.getElementById('courseLegend');
+          legend.style.display = 'flex';
+          const item = document.createElement('div');
+          item.className = 'legend-item';
+          item.innerHTML = `<div class="legend-line" style="background:${color}"></div><span>${name}</span>`;
+          legend.appendChild(item);
         });
       });
     }
 
-    function drawCourse(pts) {
-      removeCourseLayer();
-      courseLayer = L.polyline(pts.map(p => [p.lat, p.lng]), {
-        color: '#ff1744', weight: 4, opacity: 0.9, smoothFactor: 1,
-      }).addTo(map);
-      if (!mapFitted) {
-        map.fitBounds(courseLayer.getBounds(), { padding: [40, 40] });
-        mapFitted = true;
+    function toggleCourseLayer(courseId, btn) {
+      const c = courseLayers[courseId];
+      if (!c) return;
+      c.visible = !c.visible;
+      if (c.visible) {
+        c.layer.addTo(map);
+        btn.classList.add('active');
+        btn.style.borderColor = c.color;
+        btn.style.color = c.color;
+      } else {
+        c.layer.remove();
+        btn.classList.remove('active');
+        btn.style.borderColor = 'var(--border)';
+        btn.style.color = 'var(--mid)';
       }
     }
 
     function removeCourseLayer() {
-      if (courseLayer) { courseLayer.remove(); courseLayer = null; }
-      document.getElementById('courseLegend').classList.remove('visible');
-      document.getElementById('courseToggle').classList.remove('visible','active');
+      Object.values(courseLayers).forEach(c => { if (c.layer) c.layer.remove(); });
+      Object.keys(courseLayers).forEach(k => delete courseLayers[k]);
+      document.getElementById('courseToggles').innerHTML = '';
+      document.getElementById('courseLegend').style.display = 'none';
     }
-
-    window.toggleCourse = function() {
-      const btn    = document.getElementById('courseToggle');
-      const legend = document.getElementById('courseLegend');
-      if (!courseLayer) return;
-      courseVisible = !courseVisible;
-      if (courseVisible) {
-        courseLayer.addTo(map);
-        btn.classList.add('active');
-        btn.textContent = 'Course On';
-        legend.classList.add('visible');
-      } else {
-        courseLayer.remove();
-        btn.classList.remove('active');
-        btn.textContent = 'Course Off';
-        legend.classList.remove('visible');
-      }
-    };
 
     // ── Rider helpers ─────────────────────────────────────────────────────────
     function stalenessClass(ts) {
