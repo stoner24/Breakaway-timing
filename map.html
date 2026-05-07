@@ -94,19 +94,19 @@
     .rider-name { font-size: 0.88rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .rider-meta { font-size: 0.72rem; color: var(--mid); margin-top: 0.1rem; }
     .rider-status { font-size: 0.68rem; font-weight: 700; white-space: nowrap; }
-    .rider-status.fresh { color: #2e7d32; }
-    .rider-status.stale { color: #e65100; }
+    .rider-status.fresh { color: var(--green); }
+    .rider-status.stale { color: var(--amber); }
     .rider-status.old   { color: #999; }
 
     .rider-marker { width: 16px; height: 16px; border-radius: 50%; background: #ff6d00; border: 3px solid #fff; box-shadow: 0 1px 4px rgba(0,0,0,0.4); }
     .rider-marker.stale { background: #ffab00; border-color: #fff; }
     .rider-marker.old   { background: #bbb; border-color: #fff; }
 
-    .leaflet-container { background: #f0ede8; }
-    .leaflet-popup-content-wrapper { background: #fff; border: 1px solid #ccc; border-radius: 8px; color: #111; box-shadow: 0 2px 8px rgba(0,0,0,0.15); }
-    .leaflet-popup-tip { background: #fff; }
-    .leaflet-popup-close-button { color: #666 !important; }
-    .leaflet-control-zoom a { background: #fff !important; color: #333 !important; border-color: #bbb !important; }
+    .leaflet-container { background: #0a0a0a; }
+    .leaflet-popup-content-wrapper { background: #1a1a1a; border: 1px solid #333; border-radius: 8px; color: #fff; box-shadow: 0 2px 12px rgba(0,0,0,0.5); }
+    .leaflet-popup-tip { background: #1a1a1a; }
+    .leaflet-popup-close-button { color: #888 !important; }
+    .leaflet-control-zoom a { background: #1a1a1a !important; color: #fff !important; border-color: #333 !important; }
 
     .list-toggle {
       position: fixed; bottom: 1rem; right: 1rem; z-index: 1001;
@@ -194,9 +194,10 @@
     const db = firebase.database();
 
     const map = L.map('map', { zoomControl: true }).setView([37.1, -113.5], 13);
-    L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
-      attribution: '© OpenTopoMap contributors, © OpenStreetMap contributors',
-      maxZoom: 17,
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+      attribution: '© OpenStreetMap contributors, © CARTO',
+      subdomains: 'abcd',
+      maxZoom: 19,
     }).addTo(map);
 
     const markers     = {};
@@ -379,10 +380,10 @@
         }
         markers[bib].bindPopup(`
           <div style="font-family:-apple-system,sans-serif;min-width:130px;">
-            <div style="font-size:1rem;font-weight:700;color:#111;">Bib ${bib}</div>
-            <div style="font-size:0.85rem;color:#444;margin-top:2px;">${data.name||''}</div>
-            <div style="font-size:0.75rem;color:#666;margin-top:8px;">${formatAge(ts)}${acc?` · ±${acc}m`:''}</div>
-            <div style="font-size:0.7rem;color:#888;margin-top:2px;">${data.expiresAt?formatExpiry(data.expiresAt):''}</div>
+            <div style="font-size:1rem;font-weight:700;color:#fff;">Bib ${bib}</div>
+            <div style="font-size:0.85rem;color:#aaa;margin-top:2px;">${data.name||''}</div>
+            <div style="font-size:0.75rem;color:#888;margin-top:8px;">${formatAge(ts)}${acc?` · ±${acc}m`:''}</div>
+            <div style="font-size:0.7rem;color:#666;margin-top:2px;">${data.expiresAt?formatExpiry(data.expiresAt):''}</div>
           </div>`);
       }
       renderRiderList();
