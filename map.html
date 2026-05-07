@@ -58,7 +58,7 @@
       display: none;
     }
     .course-toggle.visible { display: block; }
-    .course-toggle.active { border-color: var(--green); color: var(--green); }
+    .course-toggle.active { border-color: #ff1744; color: #ff1744; }
 
     #map { position: fixed; top: 90px; left: 0; right: 0; bottom: 0; }
 
@@ -94,20 +94,19 @@
     .rider-name { font-size: 0.88rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .rider-meta { font-size: 0.72rem; color: var(--mid); margin-top: 0.1rem; }
     .rider-status { font-size: 0.68rem; font-weight: 700; white-space: nowrap; }
-    .rider-status.fresh { color: var(--green); }
-    .rider-status.stale { color: var(--amber); }
-    .rider-status.old   { color: var(--red); }
+    .rider-status.fresh { color: #2e7d32; }
+    .rider-status.stale { color: #e65100; }
+    .rider-status.old   { color: #999; }
 
-    .rider-marker { width: 14px; height: 14px; border-radius: 50%; background: #00e676; border: 2px solid #000; }
-    .rider-marker.stale { background: #ffab00; }
-    .rider-marker.old   { background: #ff4444; }
+    .rider-marker { width: 16px; height: 16px; border-radius: 50%; background: #ff6d00; border: 3px solid #fff; box-shadow: 0 1px 4px rgba(0,0,0,0.4); }
+    .rider-marker.stale { background: #ffab00; border-color: #fff; }
+    .rider-marker.old   { background: #bbb; border-color: #fff; }
 
-    .leaflet-tile { filter: brightness(0.55) invert(1) contrast(3) hue-rotate(200deg) saturate(0.3) brightness(0.7); }
-    .leaflet-container { background: #000; }
-    .leaflet-popup-content-wrapper { background: #111; border: 1px solid #333; border-radius: 8px; color: #fff; box-shadow: none; }
-    .leaflet-popup-tip { background: #111; }
-    .leaflet-popup-close-button { color: #888 !important; }
-    .leaflet-control-zoom a { background: #111 !important; color: #fff !important; border-color: #333 !important; }
+    .leaflet-container { background: #f0ede8; }
+    .leaflet-popup-content-wrapper { background: #fff; border: 1px solid #ccc; border-radius: 8px; color: #111; box-shadow: 0 2px 8px rgba(0,0,0,0.15); }
+    .leaflet-popup-tip { background: #fff; }
+    .leaflet-popup-close-button { color: #666 !important; }
+    .leaflet-control-zoom a { background: #fff !important; color: #333 !important; border-color: #bbb !important; }
 
     .list-toggle {
       position: fixed; bottom: 1rem; right: 1rem; z-index: 1001;
@@ -132,7 +131,7 @@
       display: none; align-items: center; gap: 0.5rem;
     }
     .course-legend.visible { display: flex; }
-    .course-line { width: 20px; height: 3px; background: #00e676; border-radius: 2px; flex-shrink: 0; }
+    .course-line { width: 20px; height: 3px; background: #ff1744; border-radius: 2px; flex-shrink: 0; }
   </style>
 </head>
 <body>
@@ -195,8 +194,9 @@
     const db = firebase.database();
 
     const map = L.map('map', { zoomControl: true }).setView([37.1, -113.5], 13);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '© OpenStreetMap', maxZoom: 19,
+    L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenTopoMap contributors, © OpenStreetMap contributors',
+      maxZoom: 17,
     }).addTo(map);
 
     const markers     = {};
@@ -297,7 +297,7 @@
     function drawCourse(pts) {
       removeCourseLayer();
       courseLayer = L.polyline(pts.map(p => [p.lat, p.lng]), {
-        color: '#00e676', weight: 3, opacity: 0.75, smoothFactor: 1.5,
+        color: '#ff1744', weight: 4, opacity: 0.9, smoothFactor: 1,
       }).addTo(map);
       if (!mapFitted) {
         map.fitBounds(courseLayer.getBounds(), { padding: [40, 40] });
@@ -379,10 +379,10 @@
         }
         markers[bib].bindPopup(`
           <div style="font-family:-apple-system,sans-serif;min-width:130px;">
-            <div style="font-size:1rem;font-weight:700;color:#fff;">Bib ${bib}</div>
-            <div style="font-size:0.85rem;color:#aaa;margin-top:2px;">${data.name||''}</div>
-            <div style="font-size:0.75rem;color:#888;margin-top:8px;">${formatAge(ts)}${acc?` · ±${acc}m`:''}</div>
-            <div style="font-size:0.7rem;color:#666;margin-top:2px;">${data.expiresAt?formatExpiry(data.expiresAt):''}</div>
+            <div style="font-size:1rem;font-weight:700;color:#111;">Bib ${bib}</div>
+            <div style="font-size:0.85rem;color:#444;margin-top:2px;">${data.name||''}</div>
+            <div style="font-size:0.75rem;color:#666;margin-top:8px;">${formatAge(ts)}${acc?` · ±${acc}m`:''}</div>
+            <div style="font-size:0.7rem;color:#888;margin-top:2px;">${data.expiresAt?formatExpiry(data.expiresAt):''}</div>
           </div>`);
       }
       renderRiderList();
