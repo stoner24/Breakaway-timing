@@ -49,6 +49,80 @@
     }
     .event-select:focus { border-color: var(--white); }
 
+    /* ── Search panel ── */
+    .search-panel {
+      position: fixed; top: 90px; right: 0; bottom: 0; z-index: 998;
+      width: 280px; background: rgba(0,0,0,0.92);
+      border-left: 1px solid var(--border);
+      backdrop-filter: blur(12px);
+      display: flex; flex-direction: column;
+      transform: translateX(100%);
+      transition: transform 0.3s ease;
+    }
+    .search-panel.open { transform: translateX(0); }
+    .search-panel-header {
+      padding: 0.85rem 1rem;
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; gap: 0.5rem;
+    }
+    .search-box {
+      flex: 1; background: var(--surface); border: 1px solid var(--border);
+      color: var(--white); font-family: var(--font); font-size: 0.85rem;
+      padding: 0.45rem 0.75rem; border-radius: 6px; outline: none;
+    }
+    .search-box:focus { border-color: var(--white); }
+    .search-box::placeholder { color: var(--mid); }
+    .search-close {
+      background: none; border: none; color: var(--mid);
+      font-size: 1.1rem; cursor: pointer; padding: 0 0.25rem; flex-shrink: 0;
+    }
+    .search-results { flex: 1; overflow-y: auto; padding: 0.25rem 0; }
+    .search-result-row {
+      display: flex; align-items: center; gap: 0.75rem;
+      padding: 0.65rem 1rem; border-bottom: 1px solid rgba(255,255,255,0.05);
+      cursor: pointer; transition: background 0.15s;
+    }
+    .search-result-row:hover { background: #111; }
+    .search-result-row.highlighted { background: #1a1a1a; border-left: 3px solid #ff6d00; }
+    .sr-bib {
+      width: 36px; height: 36px; border-radius: 6px;
+      background: var(--surface); border: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 700; font-size: 0.82rem; flex-shrink: 0; color: var(--white);
+    }
+    .sr-info { flex: 1; min-width: 0; }
+    .sr-name { font-size: 0.85rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .sr-meta { font-size: 0.7rem; color: var(--mid); margin-top: 0.1rem; }
+    .sr-status { font-size: 0.65rem; font-weight: 700; white-space: nowrap; }
+    .sr-status.fresh { color: #00e676; }
+    .sr-status.stale { color: var(--amber); }
+    .sr-status.old   { color: #888; }
+    .search-empty { padding: 1.5rem 1rem; font-size: 0.82rem; color: var(--mid); text-align: center; }
+
+    /* ── Search toggle button ── */
+    .search-toggle {
+      position: fixed; top: 50%; right: 0; z-index: 999;
+      transform: translateY(-50%);
+      background: rgba(0,0,0,0.88); border: 1px solid var(--border);
+      border-right: none; border-radius: 8px 0 0 8px;
+      color: var(--mid); font-family: var(--font); font-size: 0.7rem;
+      font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase;
+      padding: 0.75rem 0.5rem; cursor: pointer;
+      writing-mode: vertical-rl; text-orientation: mixed;
+      transition: color 0.15s, border-color 0.15s;
+    }
+    .search-toggle:hover { color: var(--white); border-color: var(--white); }
+    .search-toggle.open { right: 280px; }
+
+    /* Shrink map when panel open */
+    #map.panel-open { right: 280px; }
+
+    @media (max-width: 600px) {
+      .search-panel { width: 100%; }
+      .search-toggle.open { right: 100%; }
+      #map.panel-open { right: 0; }
+    }
+
     .course-btn {
       background: transparent; border: 1px solid var(--border);
       color: var(--mid); font-family: var(--font); font-size: 0.7rem;
@@ -160,6 +234,19 @@
   </div>
 
   <div class="course-legend" id="courseLegend" style="display:none;flex-wrap:wrap;gap:0.5rem 1rem;"></div>
+
+  <!-- ── Search panel ── -->
+  <button class="search-toggle" id="searchToggle" onclick="toggleSearchPanel()">🔍 Find Rider</button>
+
+  <div class="search-panel" id="searchPanel">
+    <div class="search-panel-header">
+      <input class="search-box" id="riderSearchBox" placeholder="Bib or name..." oninput="filterRiderSearch(this.value)" />
+      <button class="search-close" onclick="toggleSearchPanel()">✕</button>
+    </div>
+    <div class="search-results" id="searchResults">
+      <div class="search-empty">Select an event to search riders.</div>
+    </div>
+  </div>
 
   <button class="list-toggle" id="listToggle">Riders ↑</button>
 
@@ -408,6 +495,7 @@
       }
       renderRiderList();
       updateCount();
+      if (searchPanelOpen) renderSearchResults(document.getElementById('riderSearchBox')?.value || '');
     }
 
     function removeRider(bib) {
@@ -415,6 +503,7 @@
       delete riders[bib];
       renderRiderList();
       updateCount();
+      if (searchPanelOpen) renderSearchResults(document.getElementById('riderSearchBox')?.value || '');
     }
 
     function renderRiderList() {
@@ -457,6 +546,85 @@
       document.getElementById('riderPanel').classList.toggle('open'));
     document.getElementById('panelClose').addEventListener('click', () =>
       document.getElementById('riderPanel').classList.remove('open'));
+
+    // ── Rider search panel ────────────────────────────────────────────────────
+    let searchPanelOpen   = false;
+    let highlightedBib    = null;
+
+    window.toggleSearchPanel = function() {
+      searchPanelOpen = !searchPanelOpen;
+      const panel  = document.getElementById('searchPanel');
+      const toggle = document.getElementById('searchToggle');
+      const mapEl  = document.getElementById('map');
+      panel.classList.toggle('open', searchPanelOpen);
+      toggle.classList.toggle('open', searchPanelOpen);
+      mapEl.classList.toggle('panel-open', searchPanelOpen);
+      if (searchPanelOpen) {
+        document.getElementById('riderSearchBox').focus();
+        renderSearchResults('');
+      }
+    };
+
+    window.filterRiderSearch = function(q) {
+      renderSearchResults(q);
+    };
+
+    function renderSearchResults(q) {
+      const container = document.getElementById('searchResults');
+      const active    = Object.entries(riders).filter(([, r]) => r.active && !r.adminStop);
+
+      if (!active.length) {
+        container.innerHTML = '<div class="search-empty">No active riders for this event.</div>';
+        return;
+      }
+
+      const query = q.toLowerCase().trim();
+      const filtered = active.filter(([bib, r]) =>
+        !query ||
+        bib.toLowerCase().includes(query) ||
+        (r.name || '').toLowerCase().includes(query)
+      );
+
+      if (!filtered.length) {
+        container.innerHTML = '<div class="search-empty">No riders match your search.</div>';
+        return;
+      }
+
+      container.innerHTML = '';
+      filtered
+        .sort((a, b) => parseInt(a[0]) - parseInt(b[0]))
+        .forEach(([bib, rider]) => {
+          const ts    = rider.latest?.ts || null;
+          const s     = stalenessClass(ts);
+          const isHL  = highlightedBib === bib;
+
+          const row = document.createElement('div');
+          row.className = 'search-result-row' + (isHL ? ' highlighted' : '');
+          row.innerHTML = `
+            <div class="sr-bib">${bib}</div>
+            <div class="sr-info">
+              <div class="sr-name">${rider.name || 'Bib ' + bib}</div>
+              <div class="sr-meta">${formatAge(ts)}${rider.latest?.accuracy ? ' · ±' + rider.latest.accuracy + 'm' : ''}</div>
+            </div>
+            <div class="sr-status ${s}">${s === 'fresh' ? '● Live' : s === 'stale' ? '● Stale' : '● Off'}</div>`;
+
+          row.addEventListener('click', () => zoomToRider(bib));
+          container.appendChild(row);
+        });
+    }
+
+    function zoomToRider(bib) {
+      const rider = riders[bib];
+      if (!rider?.latest?.lat || !rider?.latest?.lng) return;
+
+      // Highlight in search list
+      highlightedBib = bib;
+      renderSearchResults(document.getElementById('riderSearchBox').value);
+
+      // Zoom map and open popup
+      map.setView([rider.latest.lat, rider.latest.lng], 15, { animate: true });
+      markers[bib]?.openPopup();
+    }
 
     setInterval(() => {
       Object.entries(riders).forEach(([b, d]) => {
