@@ -602,83 +602,99 @@
       });
     }
 
-    // ── Start service worker tracking ─────────────────────────────────────────
+    // ── In-page GPS tracking (works on iOS and Android) ─────────────────────
+    // iOS blocks geolocation in service workers, so we ping from the page itself.
+    // A wake lock keeps the screen active to prevent iOS from suspending JS.
+
+    let pingInterval  = null;
+    let wakeLock      = null;
+
     async function startServiceWorkerTracking() {
-      const reg = await registerSW();
-      sw = reg;
-
-      if (!reg || !reg.active) {
-        // Fallback: use watchPosition in the page (requires tab open)
-        startFallbackTracking();
-        return;
-      }
-
-      // Send session to service worker via MessageChannel
-      const mc = new MessageChannel();
-      mc.port1.onmessage = (e) => console.log('[SW reply]', e.data);
-      reg.active.postMessage({ type: 'START_TRACKING', payload: sessionData }, [mc.port2]);
-
-      // Listen for messages back from SW
-      navigator.serviceWorker.addEventListener('message', handleSWMessage);
+      // Register SW for caching/PWA only — NOT for GPS
+      await registerSW();
+      // Start in-page GPS pinging
+      startInPageTracking();
     }
 
-    // ── Fallback: in-page GPS (tab must stay open) ────────────────────────────
-    let watchId = null;
-    function startFallbackTracking() {
-      console.warn('Service worker unavailable — using in-page fallback');
-      const ping = () => {
-        if (!sessionData || Date.now() > sessionData.expiresAt) {
-          if (watchId) navigator.geolocation.clearWatch(watchId);
-          handleExpiry();
-          return;
+    async function acquireWakeLock() {
+      if ('wakeLock' in navigator) {
+        try {
+          wakeLock = await navigator.wakeLock.request('screen');
+          wakeLock.addEventListener('release', () => {
+            // Re-acquire if page is still visible and session active
+            if (sessionData && document.visibilityState === 'visible') acquireWakeLock();
+          });
+        } catch (e) {
+          console.warn('Wake lock not available:', e.message);
         }
-        navigator.geolocation.getCurrentPosition(
-          (pos) => writePingDirect(pos),
-          (err) => console.warn('GPS error:', err),
-          { enableHighAccuracy: true, timeout: 30000, maximumAge: 60000 }
-        );
-      };
-      ping();
-      setInterval(ping, 5 * 60 * 1000);
+      }
+    }
+
+    function startInPageTracking() {
+      if (pingInterval) clearInterval(pingInterval);
+      acquireWakeLock();
+      pingNow();  // immediate first ping
+      pingInterval = setInterval(pingNow, 5 * 60 * 1000);
+    }
+
+    function pingNow() {
+      if (!sessionData) return;
+      // Expiry check
+      if (Date.now() > sessionData.expiresAt) {
+        stopPingInterval();
+        handleExpiry();
+        return;
+      }
+      navigator.geolocation.getCurrentPosition(
+        (pos) => writePingDirect(pos),
+        (err) => {
+          console.warn('GPS error:', err.code, err.message);
+          statusDot.className = 'status-dot error';
+          statusValue.textContent = 'GPS error — retrying next ping';
+        },
+        { enableHighAccuracy: true, timeout: 30000, maximumAge: 60000 }
+      );
     }
 
     async function writePingDirect(pos) {
       if (!sessionData || !sessionData.dbPath) return;
-      await db.ref(sessionData.dbPath).update({
-        active: true,
-        expiresAt: sessionData.expiresAt,
-        latest: {
-          lat: pos.coords.latitude,
-          lng: pos.coords.longitude,
-          accuracy: Math.round(pos.coords.accuracy),
-          ts: Date.now(),
-        },
-      });
-      updateLastPing({ accuracy: pos.coords.accuracy });
-    }
-
-    // ── Handle SW messages ────────────────────────────────────────────────────
-    function handleSWMessage(event) {
-      const { type } = event.data;
-      if (type === 'PING_SUCCESS') {
-        updateLastPing(event.data);
-      }
-      if (type === 'SESSION_EXPIRED') {
-        handleExpiry();
-      }
-      if (type === 'PING_ERROR') {
-        statusDot.className = 'status-dot error';
-        statusValue.textContent = 'GPS error — retrying next ping';
+      try {
+        await db.ref(sessionData.dbPath).update({
+          active: true,
+          expiresAt: sessionData.expiresAt,
+          latest: {
+            lat:      pos.coords.latitude,
+            lng:      pos.coords.longitude,
+            accuracy: Math.round(pos.coords.accuracy),
+            ts:       Date.now(),
+          },
+        });
+        updateLastPing(pos.coords.accuracy);
+      } catch (e) {
+        console.warn('Firebase write error:', e);
       }
     }
 
-    function updateLastPing(data) {
+    function stopPingInterval() {
+      if (pingInterval) { clearInterval(pingInterval); pingInterval = null; }
+      if (wakeLock)     { wakeLock.release(); wakeLock = null; }
+    }
+
+    function updateLastPing(accuracy) {
       const now = new Date();
       statusDot.className = 'status-dot active';
       statusValue.textContent = `Active — last ping at ${now.toLocaleTimeString()}`;
       displayLastPing.textContent = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-      if (data.accuracy) displayAccuracy.textContent = `±${data.accuracy}m`;
+      if (accuracy) displayAccuracy.textContent = `±${Math.round(accuracy)}m`;
     }
+
+    // Re-acquire wake lock when page becomes visible again
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible' && sessionData) {
+        acquireWakeLock();
+        pingNow(); // ping immediately when user returns to page
+      }
+    });
 
     // ── Stop tracking ─────────────────────────────────────────────────────────
     stopBtn.addEventListener('click', async () => {
@@ -687,12 +703,9 @@
     });
 
     async function stopTracking(expired) {
-      if (sw?.active) {
-        const mc = new MessageChannel();
-        sw.active.postMessage({ type: 'STOP_TRACKING' }, [mc.port2]);
-      }
-      if (sessionData) {
-        await db.ref(`riders/${sessionData.sessionId}`).update({ active: false, stoppedAt: Date.now() });
+      stopPingInterval();
+      if (sessionData?.dbPath) {
+        await db.ref(sessionData.dbPath).update({ active: false, stoppedAt: Date.now() });
       }
       localStorage.removeItem('bt_session');
       sessionData = null;
@@ -758,7 +771,7 @@
           return;
         }
         // Check Firebase to confirm session is still active
-        const snap = await db.ref(`riders/${s.sessionId}/active`).once('value');
+        const snap = await db.ref(`${s.dbPath}/active`).once('value');
         if (!snap.val()) { localStorage.removeItem('bt_session'); return; }
 
         sessionData = s;
