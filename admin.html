@@ -27,15 +27,8 @@
     position:fixed; inset:0; background:var(--bg); z-index:1000;
     display:flex; align-items:center; justify-content:center;
   }
-  .login-box {
-    width:360px; background:var(--bg2); border-top:3px solid var(--orange); padding:40px;
-  }
+  .login-box { width:360px; background:var(--bg2); border-top:3px solid var(--orange); padding:40px; }
   .login-logo { display:flex; align-items:center; gap:12px; margin-bottom:32px; }
-  .login-hex {
-    width:44px; height:44px; clip-path:polygon(50% 0%,93% 25%,93% 75%,50% 100%,7% 25%,7% 75%);
-    background:var(--orange); display:flex; align-items:center; justify-content:center;
-  }
-  .login-hex svg { width:26px; height:26px; fill:#0c0e0f; }
   .login-title { font-family:var(--condensed); font-size:22px; font-weight:900; color:var(--orange); letter-spacing:2px; text-transform:uppercase; line-height:1.1; }
   .login-sub { font-family:var(--mono); font-size:9px; color:var(--text-dim); letter-spacing:2px; }
   .login-label { font-family:var(--condensed); font-size:11px; font-weight:700; letter-spacing:3px; text-transform:uppercase; color:var(--text-dim); margin-bottom:8px; display:block; }
@@ -45,11 +38,7 @@
     letter-spacing:3px; margin-bottom:16px;
   }
   .login-input:focus { border-color:var(--orange); }
-  .login-btn {
-    width:100%; padding:16px; background:var(--orange); color:#0c0e0f;
-    font-family:var(--condensed); font-size:18px; font-weight:900; letter-spacing:4px;
-    text-transform:uppercase; border:none; cursor:pointer;
-  }
+  .login-btn { width:100%; padding:16px; background:var(--orange); color:#0c0e0f; font-family:var(--condensed); font-size:18px; font-weight:900; letter-spacing:4px; text-transform:uppercase; border:none; cursor:pointer; }
   .login-btn:hover { background:#ffbc45; }
   .login-err { color:var(--red); font-family:var(--mono); font-size:12px; margin-top:10px; display:none; }
 
@@ -59,28 +48,16 @@
     background:var(--bg2); border-bottom:2px solid var(--orange);
     position:sticky; top:0; z-index:50; flex-wrap:wrap;
   }
-  .logo-hex {
-    width:38px; height:38px; clip-path:polygon(50% 0%,93% 25%,93% 75%,50% 100%,7% 25%,7% 75%);
-    background:var(--orange); display:flex; align-items:center; justify-content:center; flex-shrink:0;
-  }
-  .logo-hex svg { width:22px; height:22px; fill:#0c0e0f; }
   .brand-top { font-family:var(--condensed); font-size:18px; font-weight:900; letter-spacing:2px; text-transform:uppercase; color:var(--orange); line-height:1; }
   .brand-sub { font-family:var(--mono); font-size:9px; color:var(--text-dim); letter-spacing:1.5px; text-transform:uppercase; }
   .topbar-spacer { flex:1; }
-
-  /* GLOBAL TOGGLE */
   .toggle-row { display:flex; align-items:center; gap:10px; }
   .toggle-label { font-family:var(--condensed); font-size:13px; font-weight:700; letter-spacing:2px; text-transform:uppercase; color:var(--text-dim); }
   .toggle-switch { position:relative; width:52px; height:28px; cursor:pointer; }
   .toggle-switch input { opacity:0; width:0; height:0; }
-  .toggle-track {
-    position:absolute; inset:0; background:#2a2d30; transition:background 0.2s;
-  }
+  .toggle-track { position:absolute; inset:0; background:#2a2d30; transition:background 0.2s; }
   .toggle-switch input:checked + .toggle-track { background:var(--green); }
-  .toggle-thumb {
-    position:absolute; width:22px; height:22px; background:#fff; top:3px; left:3px;
-    transition:left 0.2s;
-  }
+  .toggle-thumb { position:absolute; width:22px; height:22px; background:#fff; top:3px; left:3px; transition:left 0.2s; }
   .toggle-switch input:checked ~ .toggle-thumb { left:27px; }
   .global-status { font-family:var(--condensed); font-size:14px; font-weight:700; letter-spacing:2px; }
   .status-on { color:var(--green); }
@@ -112,48 +89,29 @@
   .btn-red:hover { background:#c94040; }
   .btn-green { background:var(--green); color:#0c0e0f; }
   .btn-blue { background:var(--blue); color:#0c0e0f; }
-  .gpx-panel {
-    background:var(--bg3); border-top:2px solid var(--green);
-    padding:20px; margin-bottom:24px;
-  }
+
+  .gpx-panel { background:var(--bg3); border-top:2px solid var(--green); padding:20px; margin-bottom:24px; }
 
   /* ADD EVENT PANEL */
-  .add-event-panel {
-    background:var(--bg3); border-top:2px solid var(--orange); padding:20px;
-    margin-bottom:20px; display:none;
-  }
+  .add-event-panel { background:var(--bg3); border-top:2px solid var(--orange); padding:20px; margin-bottom:20px; display:none; }
   .add-event-panel.open { display:block; }
   .panel-grid { display:grid; grid-template-columns:1fr 1fr auto; gap:12px; align-items:end; }
   .field-label { font-family:var(--condensed); font-size:10px; font-weight:700; letter-spacing:3px; text-transform:uppercase; color:var(--text-dim); margin-bottom:6px; }
-  .styled-input {
-    width:100%; background:var(--bg2); border:2px solid var(--border); border-top:2px solid #3a3d40;
-    color:var(--text); font-family:var(--body); font-size:15px; padding:10px 14px; outline:none;
-  }
+  .styled-input { width:100%; background:var(--bg2); border:2px solid var(--border); border-top:2px solid #3a3d40; color:var(--text); font-family:var(--body); font-size:15px; padding:10px 14px; outline:none; }
   .styled-input:focus { border-color:var(--orange); }
 
   /* ── SCHEDULING PANEL ── */
-  .schedule-panel {
-    background:var(--bg3); border-top:2px solid var(--blue);
-    padding:20px; margin-bottom:24px;
-  }
+  .schedule-panel { background:var(--bg3); border-top:2px solid var(--blue); padding:20px; margin-bottom:24px; }
   .schedule-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; }
   .schedule-title { font-family:var(--condensed); font-size:18px; font-weight:700; letter-spacing:3px; text-transform:uppercase; color:var(--blue); }
   .schedule-grid { display:grid; grid-template-columns:1fr 1fr 1fr 1fr auto; gap:12px; align-items:end; flex-wrap:wrap; }
-  .schedule-status {
-    display:inline-flex; align-items:center; gap:8px; padding:6px 14px;
-    font-family:var(--condensed); font-size:13px; font-weight:700; letter-spacing:2px; text-transform:uppercase;
-  }
+  .schedule-status { display:inline-flex; align-items:center; gap:8px; padding:6px 14px; font-family:var(--condensed); font-size:13px; font-weight:700; letter-spacing:2px; text-transform:uppercase; }
   .sched-active { background:var(--green); color:#0c0e0f; }
   .sched-inactive { background:var(--bg2); color:var(--text-dim); border:1px solid var(--border); }
   .sched-pending { background:var(--orange); color:#0c0e0f; }
   .sched-info { font-family:var(--mono); font-size:11px; color:var(--text-dim); margin-top:10px; line-height:1.6; }
-  .sched-info span { color:var(--text); }
   .schedule-list { margin-top:16px; }
-  .sched-row {
-    display:flex; align-items:center; gap:12px; padding:10px 14px;
-    background:var(--bg2); border-left:3px solid transparent; margin-bottom:4px;
-    font-family:var(--mono); font-size:12px; flex-wrap:wrap;
-  }
+  .sched-row { display:flex; align-items:center; gap:12px; padding:10px 14px; background:var(--bg2); border-left:3px solid transparent; margin-bottom:4px; font-family:var(--mono); font-size:12px; flex-wrap:wrap; }
   .sched-row.active { border-left-color:var(--green); }
   .sched-row.past { border-left-color:var(--text-dim); opacity:0.5; }
   .sched-row.future { border-left-color:var(--orange); }
@@ -175,12 +133,9 @@
   .num-amber { color:var(--amber); }
   .stat-desc { font-family:var(--mono); font-size:9px; color:var(--text-dim); letter-spacing:2px; text-transform:uppercase; margin-top:4px; }
 
-  /* ── SEARCH ── */
-  .search-row { display:flex; align-items:center; gap:12px; margin-bottom:16px; }
-  .search-input {
-    flex:1; background:var(--bg3); border:2px solid var(--border); border-top:2px solid #3a3d40;
-    color:var(--text); font-family:var(--mono); font-size:14px; padding:10px 16px; outline:none;
-  }
+  /* ── SEARCH / ACTION ROW ── */
+  .search-row { display:flex; align-items:center; gap:12px; margin-bottom:16px; flex-wrap:wrap; }
+  .search-input { flex:1; min-width:180px; background:var(--bg3); border:2px solid var(--border); border-top:2px solid #3a3d40; color:var(--text); font-family:var(--mono); font-size:14px; padding:10px 16px; outline:none; }
   .search-input:focus { border-color:var(--orange); }
   .search-input::placeholder { color:var(--text-dim); }
 
@@ -200,22 +155,14 @@
   .expires-cell { font-family:var(--mono); font-size:12px; }
   .expires-warn { color:var(--red); }
 
-  /* STATUS PILLS */
-  .pill {
-    display:inline-block; padding:4px 12px;
-    font-family:var(--condensed); font-size:12px; font-weight:700; letter-spacing:2px; text-transform:uppercase;
-  }
+  .pill { display:inline-block; padding:4px 12px; font-family:var(--condensed); font-size:12px; font-weight:700; letter-spacing:2px; text-transform:uppercase; }
   .pill-live { background:var(--green); color:#0c0e0f; }
   .pill-paused { background:var(--red); color:#fff; }
   .pill-stale { background:#3a3d40; color:var(--text-dim); }
   .pill-stopped { background:var(--bg); color:var(--text-dim); border:1px solid var(--border); }
 
-  /* ACTIONS */
   .actions { display:flex; gap:6px; flex-wrap:wrap; }
-  .act-btn {
-    padding:5px 12px; font-family:var(--condensed); font-size:11px; font-weight:700;
-    letter-spacing:1.5px; text-transform:uppercase; border:none; cursor:pointer;
-  }
+  .act-btn { padding:5px 12px; font-family:var(--condensed); font-size:11px; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; border:none; cursor:pointer; }
   .act-pause { background:var(--red); color:#fff; }
   .act-pause:hover { background:#c94040; }
   .act-resume { background:var(--green); color:#0c0e0f; }
@@ -223,20 +170,18 @@
   .act-remove { background:transparent; border:1px solid var(--red); color:var(--red); }
   .act-remove:hover { background:var(--red); color:#fff; }
 
-  /* EMPTY STATE */
   .empty-state { text-align:center; padding:60px 20px; color:var(--text-dim); }
   .empty-state h3 { font-family:var(--condensed); font-size:24px; letter-spacing:3px; margin-bottom:8px; }
   .empty-state p { font-family:var(--mono); font-size:12px; }
 
-  /* CONFIRM DIALOG */
+  /* ── CONFIRM DIALOG ── */
   .dialog-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.75); z-index:200; display:none; align-items:center; justify-content:center; }
   .dialog-overlay.open { display:flex; }
-  .dialog-box { background:var(--bg2); border-top:3px solid var(--red); padding:32px; max-width:380px; width:90%; }
+  .dialog-box { background:var(--bg2); border-top:3px solid var(--red); padding:32px; max-width:420px; width:90%; }
   .dialog-title { font-family:var(--condensed); font-size:22px; font-weight:900; color:var(--red); letter-spacing:2px; margin-bottom:12px; }
   .dialog-msg { font-family:var(--body); font-size:14px; color:var(--text-mid); margin-bottom:24px; line-height:1.5; }
   .dialog-actions { display:flex; gap:12px; }
 
-  /* RESPONSIVE */
   @media(max-width:900px) {
     .stats-row { grid-template-columns:1fr 1fr; }
     .schedule-grid { grid-template-columns:1fr 1fr; }
@@ -246,14 +191,8 @@
     .stats-row { grid-template-columns:1fr 1fr; }
     .main { padding:16px; }
   }
-
-  .datetime-input {
-    background:var(--bg2); border:2px solid var(--border); border-top:2px solid #3a3d40;
-    color:var(--text); font-family:var(--mono); font-size:13px; padding:10px 12px; outline:none;
-    width:100%; cursor:pointer;
-  }
+  .datetime-input { background:var(--bg2); border:2px solid var(--border); border-top:2px solid #3a3d40; color:var(--text); font-family:var(--mono); font-size:13px; padding:10px 12px; outline:none; width:100%; cursor:pointer; }
   .datetime-input:focus { border-color:var(--blue); }
-  /* Style datetime-local inputs */
   input[type="datetime-local"]::-webkit-calendar-picker-indicator { filter:invert(0.5); cursor:pointer; }
 </style>
 </head>
@@ -276,13 +215,13 @@
   </div>
 </div>
 
-<!-- CONFIRM DIALOG -->
+<!-- CONFIRM DIALOG — used for multiple actions -->
 <div class="dialog-overlay" id="confirmDialog">
   <div class="dialog-box">
-    <div class="dialog-title">Confirm Remove</div>
-    <div class="dialog-msg" id="confirmMsg">Remove this rider from tracking?</div>
+    <div class="dialog-title" id="dialogTitle">Confirm</div>
+    <div class="dialog-msg" id="confirmMsg"></div>
     <div class="dialog-actions">
-      <button class="btn btn-red" onclick="confirmRemove()">REMOVE</button>
+      <button class="btn btn-red" id="dialogConfirmBtn" onclick="executeDialogAction()">CONFIRM</button>
       <button class="btn btn-ghost" onclick="closeDialog()">CANCEL</button>
     </div>
   </div>
@@ -303,9 +242,7 @@
       <div class="toggle-track"></div>
       <div class="toggle-thumb"></div>
     </label>
-    <span class="global-status" id="globalStatusLabel">
-      <span class="status-off">OFF</span>
-    </span>
+    <span class="global-status" id="globalStatusLabel"><span class="status-off">OFF</span></span>
   </div>
 </div>
 
@@ -320,6 +257,11 @@
       </select>
     </div>
     <button class="btn btn-ghost" onclick="toggleAddPanel()">+ Add Event</button>
+    <!-- ── NEW: Delete current race ── -->
+    <button class="btn btn-ghost" id="deleteRaceBtn" onclick="promptDeleteRace()"
+      style="border-color:var(--red);color:var(--red);display:none">
+      🗑 Delete Race
+    </button>
   </div>
 
   <!-- ADD EVENT PANEL -->
@@ -343,13 +285,10 @@
     <div class="schedule-header">
       <div>
         <div class="schedule-title" style="color:var(--green)">🗺 Course GPX Overlay</div>
-        <div style="font-family:var(--mono);font-size:11px;color:var(--text-dim);margin-top:4px;">
-          Upload a GPX file to draw the course route on the spectator map.
-        </div>
+        <div style="font-family:var(--mono);font-size:11px;color:var(--text-dim);margin-top:4px;">Upload a GPX file to draw the course route on the spectator map.</div>
       </div>
       <div id="gpxStatusBadge" class="schedule-status sched-inactive">NO COURSE</div>
     </div>
-
     <div style="display:grid;grid-template-columns:1fr auto auto;gap:12px;align-items:end;margin-top:16px;">
       <div>
         <div class="field-label">GPX File</div>
@@ -369,13 +308,10 @@
     <div class="schedule-header">
       <div>
         <div class="schedule-title">📅 Tracking Schedule</div>
-        <div style="font-family:var(--mono);font-size:11px;color:var(--text-dim);margin-top:4px;">
-          Set windows when rider dots appear on the spectator map. Outside these windows, the map is blank.
-        </div>
+        <div style="font-family:var(--mono);font-size:11px;color:var(--text-dim);margin-top:4px;">Set windows when rider dots appear on the spectator map.</div>
       </div>
       <div id="scheduleStatusBadge" class="schedule-status sched-inactive">NO SCHEDULE</div>
     </div>
-
     <div class="schedule-grid">
       <div>
         <div class="field-label">Start Date & Time</div>
@@ -401,16 +337,12 @@
       </div>
       <button class="btn btn-blue" onclick="addScheduleWindow()" style="height:42px;align-self:end">ADD WINDOW</button>
     </div>
-
-    <div class="sched-info" id="schedInfo">
-      No tracking windows scheduled. Add one above, or leave empty to always show dots when global tracking is ON.
-    </div>
-
+    <div class="sched-info" id="schedInfo">No tracking windows scheduled.</div>
     <div class="schedule-list" id="scheduleList"></div>
   </div>
 
   <!-- STATS ROW -->
-  <div class="stats-row" id="statsRow">
+  <div class="stats-row">
     <div class="stat-card active-card">
       <div class="stat-num num-green" id="statActive">0</div>
       <div class="stat-desc">Active Trackers</div>
@@ -429,10 +361,19 @@
     </div>
   </div>
 
-  <!-- SEARCH -->
+  <!-- SEARCH + ACTION ROW -->
   <div class="search-row">
     <input type="text" class="search-input" id="searchInput" placeholder="Filter by bib or name..." oninput="filterTable()">
-    <div style="font-family:var(--mono);font-size:11px;color:var(--text-dim)" id="filterCount"></div>
+    <div style="font-family:var(--mono);font-size:11px;color:var(--text-dim);white-space:nowrap" id="filterCount"></div>
+    <!-- ── NEW: Rider cleanup buttons ── -->
+    <button class="btn btn-ghost" id="clearExpiredBtn" onclick="promptClearExpired()"
+      style="border-color:var(--amber);color:var(--amber);display:none">
+      Clear Expired
+    </button>
+    <button class="btn btn-ghost" id="clearAllBtn" onclick="promptClearAll()"
+      style="border-color:var(--red);color:var(--red);display:none">
+      Clear All Riders
+    </button>
   </div>
 
   <!-- TABLE -->
@@ -440,35 +381,22 @@
     <table id="riderTable">
       <thead>
         <tr>
-          <th>Bib</th>
-          <th>Name</th>
-          <th>Status</th>
-          <th>Last Ping</th>
-          <th>Expires</th>
-          <th>Actions</th>
+          <th>Bib</th><th>Name</th><th>Status</th><th>Last Ping</th><th>Expires</th><th>Actions</th>
         </tr>
       </thead>
       <tbody id="riderTableBody">
-        <tr>
-          <td colspan="6">
-            <div class="empty-state">
-              <h3>No Event Selected</h3>
-              <p>Select an event above to view riders.</p>
-            </div>
-          </td>
-        </tr>
+        <tr><td colspan="6"><div class="empty-state"><h3>No Event Selected</h3><p>Select an event above to view riders.</p></div></td></tr>
       </tbody>
     </table>
   </div>
 
-</div><!-- /main -->
+</div>
 
 <script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
 import { getDatabase, ref, set, get, update, remove, onValue, off } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
 
-// ── CONFIG ───────────────────────────────────────────────────────────────────
-const ADMIN_PASSWORD = "breakaway2025"; // ← change this
+const ADMIN_PASSWORD = "breakaway2025";
 
 const firebaseConfig = {
   apiKey: "AIzaSyCWwav2Ytr1wKSPevsxKYlYb6h6RNWJ5Rc",
@@ -482,17 +410,16 @@ const firebaseConfig = {
 };
 
 const app = initializeApp(firebaseConfig);
-const db = getDatabase(app);
+const db  = getDatabase(app);
 
-// ── STATE ────────────────────────────────────────────────────────────────────
-let currentRaceId = null;
-let currentRiders = {};
-let raceListener = null;
-let pendingRemoveBib = null;
-let scheduleWindows = [];
+let currentRaceId      = null;
+let currentRiders      = {};
+let raceListener       = null;
+let pendingAction      = null;   // { type, payload }
+let scheduleWindows    = [];
 let scheduleCheckInterval = null;
 
-// ── LOGIN ────────────────────────────────────────────────────────────────────
+// ── LOGIN ─────────────────────────────────────────────────────────────────────
 window.doLogin = function() {
   const pw = document.getElementById('pwInput').value;
   if (pw === ADMIN_PASSWORD) {
@@ -509,10 +436,10 @@ function init() {
   startScheduleCheck();
 }
 
-// ── RACES ────────────────────────────────────────────────────────────────────
+// ── RACES ─────────────────────────────────────────────────────────────────────
 function loadRaces() {
   onValue(ref(db, 'config/races'), (snap) => {
-    const sel = document.getElementById('raceSelect');
+    const sel  = document.getElementById('raceSelect');
     const prev = sel.value;
     sel.innerHTML = '<option value="">— Select Event —</option>';
     const data = snap.val();
@@ -524,18 +451,18 @@ function loadRaces() {
         sel.appendChild(opt);
       });
     }
-    if (prev) { sel.value = prev; }
+    if (prev) sel.value = prev;
   });
 }
 
 window.addEvent = async function() {
-  const id = document.getElementById('newRaceId').value.trim().replace(/\s+/g, '-');
+  const id   = document.getElementById('newRaceId').value.trim().replace(/\s+/g, '-');
   const name = document.getElementById('newRaceName').value.trim();
-  const msg = document.getElementById('addEventMsg');
+  const msg  = document.getElementById('addEventMsg');
   if (!id || !name) { msg.style.color = 'var(--red)'; msg.textContent = 'Both fields required.'; return; }
   await set(ref(db, `config/races/${id}`), { name, trackingEnabled: true, createdAt: Date.now() });
   msg.style.color = 'var(--green)'; msg.textContent = `✓ Event "${name}" created.`;
-  document.getElementById('newRaceId').value = '';
+  document.getElementById('newRaceId').value  = '';
   document.getElementById('newRaceName').value = '';
 };
 
@@ -546,11 +473,29 @@ window.toggleAddPanel = function() {
 window.selectRace = function(raceId) {
   currentRaceId = raceId;
   if (raceListener) { off(ref(db, `tracker/${currentRaceId}`)); raceListener = null; }
-  const gpxPanel = document.getElementById('gpxPanel');
-  if (!raceId) { renderEmpty('No event selected.'); gpxPanel.style.display = 'none'; return; }
-  gpxPanel.style.display = 'block';
+
+  const gpxPanel       = document.getElementById('gpxPanel');
+  const deleteRaceBtn  = document.getElementById('deleteRaceBtn');
+  const clearExpiredBtn = document.getElementById('clearExpiredBtn');
+  const clearAllBtn    = document.getElementById('clearAllBtn');
+
+  if (!raceId) {
+    renderEmpty('No event selected.');
+    gpxPanel.style.display      = 'none';
+    deleteRaceBtn.style.display  = 'none';
+    clearExpiredBtn.style.display = 'none';
+    clearAllBtn.style.display    = 'none';
+    return;
+  }
+
+  gpxPanel.style.display       = 'block';
+  deleteRaceBtn.style.display  = 'inline-flex';
+  clearExpiredBtn.style.display = 'inline-flex';
+  clearAllBtn.style.display    = 'inline-flex';
+
   loadSchedule(raceId);
   loadGpxStatus(raceId);
+
   raceListener = onValue(ref(db, `tracker/${raceId}`), (snap) => {
     currentRiders = snap.val() || {};
     autoExpireCheck();
@@ -559,7 +504,94 @@ window.selectRace = function(raceId) {
   });
 };
 
-// ── GLOBAL TRACKING ──────────────────────────────────────────────────────────
+// ── DELETE RACE ───────────────────────────────────────────────────────────────
+window.promptDeleteRace = function() {
+  if (!currentRaceId) return;
+  const name = document.querySelector(`#raceSelect option[value="${currentRaceId}"]`)?.textContent || currentRaceId;
+  pendingAction = { type: 'deleteRace', raceId: currentRaceId };
+  document.getElementById('dialogTitle').textContent = 'Delete Race';
+  document.getElementById('confirmMsg').textContent  =
+    `Permanently delete "${name}" and ALL its rider data, schedule, and GPX course? This cannot be undone.`;
+  document.getElementById('dialogConfirmBtn').textContent = 'DELETE RACE';
+  document.getElementById('confirmDialog').classList.add('open');
+};
+
+async function executeDeleteRace(raceId) {
+  // Remove riders
+  await remove(ref(db, `tracker/${raceId}`));
+  // Remove schedule
+  await remove(ref(db, `config/schedules/${raceId}`));
+  // Remove GPX
+  await remove(ref(db, `config/gpx/${raceId}`));
+  // Remove the race entry itself
+  await remove(ref(db, `config/races/${raceId}`));
+  // Reset UI
+  document.getElementById('raceSelect').value = '';
+  window.selectRace('');
+}
+
+// ── CLEAR EXPIRED RIDERS ──────────────────────────────────────────────────────
+window.promptClearExpired = function() {
+  if (!currentRaceId) return;
+  const now     = Date.now();
+  const expired = Object.entries(currentRiders).filter(([, r]) => !r.expiresAt || r.expiresAt < now);
+  if (!expired.length) {
+    alert('No expired riders found for this event.');
+    return;
+  }
+  pendingAction = { type: 'clearExpired', raceId: currentRaceId };
+  document.getElementById('dialogTitle').textContent = 'Clear Expired Riders';
+  document.getElementById('confirmMsg').textContent  =
+    `Remove ${expired.length} expired rider${expired.length !== 1 ? 's' : ''} from "${currentRaceId}"? Active riders will not be affected.`;
+  document.getElementById('dialogConfirmBtn').textContent = 'CLEAR EXPIRED';
+  document.getElementById('confirmDialog').classList.add('open');
+};
+
+async function executeClearExpired(raceId) {
+  const now  = Date.now();
+  const snap = await get(ref(db, `tracker/${raceId}`));
+  const data = snap.val() || {};
+  const dels = Object.entries(data)
+    .filter(([, r]) => !r.expiresAt || r.expiresAt < now)
+    .map(([bib]) => remove(ref(db, `tracker/${raceId}/${bib}`)));
+  await Promise.all(dels);
+}
+
+// ── CLEAR ALL RIDERS ──────────────────────────────────────────────────────────
+window.promptClearAll = function() {
+  if (!currentRaceId) return;
+  const count = Object.keys(currentRiders).length;
+  if (!count) { alert('No riders to clear.'); return; }
+  pendingAction = { type: 'clearAll', raceId: currentRaceId };
+  document.getElementById('dialogTitle').textContent = 'Clear All Riders';
+  document.getElementById('confirmMsg').textContent  =
+    `Remove all ${count} rider${count !== 1 ? 's' : ''} from "${currentRaceId}"? This clears all tracking data for this event.`;
+  document.getElementById('dialogConfirmBtn').textContent = 'CLEAR ALL';
+  document.getElementById('confirmDialog').classList.add('open');
+};
+
+async function executeClearAll(raceId) {
+  await remove(ref(db, `tracker/${raceId}`));
+}
+
+// ── SHARED DIALOG EXECUTOR ────────────────────────────────────────────────────
+window.executeDialogAction = async function() {
+  if (!pendingAction) { closeDialog(); return; }
+  const { type, raceId, bib } = pendingAction;
+  closeDialog();
+  if (type === 'deleteRace')   await executeDeleteRace(raceId);
+  if (type === 'clearExpired') await executeClearExpired(raceId);
+  if (type === 'clearAll')     await executeClearAll(raceId);
+  if (type === 'removeRider')  await remove(ref(db, `tracker/${raceId}/${bib}`));
+  pendingAction = null;
+};
+
+window.closeDialog = function() {
+  document.getElementById('confirmDialog').classList.remove('open');
+  pendingAction = null;
+};
+
+// ── GLOBAL TRACKING ───────────────────────────────────────────────────────────
 function listenGlobalTracking() {
   onValue(ref(db, 'config/globalTracking'), (snap) => {
     const on = snap.val() === true;
@@ -571,39 +603,29 @@ function listenGlobalTracking() {
 window.toggleGlobal = async function(on) {
   await set(ref(db, 'config/globalTracking'), on);
   updateGlobalUI(on);
-  // Push adminStop to all active riders in current race
   if (currentRaceId && Object.keys(currentRiders).length > 0) {
     const updates = {};
     Object.entries(currentRiders).forEach(([bib, rider]) => {
-      if (rider.active) {
-        updates[`tracker/${currentRaceId}/${bib}/adminStop`] = !on;
-      }
+      if (rider.active) updates[`tracker/${currentRaceId}/${bib}/adminStop`] = !on;
     });
-    if (Object.keys(updates).length > 0) {
-      const { getDatabase, ref: dbRef } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js');
-      await update(ref(db, '/'), updates);
-    }
+    if (Object.keys(updates).length > 0) await update(ref(db, '/'), updates);
   }
 };
 
 function updateGlobalUI(on) {
-  const label = document.getElementById('globalStatusLabel');
-  label.innerHTML = on ? '<span class="status-on">ON</span>' : '<span class="status-off">OFF</span>';
-  const statEl = document.getElementById('statGlobal');
-  statEl.textContent = on ? 'ON' : 'OFF';
-  statEl.style.color = on ? 'var(--green)' : 'var(--red)';
+  document.getElementById('globalStatusLabel').innerHTML = on
+    ? '<span class="status-on">ON</span>' : '<span class="status-off">OFF</span>';
+  const el = document.getElementById('statGlobal');
+  el.textContent  = on ? 'ON' : 'OFF';
+  el.style.color  = on ? 'var(--green)' : 'var(--red)';
 }
 
-// ── SCHEDULING ───────────────────────────────────────────────────────────────
+// ── SCHEDULING ────────────────────────────────────────────────────────────────
 function loadSchedule(raceId) {
   onValue(ref(db, `config/schedules/${raceId}`), (snap) => {
     scheduleWindows = [];
     const data = snap.val();
-    if (data) {
-      Object.entries(data).forEach(([key, win]) => {
-        scheduleWindows.push({ key, ...win });
-      });
-    }
+    if (data) Object.entries(data).forEach(([key, win]) => scheduleWindows.push({ key, ...win }));
     renderScheduleList();
     checkScheduleNow();
   });
@@ -612,35 +634,21 @@ function loadSchedule(raceId) {
 window.addScheduleWindow = async function() {
   if (!currentRaceId) { alert('Select an event first.'); return; }
   const startVal = document.getElementById('schedStart').value;
-  const endVal = document.getElementById('schedEnd').value;
-  const label = document.getElementById('schedLabel').value.trim();
-  const repeat = document.getElementById('schedRepeat').value;
-
+  const endVal   = document.getElementById('schedEnd').value;
   if (!startVal || !endVal) { alert('Start and end date/time are required.'); return; }
-
   const startTs = new Date(startVal).getTime();
-  const endTs = new Date(endVal).getTime();
-
+  const endTs   = new Date(endVal).getTime();
   if (endTs <= startTs) { alert('End time must be after start time.'); return; }
-
-  const windowData = {
-    start: startTs,
-    end: endTs,
-    startIso: startVal,
-    endIso: endVal,
-    label: label || 'Race Window',
-    repeat,
-    createdAt: Date.now()
-  };
-
-  const newRef = ref(db, `config/schedules/${currentRaceId}`);
-  // push manually using timestamp key
   const key = 'w_' + Date.now();
-  await set(ref(db, `config/schedules/${currentRaceId}/${key}`), windowData);
-
-  document.getElementById('schedStart').value = '';
-  document.getElementById('schedEnd').value = '';
-  document.getElementById('schedLabel').value = '';
+  await set(ref(db, `config/schedules/${currentRaceId}/${key}`), {
+    start: startTs, end: endTs, startIso: startVal, endIso: endVal,
+    label: document.getElementById('schedLabel').value.trim() || 'Race Window',
+    repeat: document.getElementById('schedRepeat').value,
+    createdAt: Date.now()
+  });
+  document.getElementById('schedStart').value  = '';
+  document.getElementById('schedEnd').value    = '';
+  document.getElementById('schedLabel').value  = '';
   document.getElementById('schedRepeat').value = 'none';
 };
 
@@ -652,178 +660,134 @@ window.deleteScheduleWindow = async function(key) {
 function renderScheduleList() {
   const list = document.getElementById('scheduleList');
   const info = document.getElementById('schedInfo');
-  if (scheduleWindows.length === 0) {
+  if (!scheduleWindows.length) {
     list.innerHTML = '';
-    info.style.display = 'block';
-    info.textContent = 'No tracking windows scheduled. Add one above, or leave empty to always show dots when global tracking is ON.';
+    info.style.display  = 'block';
+    info.textContent    = 'No tracking windows scheduled. Add one above, or leave empty to always show dots when global tracking is ON.';
     return;
   }
   info.style.display = 'none';
-
-  const now = Date.now();
-  const sorted = [...scheduleWindows].sort((a, b) => a.start - b.start);
+  const now    = Date.now();
+  const sorted = [...scheduleWindows].sort((a,b) => a.start - b.start);
   list.innerHTML = sorted.map(w => {
-    let rowClass = 'future';
-    if (now >= w.start && now <= w.end) rowClass = 'active';
-    else if (now > w.end) rowClass = 'past';
-    const startStr = new Date(w.start).toLocaleString('en-US', { month:'short', day:'numeric', hour:'2-digit', minute:'2-digit' });
-    const endStr = new Date(w.end).toLocaleString('en-US', { month:'short', day:'numeric', hour:'2-digit', minute:'2-digit' });
-    const repeatBadge = w.repeat !== 'none' ? `<span style="color:var(--blue);margin-left:8px">[${w.repeat}]</span>` : '';
-    return `
-      <div class="sched-row ${rowClass}">
-        <span class="sched-time">${w.label}${repeatBadge}</span>
-        <span class="sched-window">${startStr} → ${endStr}</span>
-        <button class="sched-del" onclick="deleteScheduleWindow('${w.key}')">✕ DEL</button>
-      </div>`;
+    let rowClass = now >= w.start && now <= w.end ? 'active' : now > w.end ? 'past' : 'future';
+    const s = new Date(w.start).toLocaleString('en-US', { month:'short', day:'numeric', hour:'2-digit', minute:'2-digit' });
+    const e = new Date(w.end).toLocaleString('en-US',   { month:'short', day:'numeric', hour:'2-digit', minute:'2-digit' });
+    const rpt = w.repeat !== 'none' ? `<span style="color:var(--blue);margin-left:8px">[${w.repeat}]</span>` : '';
+    return `<div class="sched-row ${rowClass}">
+      <span class="sched-time">${w.label}${rpt}</span>
+      <span class="sched-window">${s} → ${e}</span>
+      <button class="sched-del" onclick="deleteScheduleWindow('${w.key}')">✕ DEL</button>
+    </div>`;
   }).join('');
 }
 
 function checkScheduleNow() {
   const badge = document.getElementById('scheduleStatusBadge');
-  if (scheduleWindows.length === 0) {
-    badge.className = 'schedule-status sched-inactive';
-    badge.textContent = 'NO SCHEDULE';
-    return;
-  }
-
-  const now = Date.now();
-  const active = isInScheduleWindow(now);
+  if (!scheduleWindows.length) { badge.className = 'schedule-status sched-inactive'; badge.textContent = 'NO SCHEDULE'; return; }
+  const now      = Date.now();
+  const active   = isInScheduleWindow(now);
   const upcoming = scheduleWindows.find(w => w.start > now);
-
-  if (active) {
-    badge.className = 'schedule-status sched-active';
-    badge.textContent = '● WINDOW ACTIVE';
-  } else if (upcoming) {
-    badge.className = 'schedule-status sched-pending';
-    badge.textContent = '⏳ NEXT WINDOW PENDING';
-  } else {
-    badge.className = 'schedule-status sched-inactive';
-    badge.textContent = 'ALL WINDOWS PAST';
-  }
-
-  // Write visibility state to Firebase for map.html to read
-  if (currentRaceId) {
-    set(ref(db, `config/scheduleActive/${currentRaceId}`), active);
-    // Find next window start/end for map
-    const activeWin = scheduleWindows.find(w => now >= w.start && now <= w.end);
-    if (activeWin) {
-      set(ref(db, `config/scheduleWindow/${currentRaceId}`), { start: activeWin.start, end: activeWin.end, label: activeWin.label });
-    }
-  }
+  if (active)         { badge.className = 'schedule-status sched-active';   badge.textContent = '● WINDOW ACTIVE'; }
+  else if (upcoming)  { badge.className = 'schedule-status sched-pending';  badge.textContent = '⏳ NEXT WINDOW PENDING'; }
+  else                { badge.className = 'schedule-status sched-inactive'; badge.textContent = 'ALL WINDOWS PAST'; }
+  if (currentRaceId) set(ref(db, `config/scheduleActive/${currentRaceId}`), active);
 }
 
 function isInScheduleWindow(ts) {
-  if (scheduleWindows.length === 0) return true; // No schedule = always visible
+  if (!scheduleWindows.length) return true;
   const now = ts || Date.now();
   return scheduleWindows.some(w => {
     if (now >= w.start && now <= w.end) return true;
-    // Handle repeating
     if (w.repeat === 'daily') {
-      const windowDuration = w.end - w.start;
-      const dayMs = 86400000;
-      const elapsed = now - w.start;
-      const cyclePos = ((elapsed % dayMs) + dayMs) % dayMs;
-      return cyclePos <= windowDuration;
+      const dur = w.end - w.start, dayMs = 86400000;
+      const pos = ((( now - w.start) % dayMs) + dayMs) % dayMs;
+      return pos <= dur;
     }
     if (w.repeat === 'weekly') {
-      const windowDuration = w.end - w.start;
-      const weekMs = 7 * 86400000;
+      const dur = w.end - w.start, wkMs = 7 * 86400000;
       const elapsed = now - w.start;
-      const cyclePos = ((elapsed % weekMs) + weekMs) % weekMs;
-      return elapsed >= 0 && cyclePos <= windowDuration;
+      const pos = ((elapsed % wkMs) + wkMs) % wkMs;
+      return elapsed >= 0 && pos <= dur;
     }
     return false;
   });
 }
 
 function startScheduleCheck() {
-  scheduleCheckInterval = setInterval(() => {
-    checkScheduleNow();
-    renderScheduleList();
-  }, 30000); // check every 30s
+  scheduleCheckInterval = setInterval(() => { checkScheduleNow(); renderScheduleList(); }, 30000);
 }
 
-// ── RIDER TABLE ──────────────────────────────────────────────────────────────
+// ── RIDER TABLE ───────────────────────────────────────────────────────────────
 function autoExpireCheck() {
   const now = Date.now();
   Object.entries(currentRiders).forEach(([bib, rider]) => {
-    if (rider.active && rider.expiresAt && rider.expiresAt < now) {
+    if (rider.active && rider.expiresAt && rider.expiresAt < now)
       update(ref(db, `tracker/${currentRaceId}/${bib}`), { active: false });
-    }
   });
 }
 
 function renderTable(filter = '') {
   const tbody = document.getElementById('riderTableBody');
-  const bibs = Object.keys(currentRiders);
-  if (bibs.length === 0) { renderEmpty('No riders registered for this event.'); return; }
+  const bibs  = Object.keys(currentRiders);
+  if (!bibs.length) { renderEmpty('No riders registered for this event.'); return; }
 
   const now = Date.now();
-  const q = filter.toLowerCase();
+  const q   = (filter || document.getElementById('searchInput').value).toLowerCase();
 
-  let rows = bibs
+  const rows = bibs
     .filter(bib => {
-      const r = currentRiders[bib];
       if (!q) return true;
-      return bib.toLowerCase().includes(q) || (r.name || '').toLowerCase().includes(q);
+      return bib.toLowerCase().includes(q) || (currentRiders[bib].name || '').toLowerCase().includes(q);
     })
     .map(bib => {
-      const r = currentRiders[bib];
+      const r      = currentRiders[bib];
       const isAnon = !r.name || r.name === 'Anonymous';
       const nameCell = `<span class="${isAnon ? 'name-anon' : ''}">${r.name || 'Anonymous'}</span>`;
 
       let status = 'stopped';
       if (r.adminStop) status = 'paused';
-      else if (r.active) {
-        status = (r.latest && (now - r.latest.ts) < 600000) ? 'live' : 'stale';
-      }
-      const pillMap = { live: 'pill-live', paused: 'pill-paused', stale: 'pill-stale', stopped: 'pill-stopped' };
-      const pillText = { live: 'Live', paused: 'Admin Paused', stale: 'Stale', stopped: 'Stopped' };
-      const statusCell = `<span class="pill ${pillMap[status]}">${pillText[status]}</span>`;
+      else if (r.active) status = (r.latest?.ts && (now - r.latest.ts) < 600000) ? 'live' : 'stale';
 
-      let lastPing = '—';
-      let pingClass = 'time-cell';
-      if (r.latest && r.latest.ts) {
+      const pillMap  = { live:'pill-live', paused:'pill-paused', stale:'pill-stale', stopped:'pill-stopped' };
+      const pillText = { live:'Live', paused:'Admin Paused', stale:'Stale', stopped:'Stopped' };
+
+      let lastPing  = '—', pingClass = 'time-cell';
+      if (r.latest?.ts) {
         const mins = Math.round((now - r.latest.ts) / 60000);
-        lastPing = mins < 1 ? 'Just now' : mins + 'm ago';
+        lastPing   = mins < 1 ? 'Just now' : mins + 'm ago';
         if (mins > 10) pingClass = 'time-cell time-stale';
       }
 
-      let expiresStr = '—';
-      let expClass = 'expires-cell';
+      let expiresStr = '—', expClass = 'expires-cell';
       if (r.expiresAt) {
         const rem = r.expiresAt - now;
         if (rem > 0) {
-          const h = Math.floor(rem / 3600000);
-          const m = Math.floor((rem % 3600000) / 60000);
+          const h = Math.floor(rem / 3600000), m = Math.floor((rem % 3600000) / 60000);
           expiresStr = `${h}h ${m}m`;
           if (rem < 3600000) expClass = 'expires-cell expires-warn';
         } else {
-          expiresStr = 'Expired';
-          expClass = 'expires-cell expires-warn';
+          expiresStr = 'Expired'; expClass = 'expires-cell expires-warn';
         }
       }
 
       let actions = '';
-      if (r.active && !r.adminStop) {
-        actions += `<button class="act-btn act-pause" onclick="pauseRider('${bib}')">Pause</button>`;
-      }
-      if (r.adminStop || (!r.active && r.startedAt)) {
-        actions += `<button class="act-btn act-resume" onclick="resumeRider('${bib}')">Resume</button>`;
-      }
-      actions += `<button class="act-btn act-remove" onclick="promptRemove('${bib}')">Remove</button>`;
+      if (r.active && !r.adminStop) actions += `<button class="act-btn act-pause" onclick="pauseRider('${bib}')">Pause</button>`;
+      if (r.adminStop || (!r.active && r.startedAt)) actions += `<button class="act-btn act-resume" onclick="resumeRider('${bib}')">Resume</button>`;
+      actions += `<button class="act-btn act-remove" onclick="promptRemoveRider('${bib}')">Remove</button>`;
 
-      return `<tr data-bib="${bib}" data-name="${r.name || ''}">
+      return `<tr>
         <td class="bib-cell">${bib}</td>
         <td class="name-cell">${nameCell}</td>
-        <td>${statusCell}</td>
+        <td><span class="pill ${pillMap[status]}">${pillText[status]}</span></td>
         <td class="${pingClass}">${lastPing}</td>
         <td class="${expClass}">${expiresStr}</td>
         <td><div class="actions">${actions}</div></td>
       </tr>`;
     });
 
-  tbody.innerHTML = rows.join('') || `<tr><td colspan="6"><div class="empty-state"><h3>No Results</h3><p>No riders match your filter.</p></div></td></tr>`;
+  tbody.innerHTML = rows.join('') ||
+    `<tr><td colspan="6"><div class="empty-state"><h3>No Results</h3><p>No riders match your filter.</p></div></td></tr>`;
   document.getElementById('filterCount').textContent = `${rows.length} of ${bibs.length}`;
 }
 
@@ -838,63 +802,41 @@ function renderEmpty(msg) {
 function updateStats() {
   const now = Date.now();
   let active = 0, stopped = 0;
-  Object.values(currentRiders).forEach(r => {
-    if (r.active && !r.adminStop) active++;
-    else stopped++;
-  });
-  document.getElementById('statActive').textContent = active;
+  Object.values(currentRiders).forEach(r => { if (r.active && !r.adminStop) active++; else stopped++; });
+  document.getElementById('statActive').textContent  = active;
   document.getElementById('statStopped').textContent = stopped;
-  document.getElementById('statTotal').textContent = Object.keys(currentRiders).length;
+  document.getElementById('statTotal').textContent   = Object.keys(currentRiders).length;
 }
 
-window.filterTable = function() {
-  renderTable(document.getElementById('searchInput').value);
-};
+window.filterTable = function() { renderTable(document.getElementById('searchInput').value); };
 
-// ── RIDER ACTIONS ────────────────────────────────────────────────────────────
-window.pauseRider = async function(bib) {
-  await update(ref(db, `tracker/${currentRaceId}/${bib}`), { adminStop: true });
-};
+// ── INDIVIDUAL RIDER ACTIONS ──────────────────────────────────────────────────
+window.pauseRider  = async (bib) => update(ref(db, `tracker/${currentRaceId}/${bib}`), { adminStop: true });
+window.resumeRider = async (bib) => update(ref(db, `tracker/${currentRaceId}/${bib}`), { adminStop: false, active: true });
 
-window.resumeRider = async function(bib) {
-  await update(ref(db, `tracker/${currentRaceId}/${bib}`), { adminStop: false, active: true });
-};
-
-window.promptRemove = function(bib) {
-  pendingRemoveBib = bib;
+window.promptRemoveRider = function(bib) {
   const r = currentRiders[bib];
-  document.getElementById('confirmMsg').textContent = `Remove Bib #${bib} (${r.name || 'Anonymous'}) from tracking? This cannot be undone.`;
+  pendingAction = { type: 'removeRider', raceId: currentRaceId, bib };
+  document.getElementById('dialogTitle').textContent = 'Remove Rider';
+  document.getElementById('confirmMsg').textContent  =
+    `Remove Bib #${bib} (${r.name || 'Anonymous'}) from tracking? This cannot be undone.`;
+  document.getElementById('dialogConfirmBtn').textContent = 'REMOVE';
   document.getElementById('confirmDialog').classList.add('open');
-};
-
-window.confirmRemove = async function() {
-  if (pendingRemoveBib && currentRaceId) {
-    await remove(ref(db, `tracker/${currentRaceId}/${pendingRemoveBib}`));
-    pendingRemoveBib = null;
-  }
-  closeDialog();
-};
-
-window.closeDialog = function() {
-  document.getElementById('confirmDialog').classList.remove('open');
-  pendingRemoveBib = null;
 };
 
 // ── GPX COURSE OVERLAY ────────────────────────────────────────────────────────
 function loadGpxStatus(raceId) {
   onValue(ref(db, `config/gpx/${raceId}/meta`), (snap) => {
-    const meta = snap.val();
+    const meta  = snap.val();
     const badge = document.getElementById('gpxStatusBadge');
-    const info = document.getElementById('gpxInfo');
-    if (meta && meta.fileName) {
-      badge.className = 'schedule-status sched-active';
-      badge.textContent = '✓ COURSE LOADED';
+    const info  = document.getElementById('gpxInfo');
+    if (meta?.fileName) {
+      badge.className = 'schedule-status sched-active'; badge.textContent = '✓ COURSE LOADED';
       info.style.display = 'block';
       document.getElementById('gpxPointCount').textContent = meta.pointCount || '?';
-      document.getElementById('gpxFileName').textContent = meta.fileName;
+      document.getElementById('gpxFileName').textContent   = meta.fileName;
     } else {
-      badge.className = 'schedule-status sched-inactive';
-      badge.textContent = 'NO COURSE';
+      badge.className = 'schedule-status sched-inactive'; badge.textContent = 'NO COURSE';
       info.style.display = 'none';
     }
   });
@@ -903,51 +845,31 @@ function loadGpxStatus(raceId) {
 window.uploadGpx = async function() {
   if (!currentRaceId) { alert('Select an event first.'); return; }
   const file = document.getElementById('gpxFileInput').files[0];
-  const msg = document.getElementById('gpxMsg');
+  const msg  = document.getElementById('gpxMsg');
   if (!file) { msg.style.color = 'var(--red)'; msg.textContent = 'Please select a GPX file.'; return; }
-
   msg.style.color = 'var(--text-dim)'; msg.textContent = 'Parsing GPX...';
 
-  const text = await file.text();
-  const parser = new DOMParser();
-  const xml = parser.parseFromString(text, 'application/xml');
-
-  // Extract track points from trkpt or wpt elements
+  const text   = await file.text();
+  const xml    = new DOMParser().parseFromString(text, 'application/xml');
   const trkpts = Array.from(xml.querySelectorAll('trkpt, wpt'));
-  if (trkpts.length === 0) {
-    msg.style.color = 'var(--red)'; msg.textContent = 'No track points found in GPX file.';
-    return;
-  }
+  if (!trkpts.length) { msg.style.color = 'var(--red)'; msg.textContent = 'No track points found.'; return; }
 
-  // Sample points if too many (Firebase has size limits — keep under 2000 points)
   const MAX_POINTS = 2000;
-  let points = trkpts.map(pt => ({
-    lat: parseFloat(pt.getAttribute('lat')),
-    lng: parseFloat(pt.getAttribute('lon'))
-  })).filter(p => !isNaN(p.lat) && !isNaN(p.lng));
-
-  if (points.length > MAX_POINTS) {
-    const step = Math.ceil(points.length / MAX_POINTS);
-    points = points.filter((_, i) => i % step === 0);
-    msg.textContent = `Sampled to ${points.length} points for performance...`;
+  let pts = trkpts.map(pt => ({ lat: parseFloat(pt.getAttribute('lat')), lng: parseFloat(pt.getAttribute('lon')) }))
+    .filter(p => !isNaN(p.lat) && !isNaN(p.lng));
+  if (pts.length > MAX_POINTS) {
+    const step = Math.ceil(pts.length / MAX_POINTS);
+    pts = pts.filter((_,i) => i % step === 0);
   }
 
-  // Write to Firebase as array of {lat,lng}
-  await set(ref(db, `config/gpx/${currentRaceId}/points`), points);
-  await set(ref(db, `config/gpx/${currentRaceId}/meta`), {
-    fileName: file.name,
-    pointCount: points.length,
-    uploadedAt: Date.now()
-  });
-
-  msg.style.color = 'var(--green)';
-  msg.textContent = `✓ Course uploaded — ${points.length} points from "${file.name}"`;
+  await set(ref(db, `config/gpx/${currentRaceId}/points`), pts);
+  await set(ref(db, `config/gpx/${currentRaceId}/meta`), { fileName: file.name, pointCount: pts.length, uploadedAt: Date.now() });
+  msg.style.color = 'var(--green)'; msg.textContent = `✓ Course uploaded — ${pts.length} points from "${file.name}"`;
   document.getElementById('gpxFileInput').value = '';
 };
 
 window.removeGpx = async function() {
-  if (!currentRaceId) return;
-  if (!confirm('Remove the course overlay for this event?')) return;
+  if (!currentRaceId || !confirm('Remove the course overlay for this event?')) return;
   await remove(ref(db, `config/gpx/${currentRaceId}`));
   document.getElementById('gpxMsg').style.color = 'var(--text-dim)';
   document.getElementById('gpxMsg').textContent = 'Course removed.';
