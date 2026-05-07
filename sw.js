@@ -1,7 +1,7 @@
 // sw.js — Breakaway Timing Service Worker
 // Handles background GPS pinging even when screen is off
 
-const SW_VERSION = 'bt-tracker-v1';
+const SW_VERSION = 'bt-tracker-v2';
 let pingInterval = null;
 let sessionData = null;
 
@@ -89,25 +89,38 @@ function getPosition() {
 
 // ── Write to Firebase REST API ───────────────────────────────────────────────
 async function writeToFirebase(data) {
-  if (!sessionData?.firebaseUrl || !sessionData?.dbPath) return;
+  if (!sessionData?.firebaseUrl || !sessionData?.dbPath) {
+    console.warn('[SW] Missing firebaseUrl or dbPath', JSON.stringify(sessionData));
+    return;
+  }
 
-  // Write GPS update — admin panel reads from latest.lat/lng/ts
-  const url = `${sessionData.firebaseUrl}/${sessionData.dbPath}.json?auth=${sessionData.token}`;
+  // No auth token needed — Firebase rules allow open writes to tracker/
+  const url = `${sessionData.firebaseUrl}/${sessionData.dbPath}.json`;
+
+  const payload = {
+    active: data.active !== undefined ? data.active : true,
+    expiresAt: sessionData.expiresAt,
+  };
+
+  if (data.lat && data.lng) {
+    payload.latest = {
+      lat: data.lat,
+      lng: data.lng,
+      accuracy: data.accuracy || null,
+      ts: data.timestamp || Date.now(),
+    };
+  }
+
   try {
-    await fetch(url, {
+    const res = await fetch(url, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        active: data.active !== undefined ? data.active : true,
-        expiresAt: sessionData.expiresAt,
-        latest: data.lat ? {
-          lat: data.lat,
-          lng: data.lng,
-          accuracy: data.accuracy,
-          ts: data.timestamp,
-        } : null,
-      }),
+      body: JSON.stringify(payload),
     });
+    if (!res.ok) {
+      const text = await res.text();
+      console.warn('[SW] Firebase write error:', res.status, text);
+    }
   } catch (err) {
     console.warn('[SW] Firebase write failed:', err.message);
   }
