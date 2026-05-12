@@ -1,164 +1,735 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <link rel="icon" href="/favicon-16x16.png" type="image/png">
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Live Tracking · Breakaway Timing</title>
-  <link rel="stylesheet" href="style.css" />
+  <link rel="icon" href="/favicon-16x16.png" type="image/png" />
+  <title>Live Map · Breakaway Timing</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
   <style>
-    .tracking-hero { padding: 10rem 3rem 5rem; border-bottom: 1px solid var(--border); }
-    .tracking-hero-inner { max-width: 1200px; margin: 0 auto; }
-    .tracking-cards {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 1px;
-      background: var(--border);
-      border: 1px solid var(--border);
-      margin-top: 4rem;
-      max-width: 1200px;
-      margin-left: auto;
-      margin-right: auto;
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --black: #000; --white: #fff; --green: #00e676;
+      --amber: #ffab00; --red: #ff4444; --blue: #58a6ff;
+      --purple: #c084fc;
+      --mid: #888; --border: #333; --surface: #111;
+      --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     }
-    .tracking-card {
-      background: var(--black);
-      padding: 3.5rem;
-      display: flex;
-      flex-direction: column;
-      transition: background 0.2s;
-      text-decoration: none;
-      color: inherit;
+    html, body { height: 100%; background: var(--black); color: var(--white); font-family: var(--font); overflow: hidden; }
+
+    .topbar {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+      background: rgba(0,0,0,0.92); backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
     }
-    .tracking-card:hover { background: #111; }
-    .card-number { font-family: var(--font-display); font-size: 5rem; color: var(--border); line-height: 1; margin-bottom: 1.5rem; }
-    .card-icon { font-size: 2.5rem; margin-bottom: 1.5rem; display: block; }
-    .card-title { font-family: var(--font-display); font-size: 2.8rem; line-height: 1; letter-spacing: 0.02em; margin-bottom: 1rem; color: var(--white); }
-    .card-desc { font-size: 0.95rem; color: var(--mid); line-height: 1.7; flex: 1; margin-bottom: 2rem; }
-    .card-cta { display: inline-block; font-family: var(--font-heading); font-weight: 700; font-size: 0.8rem; letter-spacing: 0.15em; text-transform: uppercase; padding: 0.85rem 2rem; border: 2px solid var(--white); color: var(--white); align-self: flex-start; transition: background 0.2s, color 0.2s; }
-    .tracking-card:hover .card-cta { background: var(--white); color: var(--black); }
-    .card-tag { display: inline-block; font-family: var(--font-heading); font-size: 0.65rem; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; padding: 0.2rem 0.7rem; border: 1px solid var(--border); color: var(--mid); margin-bottom: 1.5rem; align-self: flex-start; }
-    .how-it-works { padding: 6rem 3rem; max-width: 1200px; margin: 0 auto; }
-    .steps-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; background: var(--border); border: 1px solid var(--border); margin-top: 3rem; }
-    .step-card { background: var(--black); padding: 2.5rem; }
-    .step-num { font-family: var(--font-display); font-size: 3.5rem; color: var(--border); line-height: 1; margin-bottom: 1rem; }
-    .step-card h3 { font-family: var(--font-heading); font-weight: 700; font-size: 1.1rem; letter-spacing: 0.05em; text-transform: uppercase; margin-bottom: 0.75rem; }
-    .step-card p { font-size: 0.9rem; color: var(--mid); line-height: 1.7; }
-    @media (max-width: 768px) {
-      .tracking-cards { grid-template-columns: 1fr; }
-      .steps-grid { grid-template-columns: 1fr; }
-      .tracking-hero { padding: 8rem 1.5rem 3rem; }
-      .tracking-card { padding: 2.5rem 1.5rem; }
-      .how-it-works { padding: 4rem 1.5rem; }
+    .topbar-row1 {
+      display: flex; align-items: center; gap: 1rem;
+      padding: 0.75rem 1.25rem;
     }
+    .nav-logo { font-size: 0.7rem; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; color: var(--mid); text-decoration: none; white-space: nowrap; }
+    .topbar-spacer { flex: 1; }
+    .live-badge { display: flex; align-items: center; gap: 0.4rem; font-size: 0.65rem; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; color: var(--green); white-space: nowrap; }
+    .live-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); animation: pulse 2s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+    .rider-count { font-size: 0.75rem; color: var(--mid); white-space: nowrap; }
+
+    .topbar-row2 {
+      display: flex; align-items: center; gap: 0.75rem;
+      padding: 0.5rem 1.25rem 0.75rem;
+      border-top: 1px solid rgba(255,255,255,0.06);
+      flex-wrap: wrap;
+    }
+    .event-label { font-size: 0.65rem; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; color: var(--mid); white-space: nowrap; }
+    .event-select {
+      flex: 1; max-width: 320px;
+      background: var(--surface); border: 1px solid var(--border);
+      color: var(--white); font-family: var(--font); font-size: 0.85rem;
+      padding: 0.45rem 0.75rem; border-radius: 6px; outline: none;
+      -webkit-appearance: none; appearance: none; cursor: pointer;
+    }
+    .event-select:focus { border-color: var(--white); }
+
+    /* ── Search panel ── */
+    .search-panel {
+      position: fixed; top: 90px; right: 0; bottom: 0; z-index: 998;
+      width: 280px; background: rgba(0,0,0,0.92);
+      border-left: 1px solid var(--border);
+      backdrop-filter: blur(12px);
+      display: flex; flex-direction: column;
+      transform: translateX(100%);
+      transition: transform 0.3s ease;
+    }
+    .search-panel.open { transform: translateX(0); }
+    .search-panel-header {
+      padding: 0.85rem 1rem;
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; gap: 0.5rem;
+    }
+    .search-box {
+      flex: 1; background: var(--surface); border: 1px solid var(--border);
+      color: var(--white); font-family: var(--font); font-size: 0.85rem;
+      padding: 0.45rem 0.75rem; border-radius: 6px; outline: none;
+    }
+    .search-box:focus { border-color: var(--white); }
+    .search-box::placeholder { color: var(--mid); }
+    .search-close {
+      background: none; border: none; color: var(--mid);
+      font-size: 1.1rem; cursor: pointer; padding: 0 0.25rem; flex-shrink: 0;
+    }
+    .search-results { flex: 1; overflow-y: auto; padding: 0.25rem 0; }
+    .search-result-row {
+      display: flex; align-items: center; gap: 0.75rem;
+      padding: 0.65rem 1rem; border-bottom: 1px solid rgba(255,255,255,0.05);
+      cursor: pointer; transition: background 0.15s;
+    }
+    .search-result-row:hover { background: #111; }
+    .search-result-row.highlighted { background: #1a1a1a; border-left: 3px solid #ff6d00; }
+    .sr-bib {
+      width: 36px; height: 36px; border-radius: 6px;
+      background: var(--surface); border: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 700; font-size: 0.82rem; flex-shrink: 0; color: var(--white);
+    }
+    .sr-info { flex: 1; min-width: 0; }
+    .sr-name { font-size: 0.85rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .sr-meta { font-size: 0.7rem; color: var(--mid); margin-top: 0.1rem; }
+    .sr-status { font-size: 0.65rem; font-weight: 700; white-space: nowrap; }
+    .sr-status.fresh { color: #00e676; }
+    .sr-status.stale { color: var(--amber); }
+    .sr-status.old   { color: #888; }
+    .search-empty { padding: 1.5rem 1rem; font-size: 0.82rem; color: var(--mid); text-align: center; }
+
+    /* ── Search toggle button ── */
+    .search-toggle {
+      position: fixed; top: 50%; right: 0; z-index: 999;
+      transform: translateY(-50%);
+      background: rgba(0,0,0,0.88); border: 1px solid var(--border);
+      border-right: none; border-radius: 8px 0 0 8px;
+      color: var(--mid); font-family: var(--font); font-size: 0.7rem;
+      font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase;
+      padding: 0.75rem 0.5rem; cursor: pointer;
+      writing-mode: vertical-rl; text-orientation: mixed;
+      transition: color 0.15s, border-color 0.15s;
+    }
+    .search-toggle:hover { color: var(--white); border-color: var(--white); }
+    .search-toggle.open { right: 280px; }
+
+    #map.panel-open { right: 280px; }
+
+    @media (max-width: 600px) {
+      .search-panel { width: 100%; }
+      .search-toggle.open { right: 100%; }
+      #map.panel-open { right: 0; }
+    }
+
+    .course-btn {
+      background: transparent; border: 1px solid var(--border);
+      color: var(--mid); font-family: var(--font); font-size: 0.7rem;
+      font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase;
+      padding: 0.45rem 0.85rem; border-radius: 6px; cursor: pointer;
+      white-space: nowrap; transition: border-color 0.15s, color 0.15s, background 0.15s;
+      display: flex; align-items: center; gap: 0.4rem;
+    }
+    .course-btn .dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+    .course-btn.active { background: rgba(255,255,255,0.08); }
+
+    /* Feedzone toggle button */
+    .feedzone-toggle-btn {
+      background: transparent; border: 1px solid var(--purple);
+      color: var(--purple); font-family: var(--font); font-size: 0.7rem;
+      font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase;
+      padding: 0.45rem 0.85rem; border-radius: 6px; cursor: pointer;
+      white-space: nowrap; transition: border-color 0.15s, color 0.15s, background 0.15s;
+      display: flex; align-items: center; gap: 0.4rem;
+    }
+    .feedzone-toggle-btn.active { background: rgba(192,132,252,0.12); }
+    .feedzone-toggle-btn:not(.active) { color: var(--mid); border-color: var(--border); }
+
+    #map { position: fixed; top: 90px; left: 0; right: 0; bottom: 0; }
+
+    .rider-panel {
+      position: fixed; bottom: 0; left: 0; right: 0; z-index: 999;
+      background: rgba(0,0,0,0.95); border-top: 1px solid var(--border);
+      backdrop-filter: blur(12px);
+      transform: translateY(100%); transition: transform 0.3s ease;
+      max-height: 55vh; overflow-y: auto;
+    }
+    .rider-panel.open { transform: translateY(0); }
+    .panel-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0.85rem 1.25rem; border-bottom: 1px solid var(--border);
+      position: sticky; top: 0; background: rgba(0,0,0,0.98);
+    }
+    .panel-title { font-size: 0.7rem; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; color: var(--mid); }
+    .panel-close { background: none; border: none; color: var(--mid); font-size: 1.1rem; cursor: pointer; }
+    .riders-list { padding: 0.25rem 0; }
+    .rider-row {
+      display: flex; align-items: center; gap: 0.85rem;
+      padding: 0.65rem 1.25rem; border-bottom: 1px solid rgba(255,255,255,0.05);
+      cursor: pointer; transition: background 0.15s;
+    }
+    .rider-row:hover { background: #0d0d0d; }
+    .rider-bib {
+      width: 38px; height: 38px; border-radius: 6px;
+      background: var(--surface); border: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 700; font-size: 0.85rem; flex-shrink: 0;
+    }
+    .rider-info { flex: 1; min-width: 0; }
+    .rider-name { font-size: 0.88rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .rider-meta { font-size: 0.72rem; color: var(--mid); margin-top: 0.1rem; }
+    .rider-status { font-size: 0.68rem; font-weight: 700; white-space: nowrap; }
+    .rider-status.fresh { color: var(--green); }
+    .rider-status.stale { color: var(--amber); }
+    .rider-status.old   { color: #999; }
+
+    .rider-marker { width: 16px; height: 16px; border-radius: 50%; background: #ff6d00; border: 3px solid #fff; box-shadow: 0 1px 4px rgba(0,0,0,0.4); }
+    .rider-marker.stale { background: #ffab00; border-color: #fff; }
+    .rider-marker.old   { background: #bbb; border-color: #fff; }
+
+    /* Feedzone marker */
+    .feedzone-marker {
+      width: 28px; height: 28px; border-radius: 50%;
+      background: rgba(192,132,252,0.9);
+      border: 3px solid #fff;
+      box-shadow: 0 0 10px rgba(192,132,252,0.7), 0 1px 4px rgba(0,0,0,0.5);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px; line-height: 1;
+    }
+
+    .leaflet-container { background: #0a0a0a; }
+    .leaflet-popup-content-wrapper { background: #1a1a1a; border: 1px solid #333; border-radius: 8px; color: #fff; box-shadow: 0 2px 12px rgba(0,0,0,0.5); }
+    .leaflet-popup-tip { background: #1a1a1a; }
+    .leaflet-popup-close-button { color: #888 !important; }
+    .leaflet-control-zoom a { background: #1a1a1a !important; color: #fff !important; border-color: #333 !important; }
+
+    .list-toggle {
+      position: fixed; bottom: 1rem; right: 1rem; z-index: 1001;
+      background: var(--white); color: var(--black); border: none; border-radius: 999px;
+      font-family: var(--font); font-weight: 700; font-size: 0.78rem;
+      padding: 0.6rem 1.1rem; cursor: pointer; box-shadow: 0 2px 12px rgba(0,0,0,0.5);
+    }
+
+    .map-message {
+      display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%,-50%);
+      text-align: center; color: var(--mid); z-index: 500; pointer-events: none;
+    }
+    .map-message.visible { display: block; }
+    .map-message h2 { font-size: 1.1rem; font-weight: 600; color: var(--white); }
+    .map-message p  { font-size: 0.82rem; margin-top: 0.4rem; }
+
+    .course-legend {
+      position: fixed; bottom: 1rem; left: 1rem; z-index: 1001;
+      background: rgba(0,0,0,0.85); border: 1px solid var(--border);
+      border-radius: 8px; padding: 0.5rem 0.85rem;
+      font-size: 0.72rem; color: var(--mid);
+      align-items: center;
+    }
+    .legend-item { display:flex; align-items:center; gap:0.4rem; }
+    .legend-line { width: 18px; height: 3px; border-radius: 2px; flex-shrink: 0; }
+    .legend-fz { width: 10px; height: 10px; border-radius: 50%; background: var(--purple); flex-shrink: 0; }
   </style>
 </head>
 <body>
 
-  <nav>
-    <a class="nav-logo" href="index.html">
-      <img src="logo.jpg" alt="Breakaway Timing" />
-      <span>Breakaway Timing</span>
-    </a>
-    <ul class="nav-links">
-      <li><a href="index.html">Home</a></li>
-      <li><a href="races.html">Races</a></li>
-      <li><a href="results.html">Results</a></li>
-      <li><a href="tracking.html" class="active">Live Tracking</a></li>
-      <li><a href="announcer.html">Announcer</a></li>
-      <li><a href="about.html">About</a></li>
-      <li><a href="contact.html">Contact</a></li>
-      <li><a href="admin.html">Admin</a></li>
-    </ul>
-    <button class="nav-toggle" id="navToggle" aria-label="Toggle menu">
-      <span></span><span></span><span></span>
-    </button>
-  </nav>
-
-  <div class="tracking-hero">
-    <div class="tracking-hero-inner">
-      <p class="section-label">GPS Live Tracking</p>
-      <h1 class="section-title">Live On<br>Course</h1>
-      <p style="color: var(--mid); max-width: 520px; margin-top: 1rem; font-size: 1rem; line-height: 1.8;">
-        Real-time GPS tracking for riders and spectators. Enable tracking on your phone before the race — your position updates live on the spectator map every 5 minutes.
-      </p>
+  <div class="topbar">
+    <div class="topbar-row1">
+      <a class="nav-logo" href="index.html">Breakaway Timing</a>
+      <div class="topbar-spacer"></div>
+      <span class="live-badge"><span class="live-dot"></span>Live</span>
+      <span class="rider-count" id="riderCount">0 riders</span>
     </div>
-
-    <div class="tracking-cards">
-      <a class="tracking-card" href="tracker.html">
-        <div class="card-number">01</div>
-        <span class="card-tag">For Riders</span>
-        <div class="card-title">Track My<br>Ride</div>
-        <p class="card-desc">Enable GPS tracking from your phone before the race starts. Enter your bib number, select your event, and go. Your position updates automatically — no app download required.</p>
-        <div class="card-cta">Start Tracking →</div>
-      </a>
-      <a class="tracking-card" href="map.html">
-        <div class="card-number">02</div>
-        <span class="card-tag">For Spectators</span>
-        <div class="card-title">Live<br>Map</div>
-        <p class="card-desc">Watch riders move across the course in real time. See every bib number, last ping time, and GPS accuracy. Click any rider to zoom in. Updates automatically — no refresh needed.</p>
-        <div class="card-cta">Open Map →</div>
-      </a>
+    <div class="topbar-row2">
+      <span class="event-label">Event</span>
+      <select class="event-select" id="eventSelect" onchange="selectEvent(this.value)">
+        <option value="">— Select Event —</option>
+      </select>
+      <div id="courseToggles" style="display:flex;gap:0.5rem;flex-wrap:wrap;"></div>
+      <!-- Feedzone toggle injected here by JS -->
+      <button class="feedzone-toggle-btn active" id="feedzoneToggleBtn" onclick="toggleFeedzones()" style="display:none">
+        🏁 Feedzones
+      </button>
     </div>
   </div>
 
-  <div class="divider"></div>
+  <div id="map"></div>
 
-  <div class="how-it-works">
-    <p class="section-label">How It Works</p>
-    <h2 class="section-title">Three Steps<br>to Live</h2>
-    <div class="steps-grid">
-      <div class="step-card">
-        <div class="step-num">01</div>
-        <h3>Enter Your Bib</h3>
-        <p>Open the tracker on your phone before the race. Enter your bib number, select the event, and optionally add your name so spectators can find you on the map.</p>
-      </div>
-      <div class="step-card">
-        <div class="step-num">02</div>
-        <h3>Hit Start</h3>
-        <p>Tap Start Tracking and allow location access when prompted. Your phone will ping your GPS position every 5 minutes automatically. Keep the screen on or it will continue in the background.</p>
-      </div>
-      <div class="step-card">
-        <div class="step-num">03</div>
-        <h3>You're Live</h3>
-        <p>Your dot appears on the spectator map in real time. Friends and family can watch from anywhere. Tracking runs for up to 24 hours and stops automatically when the session expires.</p>
-      </div>
+  <div class="map-message visible" id="mapMessage">
+    <h2>Select an event above</h2>
+    <p>Choose an event to see riders and the course.</p>
+  </div>
+
+  <div class="course-legend" id="courseLegend" style="display:none;flex-wrap:wrap;gap:0.5rem 1rem;"></div>
+
+  <button class="search-toggle" id="searchToggle" onclick="toggleSearchPanel()">🔍 Find Rider</button>
+
+  <div class="search-panel" id="searchPanel">
+    <div class="search-panel-header">
+      <input class="search-box" id="riderSearchBox" placeholder="Bib or name..." oninput="filterRiderSearch(this.value)" />
+      <button class="search-close" onclick="toggleSearchPanel()">✕</button>
+    </div>
+    <div class="search-results" id="searchResults">
+      <div class="search-empty">Select an event to search riders.</div>
     </div>
   </div>
 
-  <div class="divider"></div>
+  <button class="list-toggle" id="listToggle">Riders ↑</button>
 
-  <section class="section" style="text-align:center; padding: 5rem 3rem;">
-    <p class="section-label">Questions?</p>
-    <h2 class="section-title">Need Help<br>Getting Set Up?</h2>
-    <p style="color: var(--mid); max-width: 480px; margin: 1rem auto 2.5rem; font-size: 1rem;">
-      If you're a race director looking to enable live tracking for your event, get in touch and we'll walk you through the setup.
-    </p>
-    <a href="contact.html" class="btn btn-solid">Contact Us</a>
-  </section>
+  <div class="rider-panel" id="riderPanel">
+    <div class="panel-header">
+      <span class="panel-title" id="panelTitle">Riders</span>
+      <button class="panel-close" id="panelClose">✕</button>
+    </div>
+    <div class="riders-list" id="ridersList"></div>
+  </div>
 
-  <footer>
-    <div class="footer-logo">Breakaway Timing</div>
-    <ul class="footer-links">
-      <li><a href="index.html">Home</a></li>
-      <li><a href="races.html">Races</a></li>
-      <li><a href="results.html">Results</a></li>
-      <li><a href="tracking.html">Live Tracking</a></li>
-      <li><a href="announcer.html">Announcer</a></li>
-      <li><a href="about.html">About</a></li>
-      <li><a href="contact.html">Contact</a></li>
-      <li><a href="admin.html">Admin</a></li>
-    </ul>
-    <p class="footer-copy">© 2026 Breakaway Timing · breakawayracetiming@gmail.com</p>
-  </footer>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
   <script>
-    const toggle = document.getElementById('navToggle');
-    const links  = document.querySelector('.nav-links');
-    if (toggle && links) {
-      toggle.addEventListener('click', () => { toggle.classList.toggle('open'); links.classList.toggle('open'); });
-      links.querySelectorAll('a').forEach(a => a.addEventListener('click', () => { toggle.classList.remove('open'); links.classList.remove('open'); }));
-    }
-  </script>
+    const FIREBASE_CONFIG = {
+      apiKey:            "AIzaSyCWwav2Ytr1wKSPevsxKYlYb6h6RNWJ5Rc",
+      authDomain:        "breakaway-live-tracking.firebaseapp.com",
+      databaseURL:       "https://breakaway-live-tracking-default-rtdb.firebaseio.com",
+      projectId:         "breakaway-live-tracking",
+      storageBucket:     "breakaway-live-tracking.firebasestorage.app",
+      messagingSenderId: "339351898110",
+      appId:             "1:339351898110:web:4ab4ae53da9da04143e2af",
+      measurementId:     "G-5PW1MM3L1L",
+    };
 
+    firebase.initializeApp(FIREBASE_CONFIG);
+    const db = firebase.database();
+
+    const map = L.map('map', { zoomControl: true }).setView([37.1, -113.5], 13);
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+      attribution: '© OpenStreetMap contributors, © CARTO',
+      subdomains: 'abcd',
+      maxZoom: 19,
+    }).addTo(map);
+
+    const markers     = {};
+    const riders      = {};
+    let riderListener = null;
+    let currentEvent  = null;
+    let mapFitted     = false;
+
+    const STALE_MS = 8  * 60 * 1000;
+    const OLD_MS   = 20 * 60 * 1000;
+
+    // ── Feedzones ─────────────────────────────────────────────────────────────
+    const feedzoneMarkers  = {};   // key → Leaflet marker
+    let feedzoneListener   = null;
+    let feedzoneVisible    = true;
+
+    function makeFzIcon() {
+      return L.divIcon({
+        className: '',
+        html: `<div class="feedzone-marker">🏁</div>`,
+        iconSize: [28, 28], iconAnchor: [14, 14], popupAnchor: [0, -16],
+      });
+    }
+
+    function loadFeedzones(eventId) {
+      // Clear old markers and listener
+      Object.values(feedzoneMarkers).forEach(m => m.remove());
+      Object.keys(feedzoneMarkers).forEach(k => delete feedzoneMarkers[k]);
+      if (feedzoneListener) { feedzoneListener(); feedzoneListener = null; }
+
+      const toggleBtn = document.getElementById('feedzoneToggleBtn');
+
+      feedzoneListener = db.ref(`config/feedzones/${eventId}`).on('value', (snap) => {
+        const data = snap.val() || {};
+
+        // Remove markers for deleted feedzones
+        Object.keys(feedzoneMarkers).forEach(k => {
+          if (!data[k]) { feedzoneMarkers[k].remove(); delete feedzoneMarkers[k]; }
+        });
+
+        // Add/update markers
+        Object.entries(data).forEach(([key, fz]) => {
+          if (!fz.lat || !fz.lng) return;
+          if (feedzoneMarkers[key]) {
+            feedzoneMarkers[key].setLatLng([fz.lat, fz.lng]);
+          } else {
+            const m = L.marker([fz.lat, fz.lng], { icon: makeFzIcon(), zIndexOffset: -100 })
+              .bindPopup(`
+                <div style="font-family:-apple-system,sans-serif;min-width:120px;">
+                  <div style="font-size:0.9rem;font-weight:700;color:#c084fc;">🏁 Feedzone</div>
+                  <div style="font-size:1rem;font-weight:600;color:#fff;margin-top:4px;">${fz.name}</div>
+                  <div style="font-size:0.72rem;color:#888;margin-top:6px;">${fz.lat.toFixed(5)}, ${fz.lng.toFixed(5)}</div>
+                </div>`)
+              .addTo(map);
+            feedzoneMarkers[key] = m;
+          }
+
+          // Hide if feedzones are toggled off
+          if (!feedzoneVisible) feedzoneMarkers[key].remove();
+        });
+
+        // Show/hide toggle button
+        const count = Object.keys(data).length;
+        toggleBtn.style.display = count > 0 ? 'flex' : 'none';
+        updateFzLegend(count);
+      });
+    }
+
+    function updateFzLegend(count) {
+      const legend = document.getElementById('courseLegend');
+      const existing = legend.querySelector('.fz-legend-item');
+      if (existing) existing.remove();
+      if (count > 0 && feedzoneVisible) {
+        const item = document.createElement('div');
+        item.className = 'legend-item fz-legend-item';
+        item.innerHTML = `<div class="legend-fz"></div><span>${count} Feedzone${count !== 1 ? 's' : ''}</span>`;
+        legend.appendChild(item);
+        legend.style.display = 'flex';
+      }
+    }
+
+    window.toggleFeedzones = function() {
+      feedzoneVisible = !feedzoneVisible;
+      const btn = document.getElementById('feedzoneToggleBtn');
+      btn.classList.toggle('active', feedzoneVisible);
+
+      Object.values(feedzoneMarkers).forEach(m => {
+        if (feedzoneVisible) m.addTo(map);
+        else m.remove();
+      });
+
+      // Update legend
+      updateFzLegend(feedzoneVisible ? Object.keys(feedzoneMarkers).length : 0);
+    };
+
+    function clearFeedzones() {
+      Object.values(feedzoneMarkers).forEach(m => m.remove());
+      Object.keys(feedzoneMarkers).forEach(k => delete feedzoneMarkers[k]);
+      if (feedzoneListener) { feedzoneListener(); feedzoneListener = null; }
+      document.getElementById('feedzoneToggleBtn').style.display = 'none';
+      feedzoneVisible = true;
+    }
+
+    // ── Load events dropdown ──────────────────────────────────────────────────
+    db.ref('config/races').on('value', (snap) => {
+      const sel  = document.getElementById('eventSelect');
+      const prev = sel.value;
+      while (sel.options.length > 1) sel.remove(1);
+      const events = snap.val() || {};
+      Object.entries(events).forEach(([key, ev]) => {
+        const opt = document.createElement('option');
+        opt.value = key;
+        opt.textContent = ev.name || key;
+        sel.appendChild(opt);
+      });
+      if (prev && sel.querySelector(`option[value="${prev}"]`)) sel.value = prev;
+    });
+
+    // ── Select event ──────────────────────────────────────────────────────────
+    window.selectEvent = function(eventId) {
+      if (riderListener && currentEvent) {
+        db.ref(`tracker/${currentEvent}`).off('value', riderListener);
+        riderListener = null;
+      }
+      Object.keys(markers).forEach(b => { markers[b].remove(); delete markers[b]; });
+      Object.keys(riders).forEach(b => delete riders[b]);
+      removeCourseLayer();
+      clearFeedzones();
+      mapFitted     = false;
+      currentEvent  = eventId;
+
+      const msg = document.getElementById('mapMessage');
+
+      if (!eventId) {
+        msg.innerHTML = '<h2>Select an event above</h2><p>Choose an event to see riders and the course.</p>';
+        msg.classList.add('visible');
+        updateCount();
+        renderRiderList();
+        return;
+      }
+
+      msg.classList.remove('visible');
+      loadCourse(eventId);
+      loadFeedzones(eventId);
+
+      riderListener = db.ref(`tracker/${eventId}`).on('value', (snap) => {
+        const all = snap.val() || {};
+        Object.keys(riders).forEach(b => { if (!all[b]) removeRider(b); });
+        Object.entries(all).forEach(([b, d]) => upsertRider(b, d));
+        if (!Object.keys(riders).length) {
+          msg.innerHTML = '<h2>No active riders</h2><p>Riders will appear once they start tracking.</p>';
+          msg.classList.add('visible');
+        } else {
+          msg.classList.remove('visible');
+        }
+      });
+
+      const optLabel = document.querySelector(`#eventSelect option[value="${eventId}"]`)?.textContent;
+      document.getElementById('panelTitle').textContent = optLabel || 'Riders';
+    };
+
+    // ── Course GPX ────────────────────────────────────────────────────────────
+    const COURSE_COLORS = ['#ff1744', '#2979ff', '#ff6d00', '#00e676', '#d500f9'];
+    const courseLayers  = {};
+
+    function loadCourse(eventId) {
+      Object.values(courseLayers).forEach(c => { if (c.layer) c.layer.remove(); });
+      Object.keys(courseLayers).forEach(k => delete courseLayers[k]);
+      document.getElementById('courseToggles').innerHTML = '';
+      const legend = document.getElementById('courseLegend');
+      // Remove only course legend items (not feedzone)
+      legend.querySelectorAll('.legend-course-item').forEach(el => el.remove());
+
+      db.ref(`config/gpx/${eventId}`).once('value').then(snap => {
+        const data = snap.val();
+        if (!data) return;
+
+        const courses = Object.entries(data).filter(([k]) => k !== 'meta' && k !== 'points' && data[k].meta);
+        if (!courses.length) return;
+
+        courses.forEach(([courseId, course], i) => {
+          const pts   = course.points;
+          const meta  = course.meta;
+          const color = COURSE_COLORS[i % COURSE_COLORS.length];
+          const name  = meta?.name || courseId;
+          if (!pts || !pts.length) return;
+
+          const layer = L.polyline(pts.map(p => [p.lat, p.lng]), {
+            color, weight: 4, opacity: 0.9, smoothFactor: 1,
+          }).addTo(map);
+
+          courseLayers[courseId] = { layer, visible: true, color, name };
+
+          if (!mapFitted) {
+            map.fitBounds(layer.getBounds(), { padding: [40, 40] });
+            mapFitted = true;
+          }
+
+          const btn = document.createElement('button');
+          btn.className = 'course-btn active';
+          btn.style.borderColor = color;
+          btn.style.color = color;
+          btn.innerHTML = `<span class="dot" style="background:${color}"></span>${name}`;
+          btn.addEventListener('click', () => toggleCourseLayer(courseId, btn));
+          document.getElementById('courseToggles').appendChild(btn);
+
+          legend.style.display = 'flex';
+          const item = document.createElement('div');
+          item.className = 'legend-item legend-course-item';
+          item.innerHTML = `<div class="legend-line" style="background:${color}"></div><span>${name}</span>`;
+          legend.appendChild(item);
+        });
+      });
+    }
+
+    function toggleCourseLayer(courseId, btn) {
+      const c = courseLayers[courseId];
+      if (!c) return;
+      c.visible = !c.visible;
+      if (c.visible) {
+        c.layer.addTo(map);
+        btn.classList.add('active');
+        btn.style.borderColor = c.color;
+        btn.style.color = c.color;
+      } else {
+        c.layer.remove();
+        btn.classList.remove('active');
+        btn.style.borderColor = 'var(--border)';
+        btn.style.color = 'var(--mid)';
+      }
+    }
+
+    function removeCourseLayer() {
+      Object.values(courseLayers).forEach(c => { if (c.layer) c.layer.remove(); });
+      Object.keys(courseLayers).forEach(k => delete courseLayers[k]);
+      document.getElementById('courseToggles').innerHTML = '';
+      const legend = document.getElementById('courseLegend');
+      legend.querySelectorAll('.legend-course-item').forEach(el => el.remove());
+      if (!legend.children.length) legend.style.display = 'none';
+    }
+
+    // ── Rider helpers ─────────────────────────────────────────────────────────
+    function stalenessClass(ts) {
+      if (!ts) return 'old';
+      const age = Date.now() - ts;
+      if (age < STALE_MS) return 'fresh';
+      if (age < OLD_MS)   return 'stale';
+      return 'old';
+    }
+
+    function makeIcon(s) {
+      return L.divIcon({
+        className: '',
+        html: `<div class="rider-marker ${s === 'fresh' ? '' : s}"></div>`,
+        iconSize: [14,14], iconAnchor: [7,7], popupAnchor: [0,-10],
+      });
+    }
+
+    function formatAge(ts) {
+      if (!ts) return 'No ping yet';
+      const m = Math.floor((Date.now() - ts) / 60000);
+      return m < 1 ? 'Just now' : `${m} min ago`;
+    }
+
+    function formatExpiry(exp) {
+      const r = exp - Date.now();
+      if (r <= 0) return 'Expired';
+      const h = Math.floor(r / 3600000), m = Math.floor((r % 3600000) / 60000);
+      return h > 0 ? `Expires in ${h}h ${m}m` : `Expires in ${m}m`;
+    }
+
+    function upsertRider(bib, data) {
+      if (data.adminStop || !data.active || (data.expiresAt && Date.now() > data.expiresAt)) {
+        removeRider(bib); return;
+      }
+      riders[bib] = data;
+      const ts  = data.latest?.ts  || null;
+      const lat = data.latest?.lat || null;
+      const lng = data.latest?.lng || null;
+      const acc = data.latest?.accuracy || null;
+      const s   = stalenessClass(ts);
+
+      if (lat && lng) {
+        const ll = [lat, lng];
+        if (markers[bib]) { markers[bib].setLatLng(ll); markers[bib].setIcon(makeIcon(s)); }
+        else {
+          markers[bib] = L.marker(ll, { icon: makeIcon(s) }).addTo(map);
+          if (!mapFitted) { map.setView(ll, 14); mapFitted = true; }
+        }
+        markers[bib].bindPopup(`
+          <div style="font-family:-apple-system,sans-serif;min-width:140px;">
+            <div style="font-size:1rem;font-weight:700;color:#fff;">Bib ${bib}</div>
+            <div style="font-size:0.85rem;color:#aaa;margin-top:2px;">${data.name||''}</div>
+            <div style="font-size:0.75rem;color:#888;margin-top:8px;">${formatAge(ts)}${acc?` · ±${acc}m`:''}</div>
+            <div style="font-size:0.7rem;color:#666;margin-top:2px;">${data.expiresAt?formatExpiry(data.expiresAt):''}</div>
+          </div>`);
+      }
+      renderRiderList();
+      updateCount();
+      if (searchPanelOpen) renderSearchResults(document.getElementById('riderSearchBox')?.value || '');
+    }
+
+    function removeRider(bib) {
+      if (markers[bib]) { markers[bib].remove(); delete markers[bib]; }
+      delete riders[bib];
+      renderRiderList();
+      updateCount();
+      if (searchPanelOpen) renderSearchResults(document.getElementById('riderSearchBox')?.value || '');
+    }
+
+    function renderRiderList() {
+      const list   = document.getElementById('ridersList');
+      list.innerHTML = '';
+      const active = Object.entries(riders).filter(([,r]) => r.active && !r.adminStop);
+      if (!active.length) {
+        list.innerHTML = '<div style="padding:1.25rem 1.5rem;color:#555;font-size:0.85rem;">No riders for this event yet.</div>';
+        return;
+      }
+      active.sort((a,b) => parseInt(a[0]) - parseInt(b[0])).forEach(([bib, rider]) => {
+        const ts  = rider.latest?.ts || null;
+        const s   = stalenessClass(ts);
+        const row = document.createElement('div');
+        row.className = 'rider-row';
+        row.innerHTML = `
+          <div class="rider-bib">${bib}</div>
+          <div class="rider-info">
+            <div class="rider-name">${rider.name || `Bib ${bib}`}</div>
+            <div class="rider-meta">${formatAge(ts)}${rider.latest?.accuracy?` · ±${rider.latest.accuracy}m`:''}</div>
+          </div>
+          <div class="rider-status ${s}">${s==='fresh'?'● Live':s==='stale'?'● Stale':'● Offline'}</div>`;
+        row.addEventListener('click', () => {
+          if (rider.latest?.lat && rider.latest?.lng) {
+            map.setView([rider.latest.lat, rider.latest.lng], 15);
+            markers[bib]?.openPopup();
+            document.getElementById('riderPanel').classList.remove('open');
+          }
+        });
+        list.appendChild(row);
+      });
+    }
+
+    function updateCount() {
+      const n = Object.keys(riders).length;
+      document.getElementById('riderCount').textContent = `${n} rider${n!==1?'s':''}`;
+    }
+
+    document.getElementById('listToggle').addEventListener('click', () =>
+      document.getElementById('riderPanel').classList.toggle('open'));
+    document.getElementById('panelClose').addEventListener('click', () =>
+      document.getElementById('riderPanel').classList.remove('open'));
+
+    // ── Rider search panel ────────────────────────────────────────────────────
+    let searchPanelOpen = false;
+    let highlightedBib  = null;
+
+    window.toggleSearchPanel = function() {
+      searchPanelOpen = !searchPanelOpen;
+      const panel  = document.getElementById('searchPanel');
+      const toggle = document.getElementById('searchToggle');
+      const mapEl  = document.getElementById('map');
+      panel.classList.toggle('open', searchPanelOpen);
+      toggle.classList.toggle('open', searchPanelOpen);
+      mapEl.classList.toggle('panel-open', searchPanelOpen);
+      if (searchPanelOpen) {
+        document.getElementById('riderSearchBox').focus();
+        renderSearchResults('');
+      }
+    };
+
+    window.filterRiderSearch = function(q) { renderSearchResults(q); };
+
+    function renderSearchResults(q) {
+      const container = document.getElementById('searchResults');
+      const active    = Object.entries(riders).filter(([, r]) => r.active && !r.adminStop);
+      if (!active.length) {
+        container.innerHTML = '<div class="search-empty">No active riders for this event.</div>';
+        return;
+      }
+      const query    = q.toLowerCase().trim();
+      const filtered = active.filter(([bib, r]) =>
+        !query || bib.toLowerCase().includes(query) || (r.name || '').toLowerCase().includes(query)
+      );
+      if (!filtered.length) {
+        container.innerHTML = '<div class="search-empty">No riders match your search.</div>';
+        return;
+      }
+      container.innerHTML = '';
+      filtered
+        .sort((a, b) => parseInt(a[0]) - parseInt(b[0]))
+        .forEach(([bib, rider]) => {
+          const ts   = rider.latest?.ts || null;
+          const s    = stalenessClass(ts);
+          const isHL = highlightedBib === bib;
+          const row  = document.createElement('div');
+          row.className = 'search-result-row' + (isHL ? ' highlighted' : '');
+          row.innerHTML = `
+            <div class="sr-bib">${bib}</div>
+            <div class="sr-info">
+              <div class="sr-name">${rider.name || 'Bib ' + bib}</div>
+              <div class="sr-meta">${formatAge(ts)}${rider.latest?.accuracy ? ' · ±' + rider.latest.accuracy + 'm' : ''}</div>
+            </div>
+            <div class="sr-status ${s}">${s === 'fresh' ? '● Live' : s === 'stale' ? '● Stale' : '● Off'}</div>`;
+          row.addEventListener('click', () => zoomToRider(bib));
+          container.appendChild(row);
+        });
+    }
+
+    function zoomToRider(bib) {
+      const rider = riders[bib];
+      if (!rider?.latest?.lat || !rider?.latest?.lng) return;
+      highlightedBib = bib;
+      renderSearchResults(document.getElementById('riderSearchBox').value);
+      map.setView([rider.latest.lat, rider.latest.lng], 15, { animate: true });
+      markers[bib]?.openPopup();
+    }
+
+    setInterval(() => {
+      Object.entries(riders).forEach(([b, d]) => {
+        if (markers[b]) markers[b].setIcon(makeIcon(stalenessClass(d.latest?.ts||null)));
+      });
+      renderRiderList();
+    }, 60000);
+  </script>
 </body>
 </html>
