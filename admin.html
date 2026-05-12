@@ -867,9 +867,9 @@ window.openFzModal = function() {
   setTimeout(() => {
     if (!fzPickerMap) {
       fzPickerMap = L.map('fzPickerMap', { zoomControl: true }).setView([37.1, -113.5], 10);
-      L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-        attribution: '© OpenStreetMap contributors, © CARTO',
-        subdomains: 'abcd', maxZoom: 19,
+      L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+        attribution: '© Esri, Maxar, Earthstar Geographics',
+        maxZoom: 19,
       }).addTo(fzPickerMap);
 
       fzPickerMap.on('click', (e) => {
