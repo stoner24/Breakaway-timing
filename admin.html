@@ -375,14 +375,17 @@
         </div>
       </div>
     </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr auto auto;gap:12px;align-items:end;margin-top:16px;">
+    <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:12px;align-items:end;margin-top:16px;">
       <div>
         <div class="field-label">Course Name</div>
         <input type="text" class="styled-input" id="gpxCourseName" placeholder="e.g. Short Course, Long Course">
       </div>
       <div>
         <div class="field-label">GPX File</div>
-        <input type="file" accept=".gpx" id="gpxFileInput" class="styled-input" style="padding:8px;cursor:pointer;">
+        <input type="file" accept=".gpx" id="gpxFileInput" style="display:none" onchange="updateGpxLabel(this)">
+        <button class="btn btn-ghost" style="width:100%;justify-content:flex-start;font-family:var(--mono);font-size:12px;letter-spacing:0;text-transform:none;border-color:var(--border);color:var(--text-dim);padding:11px 14px;" onclick="document.getElementById('gpxFileInput').click()">
+          <span id="gpxFileLabel">Choose .gpx file…</span>
+        </button>
       </div>
       <button class="btn btn-green" onclick="uploadGpx()" style="height:42px;align-self:end">UPLOAD</button>
     </div>
@@ -1072,6 +1075,11 @@ function renderCourseList(courses) {
     list.appendChild(div);
   });
 }
+
+window.updateGpxLabel = function(input) {
+  const label = document.getElementById('gpxFileLabel');
+  label.textContent = input.files[0]?.name || 'Choose .gpx file…';
+};
 
 window.uploadGpx = async function() {
   if (!currentRaceId) { alert('Select an event first.'); return; }
