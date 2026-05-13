@@ -372,9 +372,9 @@
         </div>
 
         <div class="field" id="categoryField" style="display:none">
-          <label for="categorySelect">Category</label>
+          <label for="categorySelect">Course</label>
           <select id="categorySelect">
-            <option value="">— Select category —</option>
+            <option value="">— Select your course —</option>
           </select>
         </div>
 
@@ -522,29 +522,28 @@
       });
     });
 
-    // ── Load categories when event is selected ────────────────────────────────
+    // ── Load courses when event is selected ─────────────────────────────────
+    const COURSE_COLORS = ['#ff1744', '#2979ff', '#ff6d00', '#00e676', '#d500f9'];
+
     eventSelect.addEventListener('change', () => {
       const eventId = eventSelect.value;
       const catField  = document.getElementById('categoryField');
       const catSelect = document.getElementById('categorySelect');
-      catSelect.innerHTML = '<option value="">— Select category —</option>';
+      catSelect.innerHTML = '<option value="">— Select your course —</option>';
       if (!eventId) { catField.style.display = 'none'; return; }
 
-      db.ref(`config/races/${eventId}/categories`).once('value').then(snap => {
-        const cats = snap.val();
-        if (!cats || !Object.keys(cats).length) { catField.style.display = 'none'; return; }
+      db.ref(`config/gpx/${eventId}`).once('value').then(snap => {
+        const data = snap.val() || {};
+        const courses = Object.entries(data).filter(([k]) => k !== 'meta' && k !== 'points' && data[k]?.meta);
+        if (!courses.length) { catField.style.display = 'none'; return; }
         catField.style.display = 'block';
-        Object.entries(cats).forEach(([key, cat]) => {
+        courses.forEach(([courseId, course], i) => {
           const opt = document.createElement('option');
-          opt.value = key;
-          opt.textContent = cat.name || key;
+          opt.value = courseId;
+          opt.textContent = course.meta?.name || courseId;
+          opt.dataset.color = COURSE_COLORS[i % COURSE_COLORS.length];
           catSelect.appendChild(opt);
         });
-      });
-
-      // Load race clock start time
-      db.ref(`config/races/${eventId}/startTime`).once('value').then(snap => {
-        sessionData && (sessionData.raceStartTime = snap.val());
       });
     });
 
@@ -663,6 +662,11 @@
       const avatarUrl  = avatarFile ? await uploadAvatar(avatarFile, sessionId) : null;
       const categorySelect = document.getElementById('categorySelect');
 
+      const selectedCourseOpt = categorySelect.options[categorySelect.selectedIndex];
+      const courseId    = categorySelect.value || null;
+      const courseName  = courseId ? (selectedCourseOpt?.textContent || null) : null;
+      const courseColor = courseId ? (selectedCourseOpt?.dataset?.color || '#ff6d00') : '#ff6d00';
+
       sessionData = {
         sessionId,
         token,
@@ -671,7 +675,9 @@
         expiresAt,
         firebaseUrl: FIREBASE_DB_URL,
         event:       eventSelect.value,
-        category:    categorySelect.value || null,
+        courseId,
+        courseName,
+        courseColor,
         avatarUrl:   avatarUrl || null,
         lastPing:    null,
       };
@@ -680,22 +686,23 @@
       localStorage.setItem('bt_session', JSON.stringify(sessionData));
 
       // Write initial record to Firebase
-      // Path: tracker/{eventId}/{bib} — matches admin panel structure
       const eventId = sessionData.event || 'default';
       sessionData.dbPath = `tracker/${eventId}/${bib}`;
       await db.ref(sessionData.dbPath).set({
         sessionId,
         bib,
-        name:      sessionData.name,
-        event:     eventId,
-        category:  sessionData.category  || null,
-        avatarUrl: sessionData.avatarUrl || null,
+        name:        sessionData.name,
+        event:       eventId,
+        courseId:    courseId || null,
+        courseName:  courseName || null,
+        courseColor: courseColor,
+        avatarUrl:   sessionData.avatarUrl || null,
         expiresAt,
-        active:    true,
-        startedAt: Date.now(),
-        adminStop: false,
-        latest:    null,
-        history:   null,
+        active:      true,
+        startedAt:   Date.now(),
+        adminStop:   false,
+        latest:      null,
+        history:     null,
       });
       localStorage.setItem('bt_session', JSON.stringify(sessionData));
 
