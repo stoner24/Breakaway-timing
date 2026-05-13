@@ -172,9 +172,7 @@
     .rider-status.stale { color: var(--amber); }
     .rider-status.old   { color: #999; }
 
-    .rider-marker { width: 16px; height: 16px; border-radius: 50%; background: #ff6d00; border: 3px solid #fff; box-shadow: 0 1px 4px rgba(0,0,0,0.4); }
-    .rider-marker.stale { background: #ffab00; border-color: #fff; }
-    .rider-marker.old   { background: #bbb; border-color: #fff; }
+    .rider-marker { width: 16px; height: 16px; border-radius: 50%; border: 3px solid #fff; box-shadow: 0 1px 4px rgba(0,0,0,0.4); }
 
     .leaflet-container { background: #0a0a0a; }
     .leaflet-popup-content-wrapper { background: #1a1a1a; border: 1px solid #333; border-radius: 8px; color: #fff; box-shadow: 0 2px 12px rgba(0,0,0,0.5); }
@@ -464,8 +462,8 @@
       return 'old';
     }
 
-    function makeIcon(s, cat) {
-      const color = s === 'fresh' ? categoryColor(cat) : s === 'stale' ? '#ffab00' : '#888';
+    function makeIcon(s, courseColor) {
+      const color = s === 'fresh' ? (courseColor || '#ff6d00') : s === 'stale' ? '#ffab00' : '#888';
       return L.divIcon({
         className: '',
         html: `<div class="rider-marker" style="background:${color};border-color:${s==='fresh'?'#fff':'#555'}"></div>`,
@@ -497,14 +495,15 @@
       const acc   = data.latest?.accuracy || null;
       const speed = data.latest?.speed    || null;
       const elev  = data.latest?.elevation|| null;
-      const cat   = data.category         || null;
-      const s     = stalenessClass(ts);
+      const courseColor = data.courseColor || '#ff6d00';
+      const courseName  = data.courseName  || null;
+      const s           = stalenessClass(ts);
 
       if (lat && lng) {
         const ll = [lat, lng];
-        if (markers[bib]) { markers[bib].setLatLng(ll); markers[bib].setIcon(makeIcon(s, cat)); }
+        if (markers[bib]) { markers[bib].setLatLng(ll); markers[bib].setIcon(makeIcon(s, courseColor)); }
         else {
-          markers[bib] = L.marker(ll, { icon: makeIcon(s, cat) }).addTo(map);
+          markers[bib] = L.marker(ll, { icon: makeIcon(s, courseColor) }).addTo(map);
           if (!mapFitted) { map.setView(ll, 14); mapFitted = true; }
         }
 
@@ -514,7 +513,7 @@
           const trailPoints = history.map(p => [p.lat, p.lng]);
           if (trailLayers[bib]) trailLayers[bib].remove();
           trailLayers[bib] = L.polyline(trailPoints, {
-            color: categoryColor(cat), weight: 2, opacity: 0.5, dashArray: '4 4',
+            color: courseColor, weight: 2, opacity: 0.5, dashArray: '4 4',
           }).addTo(map);
         }
 
@@ -523,9 +522,9 @@
           ? `<img src="${data.avatarUrl}" style="width:40px;height:40px;border-radius:50%;object-fit:cover;margin-bottom:6px;display:block;">`
           : '';
 
-        // ── Category badge ──
-        const catHtml = cat
-          ? `<span style="display:inline-block;padding:2px 8px;border-radius:4px;background:${categoryColor(cat)};color:#000;font-size:0.65rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;margin-top:4px">${cat}</span>`
+        // ── Course badge ──
+        const catHtml = courseName
+          ? `<span style="display:inline-block;padding:2px 8px;border-radius:4px;background:${courseColor};color:#fff;font-size:0.65rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;margin-top:4px">${courseName}</span>`
           : '';
 
         markers[bib].bindPopup(`
@@ -569,7 +568,7 @@
         const s   = stalenessClass(ts);
         const row = document.createElement('div');
         row.className = 'rider-row';
-        const catColor = categoryColor(rider.category);
+        const catColor = rider.courseColor || '#333';
         row.innerHTML = `
           <div class="rider-bib" style="border-left:3px solid ${catColor}">${bib}</div>
           <div class="rider-info">
@@ -655,7 +654,7 @@
             <div class="sr-bib">${bib}</div>
             <div class="sr-info">
               <div class="sr-name">${rider.name || 'Bib ' + bib}</div>
-              <div class="sr-meta">${formatAge(ts)}${rider.latest?.accuracy ? ' · ±' + rider.latest.accuracy + 'm' : ''}</div>
+              <div class="sr-meta">${formatAge(ts)}${rider.latest?.accuracy ? ' · ±' + rider.latest.accuracy + 'm' : ''}${rider.courseName ? ' · ' + rider.courseName : ''}</div>
             </div>
             <div class="sr-status ${s}">${s === 'fresh' ? '● Live' : s === 'stale' ? '● Stale' : '● Off'}</div>`;
 
@@ -679,7 +678,7 @@
 
     setInterval(() => {
       Object.entries(riders).forEach(([b, d]) => {
-        if (markers[b]) markers[b].setIcon(makeIcon(stalenessClass(d.latest?.ts||null)));
+        if (markers[b]) markers[b].setIcon(makeIcon(stalenessClass(d.latest?.ts||null), d.courseColor || '#ff6d00'));
       });
       renderRiderList();
     }, 60000);
