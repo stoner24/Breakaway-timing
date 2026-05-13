@@ -284,16 +284,33 @@
       maxZoom: 19,
     }).addTo(map);
 
-    const markers     = {};
-    const riders      = {};
-    let riderListener = null;
-    let courseLayer   = null;
-    let courseVisible = true;
-    let currentEvent  = null;
-    let mapFitted     = false;
+    const markers      = {};
+    const riders       = {};
+    const trailLayers  = {};   // bib → Leaflet polyline of history
+    let riderListener  = null;
+    let courseLayer    = null;
+    let courseVisible  = true;
+    let currentEvent   = null;
+    let mapFitted      = false;
 
     const STALE_MS = 8  * 60 * 1000;
     const OLD_MS   = 20 * 60 * 1000;
+
+    // Category colors — cycle through these
+    const CATEGORY_COLORS = {
+      default: '#ff6d00',
+      xc:      '#00e5ff',
+      enduro:  '#ff1744',
+      dh:      '#d500f9',
+      gravel:  '#00e676',
+      road:    '#ffab00',
+    };
+
+    function categoryColor(cat) {
+      if (!cat) return CATEGORY_COLORS.default;
+      const key = cat.toLowerCase().replace(/[^a-z]/g, '');
+      return CATEGORY_COLORS[key] || CATEGORY_COLORS.default;
+    }
 
     // ── Load events dropdown ──────────────────────────────────────────────────
     db.ref('config/races').on('value', (snap) => {
@@ -317,6 +334,7 @@
         riderListener = null;
       }
       Object.keys(markers).forEach(b => { markers[b].remove(); delete markers[b]; });
+      Object.keys(trailLayers).forEach(b => { trailLayers[b].remove(); delete trailLayers[b]; });
       Object.keys(riders).forEach(b => delete riders[b]);
       removeCourseLayer();
       mapFitted     = false;
@@ -446,11 +464,12 @@
       return 'old';
     }
 
-    function makeIcon(s) {
+    function makeIcon(s, cat) {
+      const color = s === 'fresh' ? categoryColor(cat) : s === 'stale' ? '#ffab00' : '#888';
       return L.divIcon({
         className: '',
-        html: `<div class="rider-marker ${s === 'fresh' ? '' : s}"></div>`,
-        iconSize: [14,14], iconAnchor: [7,7], popupAnchor: [0,-10],
+        html: `<div class="rider-marker" style="background:${color};border-color:${s==='fresh'?'#fff':'#555'}"></div>`,
+        iconSize: [16,16], iconAnchor: [8,8], popupAnchor: [0,-10],
       });
     }
 
@@ -472,24 +491,54 @@
         removeRider(bib); return;
       }
       riders[bib] = data;
-      const ts  = data.latest?.ts  || null;
-      const lat = data.latest?.lat || null;
-      const lng = data.latest?.lng || null;
-      const acc = data.latest?.accuracy || null;
-      const s   = stalenessClass(ts);
+      const ts    = data.latest?.ts       || null;
+      const lat   = data.latest?.lat      || null;
+      const lng   = data.latest?.lng      || null;
+      const acc   = data.latest?.accuracy || null;
+      const speed = data.latest?.speed    || null;
+      const elev  = data.latest?.elevation|| null;
+      const cat   = data.category         || null;
+      const s     = stalenessClass(ts);
 
       if (lat && lng) {
         const ll = [lat, lng];
-        if (markers[bib]) { markers[bib].setLatLng(ll); markers[bib].setIcon(makeIcon(s)); }
+        if (markers[bib]) { markers[bib].setLatLng(ll); markers[bib].setIcon(makeIcon(s, cat)); }
         else {
-          markers[bib] = L.marker(ll, { icon: makeIcon(s) }).addTo(map);
+          markers[bib] = L.marker(ll, { icon: makeIcon(s, cat) }).addTo(map);
           if (!mapFitted) { map.setView(ll, 14); mapFitted = true; }
         }
+
+        // ── History trail ──
+        const history = data.history ? Object.values(data.history).sort((a,b) => a.ts - b.ts) : [];
+        if (history.length > 1) {
+          const trailPoints = history.map(p => [p.lat, p.lng]);
+          if (trailLayers[bib]) trailLayers[bib].remove();
+          trailLayers[bib] = L.polyline(trailPoints, {
+            color: categoryColor(cat), weight: 2, opacity: 0.5, dashArray: '4 4',
+          }).addTo(map);
+        }
+
+        // ── Avatar ──
+        const avatarHtml = data.avatarUrl
+          ? `<img src="${data.avatarUrl}" style="width:40px;height:40px;border-radius:50%;object-fit:cover;margin-bottom:6px;display:block;">`
+          : '';
+
+        // ── Category badge ──
+        const catHtml = cat
+          ? `<span style="display:inline-block;padding:2px 8px;border-radius:4px;background:${categoryColor(cat)};color:#000;font-size:0.65rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;margin-top:4px">${cat}</span>`
+          : '';
+
         markers[bib].bindPopup(`
-          <div style="font-family:-apple-system,sans-serif;min-width:140px;">
+          <div style="font-family:-apple-system,sans-serif;min-width:150px;">
+            ${avatarHtml}
             <div style="font-size:1rem;font-weight:700;color:#fff;">Bib ${bib}</div>
             <div style="font-size:0.85rem;color:#aaa;margin-top:2px;">${data.name||''}</div>
-            <div style="font-size:0.75rem;color:#888;margin-top:8px;">${formatAge(ts)}${acc?` · ±${acc}m`:''}</div>
+            ${catHtml}
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-top:8px;">
+              ${speed != null ? `<div style="font-size:0.72rem;color:#888;">Speed<br><span style="color:#fff;font-weight:600">${speed} mph</span></div>` : ''}
+              ${elev  != null ? `<div style="font-size:0.72rem;color:#888;">Elevation<br><span style="color:#fff;font-weight:600">${elev} ft</span></div>` : ''}
+            </div>
+            <div style="font-size:0.75rem;color:#888;margin-top:6px;">${formatAge(ts)}${acc?` · ±${acc}m`:''}</div>
             <div style="font-size:0.7rem;color:#666;margin-top:2px;">${data.expiresAt?formatExpiry(data.expiresAt):''}</div>
           </div>`);
       }
@@ -499,7 +548,8 @@
     }
 
     function removeRider(bib) {
-      if (markers[bib]) { markers[bib].remove(); delete markers[bib]; }
+      if (markers[bib])    { markers[bib].remove();    delete markers[bib]; }
+      if (trailLayers[bib]){ trailLayers[bib].remove(); delete trailLayers[bib]; }
       delete riders[bib];
       renderRiderList();
       updateCount();
@@ -519,11 +569,12 @@
         const s   = stalenessClass(ts);
         const row = document.createElement('div');
         row.className = 'rider-row';
+        const catColor = categoryColor(rider.category);
         row.innerHTML = `
-          <div class="rider-bib">${bib}</div>
+          <div class="rider-bib" style="border-left:3px solid ${catColor}">${bib}</div>
           <div class="rider-info">
             <div class="rider-name">${rider.name || `Bib ${bib}`}</div>
-            <div class="rider-meta">${formatAge(ts)}${rider.latest?.accuracy?` · ±${rider.latest.accuracy}m`:''}</div>
+            <div class="rider-meta">${rider.category ? `<span style="color:${catColor}">${rider.category}</span> · ` : ''}${formatAge(ts)}${rider.latest?.speed!=null?` · ${rider.latest.speed}mph`:''}${rider.latest?.elevation!=null?` · ${rider.latest.elevation}ft`:''}</div>
           </div>
           <div class="rider-status ${s}">${s==='fresh'?'● Live':s==='stale'?'● Stale':'● Offline'}</div>`;
         row.addEventListener('click', () => {

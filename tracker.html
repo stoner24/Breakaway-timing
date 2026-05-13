@@ -371,6 +371,13 @@
           </select>
         </div>
 
+        <div class="field" id="categoryField" style="display:none">
+          <label for="categorySelect">Category</label>
+          <select id="categorySelect">
+            <option value="">— Select category —</option>
+          </select>
+        </div>
+
         <div class="field">
           <label>Tracking Duration</label>
           <div class="expiry-grid" id="expiryGrid">
@@ -379,6 +386,11 @@
             <button type="button" class="expiry-btn" data-hours="8">8 hr</button>
             <button type="button" class="expiry-btn" data-hours="12">12 hr</button>
           </div>
+        </div>
+
+        <div class="field">
+          <label for="avatarInput">Photo <span style="color:var(--mid);font-weight:400;text-transform:none;letter-spacing:0">(optional — shown in spectator map)</span></label>
+          <input type="file" id="avatarInput" accept="image/*" style="background:var(--surface);border:1px solid var(--border);color:var(--white);font-family:var(--font);font-size:0.9rem;padding:0.75rem 1rem;border-radius:8px;width:100%;cursor:pointer;" />
         </div>
 
         <div class="error-msg" id="formError"></div>
@@ -418,6 +430,23 @@
         <div class="info-card">
           <div class="info-card-label">GPS Accuracy</div>
           <div class="info-card-value" id="displayAccuracy">—</div>
+        </div>
+        <div class="info-card">
+          <div class="info-card-label">Speed</div>
+          <div class="info-card-value" id="displaySpeed">—</div>
+        </div>
+        <div class="info-card">
+          <div class="info-card-label">Elevation</div>
+          <div class="info-card-value" id="displayElevation">—</div>
+        </div>
+      </div>
+
+      <!-- Race clock -->
+      <div class="status-badge" id="raceClockBadge" style="display:none">
+        <div style="font-size:1.1rem;">🕐</div>
+        <div class="status-text">
+          <div class="status-label">Race Clock</div>
+          <div class="status-value" id="raceClockValue">—</div>
         </div>
       </div>
 
@@ -482,7 +511,7 @@
     const installBtn      = document.getElementById('installBtn');
     const iosTip          = document.getElementById('iosTip');
 
-    // ── Load events from Firebase (matches admin panel config/races path) ────
+    // ── Load events from Firebase ────────────────────────────────────────────
     db.ref('config/races').once('value').then(snap => {
       const events = snap.val() || {};
       Object.entries(events).forEach(([key, ev]) => {
@@ -490,6 +519,32 @@
         opt.value = key;
         opt.textContent = ev.name || key;
         eventSelect.appendChild(opt);
+      });
+    });
+
+    // ── Load categories when event is selected ────────────────────────────────
+    eventSelect.addEventListener('change', () => {
+      const eventId = eventSelect.value;
+      const catField  = document.getElementById('categoryField');
+      const catSelect = document.getElementById('categorySelect');
+      catSelect.innerHTML = '<option value="">— Select category —</option>';
+      if (!eventId) { catField.style.display = 'none'; return; }
+
+      db.ref(`config/races/${eventId}/categories`).once('value').then(snap => {
+        const cats = snap.val();
+        if (!cats || !Object.keys(cats).length) { catField.style.display = 'none'; return; }
+        catField.style.display = 'block';
+        Object.entries(cats).forEach(([key, cat]) => {
+          const opt = document.createElement('option');
+          opt.value = key;
+          opt.textContent = cat.name || key;
+          catSelect.appendChild(opt);
+        });
+      });
+
+      // Load race clock start time
+      db.ref(`config/races/${eventId}/startTime`).once('value').then(snap => {
+        sessionData && (sessionData.raceStartTime = snap.val());
       });
     });
 
@@ -603,14 +658,22 @@
       const token     = generateToken();
       const expiresAt = Date.now() + selectedHours * 60 * 60 * 1000;
 
+      // Upload avatar if provided
+      const avatarFile = document.getElementById('avatarInput').files[0];
+      const avatarUrl  = avatarFile ? await uploadAvatar(avatarFile, sessionId) : null;
+      const categorySelect = document.getElementById('categorySelect');
+
       sessionData = {
         sessionId,
         token,
         bib,
-        name: nameInput.value.trim() || `Bib ${bib}`,
+        name:        nameInput.value.trim() || `Bib ${bib}`,
         expiresAt,
         firebaseUrl: FIREBASE_DB_URL,
-        event: eventSelect.value,
+        event:       eventSelect.value,
+        category:    categorySelect.value || null,
+        avatarUrl:   avatarUrl || null,
+        lastPing:    null,
       };
 
       // Save to localStorage so it survives page reload
@@ -623,15 +686,25 @@
       await db.ref(sessionData.dbPath).set({
         sessionId,
         bib,
-        name: sessionData.name,
-        event: eventId,
+        name:      sessionData.name,
+        event:     eventId,
+        category:  sessionData.category  || null,
+        avatarUrl: sessionData.avatarUrl || null,
         expiresAt,
-        active: true,
+        active:    true,
         startedAt: Date.now(),
         adminStop: false,
-        latest: null,
+        latest:    null,
+        history:   null,
       });
       localStorage.setItem('bt_session', JSON.stringify(sessionData));
+
+      // Load race start time for clock
+      const startSnap = await db.ref(`config/races/${eventSelect.value}/startTime`).once('value');
+      if (startSnap.val()) {
+        sessionData.raceStartTime = startSnap.val();
+        startRaceClock(startSnap.val());
+      }
 
       // Start the service worker tracker
       await startServiceWorkerTracking();
@@ -712,23 +785,107 @@
       );
     }
 
+    // ── Elevation fetch (Open-Meteo, free, no key needed) ───────────────────
+    async function fetchElevation(lat, lng) {
+      try {
+        const res = await fetch(`https://api.open-meteo.com/v1/elevation?latitude=${lat}&longitude=${lng}`);
+        const data = await res.json();
+        return data.elevation?.[0] ?? null;
+      } catch (e) { return null; }
+    }
+
+    // ── Haversine distance (meters) between two lat/lng points ────────────────
+    function haversineDistance(lat1, lng1, lat2, lng2) {
+      const R = 6371000;
+      const dLat = (lat2 - lat1) * Math.PI / 180;
+      const dLng = (lng2 - lng1) * Math.PI / 180;
+      const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180) * Math.cos(lat2*Math.PI/180) * Math.sin(dLng/2)**2;
+      return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    }
+
+    // ── Upload avatar to Firebase Storage via REST ────────────────────────────
+    async function uploadAvatar(file, sessionId) {
+      if (!file) return null;
+      try {
+        const bucket  = 'breakaway-live-tracking.firebasestorage.app';
+        const path    = encodeURIComponent(`avatars/${sessionId}`);
+        const url     = `https://firebasestorage.googleapis.com/v0/b/${bucket}/o/${path}`;
+        const res     = await fetch(url, { method: 'POST', headers: { 'Content-Type': file.type }, body: file });
+        const data    = await res.json();
+        return `${url}?alt=media&token=${data.downloadTokens}`;
+      } catch (e) { console.warn('Avatar upload failed:', e); return null; }
+    }
+
     async function writePingDirect(pos) {
       if (!sessionData || !sessionData.dbPath) return;
+      const lat = pos.coords.latitude;
+      const lng = pos.coords.longitude;
+      const acc = Math.round(pos.coords.accuracy);
+      const ts  = Date.now();
+
+      // ── Calculate speed from previous ping ──
+      let speed = null;
+      const prev = sessionData.lastPing;
+      if (prev?.lat && prev?.ts) {
+        const dist    = haversineDistance(prev.lat, prev.lng, lat, lng);
+        const elapsed = (ts - prev.ts) / 1000; // seconds
+        if (elapsed > 0) speed = (dist / elapsed) * 2.23694; // mph
+      }
+
+      // ── Fetch elevation ──
+      const elevation = await fetchElevation(lat, lng);
+
+      // ── Build ping object ──
+      const ping = { lat, lng, accuracy: acc, ts, speed: speed ? Math.round(speed * 10) / 10 : null, elevation: elevation ? Math.round(elevation) : null };
+
+      // ── Save last ping for next speed calc ──
+      sessionData.lastPing = { lat, lng, ts };
+      localStorage.setItem('bt_session', JSON.stringify(sessionData));
+
       try {
+        // Write latest + push to history
+        const historyKey = ts.toString();
         await db.ref(sessionData.dbPath).update({
-          active: true,
+          active:    true,
           expiresAt: sessionData.expiresAt,
-          latest: {
-            lat:      pos.coords.latitude,
-            lng:      pos.coords.longitude,
-            accuracy: Math.round(pos.coords.accuracy),
-            ts:       Date.now(),
-          },
+          category:  sessionData.category || null,
+          avatarUrl: sessionData.avatarUrl || null,
+          latest:    ping,
         });
-        updateLastPing(pos.coords.accuracy);
+        // Push to history (keep last 500 pings)
+        await db.ref(`${sessionData.dbPath}/history/${historyKey}`).set(ping);
+
+        updateLastPing(acc, speed, elevation);
       } catch (e) {
         console.warn('Firebase write error:', e);
       }
+    }
+
+    // ── Race clock ────────────────────────────────────────────────────────────
+    let raceClockTimer = null;
+    function startRaceClock(startTime) {
+      const badge = document.getElementById('raceClockBadge');
+      const val   = document.getElementById('raceClockValue');
+      badge.style.display = 'flex';
+      const update = () => {
+        const now     = Date.now();
+        const elapsed = now - startTime;
+        if (elapsed < 0) {
+          // Race hasn't started yet — show countdown
+          const abs = Math.abs(elapsed);
+          const h = Math.floor(abs / 3600000);
+          const m = Math.floor((abs % 3600000) / 60000);
+          const s = Math.floor((abs % 60000) / 1000);
+          val.textContent = `Starts in ${h}h ${m}m ${s}s`;
+        } else {
+          const h = Math.floor(elapsed / 3600000);
+          const m = Math.floor((elapsed % 3600000) / 60000);
+          const s = Math.floor((elapsed % 60000) / 1000);
+          val.textContent = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+        }
+      };
+      update();
+      raceClockTimer = setInterval(update, 1000);
     }
 
     function stopPingInterval() {
@@ -736,12 +893,14 @@
       if (wakeLock)     { wakeLock.release(); wakeLock = null; }
     }
 
-    function updateLastPing(accuracy) {
+    function updateLastPing(accuracy, speed, elevation) {
       const now = new Date();
       statusDot.className = 'status-dot active';
       statusValue.textContent = `Active — last ping at ${now.toLocaleTimeString()}`;
       displayLastPing.textContent = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-      if (accuracy) displayAccuracy.textContent = `±${Math.round(accuracy)}m`;
+      if (accuracy)  document.getElementById('displayAccuracy').textContent  = `±${Math.round(accuracy)}m`;
+      if (speed != null) document.getElementById('displaySpeed').textContent = `${speed.toFixed(1)} mph`;
+      if (elevation != null) document.getElementById('displayElevation').textContent = `${Math.round(elevation)} ft`;
     }
 
     // Re-acquire wake lock when page becomes visible again
@@ -766,6 +925,8 @@
       localStorage.removeItem('bt_session');
       sessionData = null;
       if (countdownTimer) clearInterval(countdownTimer);
+      if (raceClockTimer) { clearInterval(raceClockTimer); raceClockTimer = null; }
+      document.getElementById('raceClockBadge').style.display = 'none';
 
       if (expired) {
         handleExpiry();
