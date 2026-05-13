@@ -642,6 +642,27 @@
       if (!bib) { showError('Please enter your bib number.'); return; }
 
       startBtn.disabled = true;
+      startBtn.textContent = 'Checking registration…';
+
+      // ── Bib validation against rider list ────────────────────────────────
+      const eventId = eventSelect.value;
+      let registeredName = null;
+      if (eventId) {
+        const listSnap = await db.ref(`config/riderList/${eventId}`).once('value');
+        const listData = listSnap.val() || {};
+        if (listData.validate === true) {
+          const riders = listData.riders || {};
+          if (!riders[bib]) {
+            startBtn.disabled = false;
+            startBtn.textContent = 'Start Tracking →';
+            showError(`Bib #${bib} is not registered for this event. Please check your bib number.`);
+            return;
+          }
+          // Auto-fill name from registration list
+          registeredName = riders[bib].name || null;
+        }
+      }
+
       startBtn.textContent = 'Requesting location…';
 
       // Request permission upfront (must be from user gesture)
@@ -671,7 +692,7 @@
         sessionId,
         token,
         bib,
-        name:        nameInput.value.trim() || `Bib ${bib}`,
+        name:        nameInput.value.trim() || registeredName || `Bib ${bib}`,
         expiresAt,
         firebaseUrl: FIREBASE_DB_URL,
         event:       eventSelect.value,

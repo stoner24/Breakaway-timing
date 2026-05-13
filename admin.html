@@ -91,6 +91,11 @@
   .btn-blue { background:var(--blue); color:#0c0e0f; }
 
   .gpx-panel { background:var(--bg3); border-top:2px solid var(--green); padding:20px; margin-bottom:24px; }
+  .riderlist-panel { background:var(--bg3); border-top:2px solid var(--amber); padding:20px; margin-bottom:24px; }
+  .riderlist-table { width:100%; border-collapse:collapse; margin-top:12px; font-family:var(--mono); font-size:12px; }
+  .riderlist-table th { text-align:left; padding:6px 10px; color:var(--text-dim); border-bottom:1px solid var(--border); letter-spacing:1px; text-transform:uppercase; font-size:10px; }
+  .riderlist-table td { padding:6px 10px; border-bottom:1px solid rgba(255,255,255,0.04); color:var(--text-mid); }
+  .riderlist-table td:first-child { color:var(--amber); font-weight:700; font-size:14px; }
 
   /* ADD EVENT PANEL */
   .add-event-panel { background:var(--bg3); border-top:2px solid var(--orange); padding:20px; margin-bottom:20px; display:none; }
@@ -357,6 +362,47 @@
     <div class="schedule-list" id="scheduleList"></div>
   </div>
 
+  <!-- RIDER LIST PANEL -->
+  <div class="riderlist-panel" id="riderListPanel" style="display:none">
+    <div class="schedule-header">
+      <div>
+        <div class="schedule-title" style="color:var(--amber)">📋 Registered Riders</div>
+        <div style="font-family:var(--mono);font-size:11px;color:var(--text-dim);margin-top:4px;">
+          Upload a CSV to validate bibs at registration. When validation is ON, only listed riders can track.
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;">
+        <span style="font-family:var(--condensed);font-size:12px;font-weight:700;letter-spacing:2px;color:var(--text-dim)">VALIDATE BIBS</span>
+        <label class="toggle-switch">
+          <input type="checkbox" id="validateToggle" onchange="toggleValidation(this.checked)">
+          <div class="toggle-track"></div>
+          <div class="toggle-thumb"></div>
+        </label>
+        <span id="validateLabel" style="font-family:var(--condensed);font-size:13px;font-weight:700;letter-spacing:2px;color:var(--red)">OFF</span>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr auto auto;gap:12px;align-items:end;margin-top:16px;">
+      <div>
+        <div class="field-label">CSV File (bib, name — one per line)</div>
+        <input type="file" accept=".csv,.txt" id="riderCsvInput" class="styled-input" style="padding:8px;cursor:pointer;">
+      </div>
+      <button class="btn btn-orange" onclick="uploadRiderList()" style="height:42px;align-self:end">UPLOAD LIST</button>
+      <button class="btn btn-ghost" onclick="clearRiderList()" style="height:42px;align-self:end;border-color:var(--red);color:var(--red)">CLEAR</button>
+    </div>
+    <div style="margin-top:8px;font-family:var(--mono);font-size:11px;" id="riderListMsg"></div>
+    <div style="font-family:var(--mono);font-size:10px;color:var(--text-dim);margin-top:6px;">
+      CSV format: <span style="color:var(--text)">bib,name</span> — e.g. <span style="color:var(--text)">42,TJ Stone</span> — one rider per line. Headers optional.
+    </div>
+
+    <div id="riderListPreview" style="margin-top:16px;max-height:200px;overflow-y:auto;display:none">
+      <table class="riderlist-table">
+        <thead><tr><th>Bib</th><th>Name</th></tr></thead>
+        <tbody id="riderListBody"></tbody>
+      </table>
+    </div>
+  </div>
+
   <!-- STATS ROW -->
   <div class="stats-row">
     <div class="stat-card active-card">
@@ -523,13 +569,16 @@ window.selectRace = function(raceId) {
     deleteRaceBtn.style.display  = 'none';
     clearExpiredBtn.style.display = 'none';
     clearAllBtn.style.display    = 'none';
+    document.getElementById('riderListPanel').style.display = 'none';
     return;
   }
 
-  gpxPanel.style.display       = 'block';
-  deleteRaceBtn.style.display  = 'inline-flex';
-  clearExpiredBtn.style.display = 'inline-flex';
-  clearAllBtn.style.display    = 'inline-flex';
+  gpxPanel.style.display                          = 'block';
+  deleteRaceBtn.style.display                     = 'inline-flex';
+  clearExpiredBtn.style.display                   = 'inline-flex';
+  clearAllBtn.style.display                       = 'inline-flex';
+  document.getElementById('riderListPanel').style.display = 'block';
+  loadRiderListStatus(raceId);
 
   loadSchedule(raceId);
   loadGpxStatus(raceId);
@@ -937,6 +986,85 @@ window.uploadGpx = async function() {
 window.removeCourse = async function(courseId) {
   if (!currentRaceId || !confirm(`Remove this course?`)) return;
   await remove(ref(db, `config/gpx/${currentRaceId}/${courseId}`));
+};
+
+// ── RIDER LIST ────────────────────────────────────────────────────────────────
+let riderListListener = null;
+
+function loadRiderListStatus(raceId) {
+  if (riderListListener) riderListListener();
+  riderListListener = onValue(ref(db, `config/riderList/${raceId}`), (snap) => {
+    const data           = snap.val() || {};
+    const validateToggle = document.getElementById('validateToggle');
+    const validateLabel  = document.getElementById('validateLabel');
+    const preview        = document.getElementById('riderListPreview');
+    const tbody          = document.getElementById('riderListBody');
+
+    const validating = data.validate === true;
+    validateToggle.checked  = validating;
+    validateLabel.textContent = validating ? 'ON' : 'OFF';
+    validateLabel.style.color = validating ? 'var(--green)' : 'var(--red)';
+
+    const riders = data.riders || {};
+    const bibs   = Object.keys(riders);
+    if (bibs.length) {
+      preview.style.display = 'block';
+      tbody.innerHTML = bibs.sort((a,b) => parseInt(a)-parseInt(b)).slice(0,50).map(bib =>
+        `<tr><td>${bib}</td><td>${riders[bib].name||'—'}</td></tr>`
+      ).join('');
+      if (bibs.length > 50) tbody.innerHTML += `<tr><td colspan="2" style="color:var(--text-dim);text-align:center">...and ${bibs.length-50} more</td></tr>`;
+      document.getElementById('riderListMsg').style.color = 'var(--green)';
+      document.getElementById('riderListMsg').textContent = `✓ ${bibs.length} riders loaded`;
+    } else {
+      preview.style.display = 'none';
+      document.getElementById('riderListMsg').textContent = '';
+    }
+  });
+}
+
+window.toggleValidation = async function(on) {
+  if (!currentRaceId) return;
+  await set(ref(db, `config/riderList/${currentRaceId}/validate`), on);
+  const label = document.getElementById('validateLabel');
+  label.textContent = on ? 'ON' : 'OFF';
+  label.style.color = on ? 'var(--green)' : 'var(--red)';
+};
+
+window.uploadRiderList = async function() {
+  if (!currentRaceId) { alert('Select an event first.'); return; }
+  const file = document.getElementById('riderCsvInput').files[0];
+  const msg  = document.getElementById('riderListMsg');
+  if (!file) { msg.style.color = 'var(--red)'; msg.textContent = 'Please select a CSV file.'; return; }
+  msg.style.color = 'var(--text-dim)'; msg.textContent = 'Parsing CSV...';
+
+  const text   = await file.text();
+  const lines  = text.split(/\r?\n/).filter(l => l.trim());
+  const riders = {};
+  let skipped  = 0;
+
+  lines.forEach(line => {
+    const parts = line.split(',');
+    const bib   = parts[0]?.trim().replace(/[^0-9]/g, '');
+    const name  = parts.slice(1).join(',').trim().replace(/^"|"$/g, '') || '';
+    if (!bib || isNaN(parseInt(bib))) { skipped++; return; }
+    riders[bib] = { name };
+  });
+
+  const count = Object.keys(riders).length;
+  if (!count) { msg.style.color = 'var(--red)'; msg.textContent = 'No valid bibs found. Check CSV format.'; return; }
+
+  await set(ref(db, `config/riderList/${currentRaceId}/riders`), riders);
+  msg.style.color = 'var(--green)';
+  msg.textContent = `✓ ${count} riders uploaded${skipped ? ` (${skipped} rows skipped)` : ''}`;
+  document.getElementById('riderCsvInput').value = '';
+};
+
+window.clearRiderList = async function() {
+  if (!currentRaceId || !confirm('Clear the entire rider list for this event?')) return;
+  await remove(ref(db, `config/riderList/${currentRaceId}/riders`));
+  document.getElementById('riderListMsg').style.color = 'var(--text-dim)';
+  document.getElementById('riderListMsg').textContent = 'Rider list cleared.';
+  document.getElementById('riderListPreview').style.display = 'none';
 };
 </script>
 </body>
