@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" href="/favicon-16x16.png" type="image/png" />
+  <title>Download the App · Breakaway Timing</title>
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    .download-hero {
+      padding: 10rem 2rem 5rem;
+      max-width: 680px;
+      margin: 0 auto;
+      text-align: center;
+    }
+    .download-hero h1 {
+      font-family: var(--font-display);
+      font-size: 3.5rem;
+      line-height: 1;
+      letter-spacing: 0.02em;
+      margin-bottom: 1rem;
+    }
+    .download-hero p {
+      color: var(--mid);
+      font-size: 1rem;
+      line-height: 1.8;
+      max-width: 480px;
+      margin: 0 auto 3rem;
+    }
+
+    .download-cards {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1px;
+      background: var(--border);
+      border: 1px solid var(--border);
+      max-width: 680px;
+      margin: 0 auto;
+    }
+    .download-card {
+      background: var(--black);
+      padding: 3rem 2rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      gap: 1rem;
+      transition: background 0.2s;
+    }
+    .download-card:hover { background: #0d0d0d; }
+    .platform-icon {
+      font-size: 3rem;
+      line-height: 1;
+    }
+    .platform-name {
+      font-family: var(--font-heading);
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--mid);
+    }
+    .platform-title {
+      font-family: var(--font-display);
+      font-size: 2rem;
+      line-height: 1;
+      color: var(--white);
+    }
+    .platform-desc {
+      font-size: 0.85rem;
+      color: var(--mid);
+      line-height: 1.6;
+    }
+    .download-btn {
+      display: inline-block;
+      font-family: var(--font-heading);
+      font-weight: 700;
+      font-size: 0.8rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      padding: 0.85rem 2rem;
+      border: 2px solid var(--white);
+      color: var(--white);
+      text-decoration: none;
+      margin-top: 0.5rem;
+      transition: background 0.2s, color 0.2s;
+    }
+    .download-btn:hover { background: var(--white); color: var(--black); }
+    .download-btn.android {
+      border-color: #3ddc84;
+      color: #3ddc84;
+    }
+    .download-btn.android:hover { background: #3ddc84; color: var(--black); }
+
+    .install-note {
+      font-size: 0.72rem;
+      color: var(--border);
+      margin-top: 0.5rem;
+      line-height: 1.5;
+    }
+
+    .steps-section {
+      max-width: 680px;
+      margin: 4rem auto;
+      padding: 0 2rem;
+    }
+    .steps-section h2 {
+      font-family: var(--font-heading);
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--mid);
+      margin-bottom: 2rem;
+      text-align: center;
+    }
+    .steps-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2rem;
+    }
+    .steps-col h3 {
+      font-family: var(--font-heading);
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--white);
+      margin-bottom: 1rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .step-item {
+      display: flex;
+      gap: 0.75rem;
+      margin-bottom: 0.85rem;
+    }
+    .step-num {
+      font-family: var(--font-display);
+      font-size: 1.2rem;
+      color: var(--border);
+      line-height: 1.3;
+      flex-shrink: 0;
+      width: 20px;
+    }
+    .step-text {
+      font-size: 0.85rem;
+      color: var(--mid);
+      line-height: 1.6;
+    }
+    .step-text strong { color: var(--white); }
+
+    @media (max-width: 560px) {
+      .download-cards { grid-template-columns: 1fr; }
+      .steps-grid { grid-template-columns: 1fr; }
+      .download-hero h1 { font-size: 2.5rem; }
+      .download-hero { padding: 8rem 1.5rem 3rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <nav>
+    <a class="nav-logo" href="index.html">
+      <img src="logo.jpg" alt="Breakaway Timing" />
+      <span>Breakaway Timing</span>
+    </a>
+    <ul class="nav-links">
+      <li><a href="index.html">Home</a></li>
+      <li><a href="races.html">Races</a></li>
+      <li><a href="results.html">Results</a></li>
+      <li><a href="tracking.html">Live Tracking</a></li>
+      <li><a href="about.html">About</a></li>
+      <li><a href="contact.html">Contact</a></li>
+    </ul>
+    <button class="nav-toggle" id="navToggle" aria-label="Toggle menu">
+      <span></span><span></span><span></span>
+    </button>
+  </nav>
+
+  <div class="download-hero">
+    <p class="section-label">Mobile App</p>
+    <h1>Get the<br>App</h1>
+    <p>Download the Breakaway Timing Race Tracker to share your GPS position during races. Your dot appears on the live spectator map — even with your screen off.</p>
+  </div>
+
+  <div class="download-cards">
+    <!-- iPhone -->
+    <div class="download-card">
+      <div class="platform-icon">🍎</div>
+      <div class="platform-name">iPhone</div>
+      <div class="platform-title">iOS</div>
+      <p class="platform-desc">Available on TestFlight. Tap the button below and install from the TestFlight app.</p>
+      <a class="download-btn" href="https://testflight.apple.com/join/YOUR_TESTFLIGHT_CODE" target="_blank">
+        Download on TestFlight →
+      </a>
+      <div class="install-note">Requires TestFlight app · iOS 15+</div>
+    </div>
+
+    <!-- Android -->
+    <div class="download-card">
+      <div class="platform-icon">🤖</div>
+      <div class="platform-name">Android</div>
+      <div class="platform-title">Android</div>
+      <p class="platform-desc">Download the APK directly. Tap the button and follow the install prompts on your phone.</p>
+      <a class="download-btn android" href="/downloads/BreakawayTracker.apk" download>
+        Download for Android →
+      </a>
+      <div class="install-note">Tap "Allow from this source" when prompted</div>
+    </div>
+  </div>
+
+  <!-- Install instructions -->
+  <div class="steps-section">
+    <h2>How to Install</h2>
+    <div class="steps-grid">
+
+      <div class="steps-col">
+        <h3>🍎 iPhone</h3>
+        <div class="step-item">
+          <div class="step-num">1</div>
+          <div class="step-text">Install <strong>TestFlight</strong> from the App Store if you don't have it</div>
+        </div>
+        <div class="step-item">
+          <div class="step-num">2</div>
+          <div class="step-text">Tap <strong>Download on TestFlight</strong> above</div>
+        </div>
+        <div class="step-item">
+          <div class="step-num">3</div>
+          <div class="step-text">Tap <strong>Install</strong> in TestFlight</div>
+        </div>
+        <div class="step-item">
+          <div class="step-num">4</div>
+          <div class="step-text">Open the app, enter your bib, and tap <strong>Start Tracking</strong></div>
+        </div>
+      </div>
+
+      <div class="steps-col">
+        <h3>🤖 Android</h3>
+        <div class="step-item">
+          <div class="step-num">1</div>
+          <div class="step-text">Tap <strong>Download for Android</strong> above</div>
+        </div>
+        <div class="step-item">
+          <div class="step-num">2</div>
+          <div class="step-text">When prompted, tap <strong>"Allow from this source"</strong></div>
+        </div>
+        <div class="step-item">
+          <div class="step-num">3</div>
+          <div class="step-text">Tap <strong>Install</strong> when the installer appears</div>
+        </div>
+        <div class="step-item">
+          <div class="step-num">4</div>
+          <div class="step-text">Open the app, enter your bib, and tap <strong>Start Tracking</strong></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <section class="section" style="text-align:center; padding: 4rem 2rem;">
+    <p class="section-label">Questions?</p>
+    <h2 class="section-title">Need Help?</h2>
+    <p style="color: var(--mid); max-width: 400px; margin: 1rem auto 2rem; font-size: 0.95rem;">
+      Contact us at race check-in or reach out before the event.
+    </p>
+    <a href="contact.html" class="btn btn-solid">Contact Us</a>
+  </section>
+
+  <footer>
+    <div class="footer-logo">Breakaway Timing</div>
+    <ul class="footer-links">
+      <li><a href="index.html">Home</a></li>
+      <li><a href="races.html">Races</a></li>
+      <li><a href="results.html">Results</a></li>
+      <li><a href="tracking.html">Live Tracking</a></li>
+      <li><a href="about.html">About</a></li>
+      <li><a href="contact.html">Contact</a></li>
+      <li><a href="privacy.html">Privacy Policy</a></li>
+    </ul>
+    <p class="footer-copy">© 2026 Breakaway Timing · breakawayracetiming@gmail.com</p>
+  </footer>
+
+  <script>
+    const toggle = document.getElementById('navToggle');
+    const links  = document.querySelector('.nav-links');
+    if (toggle && links) {
+      toggle.addEventListener('click', () => { toggle.classList.toggle('open'); links.classList.toggle('open'); });
+      links.querySelectorAll('a').forEach(a => a.addEventListener('click', () => { toggle.classList.remove('open'); links.classList.remove('open'); }));
+    }
+  </script>
+
+</body>
+</html>
