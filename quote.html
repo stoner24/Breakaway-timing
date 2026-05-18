@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quote Calculator — Breakaway Timing</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --orange: #ff6d00;
+    --orange-dim: #cc5700;
+    --bg: #0a0a0a;
+    --surface: #111111;
+    --surface2: #1a1a1a;
+    --border: #2a2a2a;
+    --text: #ffffff;
+    --muted: #888888;
+    --light: #cccccc;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Barlow', sans-serif;
+    font-size: 15px;
+    line-height: 1.5;
+    min-height: 100vh;
+  }
+
+  header {
+    border-bottom: 1px solid var(--border);
+    padding: 20px 40px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .logo {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 800;
+    font-size: 20px;
+    letter-spacing: 3px;
+    color: var(--text);
+    text-decoration: none;
+    text-transform: uppercase;
+  }
+
+  .logo span { color: var(--orange); }
+
+  .back-link {
+    font-size: 13px;
+    color: var(--muted);
+    text-decoration: none;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    font-weight: 600;
+    transition: color 0.2s;
+  }
+  .back-link:hover { color: var(--text); }
+
+  .hero {
+    padding: 48px 40px 32px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .hero-label {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 11px;
+    letter-spacing: 4px;
+    color: var(--orange);
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+
+  .hero h1 {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 52px;
+    font-weight: 800;
+    line-height: 1;
+    letter-spacing: -1px;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+
+  .hero p {
+    color: var(--muted);
+    font-size: 14px;
+    max-width: 480px;
+  }
+
+  main {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 40px 80px;
+  }
+
+  .totals-bar {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr 1fr;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 40px;
+  }
+
+  .total-cell {
+    padding: 28px 0;
+    border-right: 1px solid var(--border);
+    padding-right: 32px;
+    margin-right: 32px;
+  }
+  .total-cell:last-child { border-right: none; }
+
+  .total-label {
+    font-size: 10px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 6px;
+    font-weight: 600;
+  }
+
+  .total-value {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 38px;
+    font-weight: 700;
+    letter-spacing: -1px;
+    color: var(--text);
+  }
+
+  .total-cell:first-child .total-value {
+    color: var(--orange);
+    font-size: 52px;
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 40px;
+    margin-bottom: 40px;
+  }
+
+  .section-label {
+    font-size: 10px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--orange);
+    font-weight: 700;
+    margin-bottom: 20px;
+  }
+
+  .field {
+    margin-bottom: 20px;
+  }
+
+  .field label {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    font-size: 13px;
+    color: var(--muted);
+    margin-bottom: 8px;
+    font-weight: 500;
+  }
+
+  .field label .val {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text);
+  }
+
+  input[type="range"] {
+    -webkit-appearance: none;
+    width: 100%;
+    height: 2px;
+    background: var(--border);
+    outline: none;
+    border-radius: 1px;
+  }
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--orange);
+    cursor: pointer;
+  }
+  input[type="range"]::-moz-range-thumb {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--orange);
+    cursor: pointer;
+    border: none;
+  }
+
+  input[type="number"], input[type="text"] {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: 'Barlow', sans-serif;
+    font-size: 14px;
+    padding: 8px 12px;
+    border-radius: 4px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  input[type="number"]:focus, input[type="text"]:focus {
+    border-color: var(--orange);
+  }
+
+  .rates-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+
+  .rate-field label {
+    font-size: 12px;
+    color: var(--muted);
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 500;
+  }
+
+  .rate-field input {
+    width: 100%;
+  }
+
+  .service-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+    gap: 12px;
+  }
+
+  .service-row:last-child { border-bottom: none; }
+
+  .service-check {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: 1;
+    cursor: pointer;
+    font-size: 14px;
+    color: var(--light);
+  }
+
+  input[type="checkbox"] {
+    -webkit-appearance: none;
+    width: 16px;
+    height: 16px;
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    background: var(--surface2);
+    cursor: pointer;
+    flex-shrink: 0;
+    position: relative;
+    transition: background 0.15s, border-color 0.15s;
+  }
+  input[type="checkbox"]:checked {
+    background: var(--orange);
+    border-color: var(--orange);
+  }
+  input[type="checkbox"]:checked::after {
+    content: '';
+    position: absolute;
+    left: 4px;
+    top: 1px;
+    width: 5px;
+    height: 9px;
+    border: 2px solid #000;
+    border-top: none;
+    border-left: none;
+    transform: rotate(45deg);
+  }
+
+  .service-price-wrap {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .price-prefix {
+    font-size: 13px;
+    color: var(--muted);
+  }
+
+  .service-price-wrap input {
+    width: 72px;
+    text-align: right;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 16px;
+    font-weight: 600;
+  }
+
+  .custom-add {
+    display: flex;
+    gap: 8px;
+    margin-top: 16px;
+    flex-wrap: wrap;
+  }
+
+  .custom-add input[type="text"] { flex: 2; min-width: 120px; }
+  .custom-add input[type="number"] { flex: 1; min-width: 70px; }
+
+  .btn {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    padding: 10px 20px;
+    border-radius: 4px;
+    border: none;
+    cursor: pointer;
+    transition: opacity 0.2s, transform 0.1s;
+  }
+  .btn:active { transform: scale(0.98); }
+
+  .btn-primary {
+    background: var(--orange);
+    color: #000;
+  }
+  .btn-primary:hover { opacity: 0.85; }
+
+  .btn-ghost {
+    background: transparent;
+    color: var(--muted);
+    border: 1px solid var(--border);
+  }
+  .btn-ghost:hover { border-color: var(--muted); color: var(--text); }
+
+  .btn-small {
+    padding: 8px 14px;
+    font-size: 12px;
+  }
+
+  .actions {
+    display: flex;
+    gap: 12px;
+    padding-top: 32px;
+    border-top: 1px solid var(--border);
+    flex-wrap: wrap;
+  }
+
+  /* Print styles */
+  @media print {
+    body { background: #fff; color: #000; }
+    header { border-color: #ddd; }
+    .back-link, .actions { display: none; }
+    .hero { padding: 24px 0; }
+    .hero p { color: #666; }
+    .hero-label { color: var(--orange); }
+    main { padding: 0; }
+    .totals-bar { border-color: #ddd; }
+    .total-cell { border-color: #ddd; }
+    .total-label { color: #666; }
+    .total-value { color: #000; }
+    .total-cell:first-child .total-value { color: var(--orange); }
+    .section-label { color: var(--orange); }
+    .field label { color: #444; }
+    .service-check { color: #333; }
+    .service-row { border-color: #ddd; }
+    input[type="range"] { display: none; }
+    .val::before { content: ''; }
+    .surface { background: #f9f9f9; }
+  }
+
+  @media (max-width: 700px) {
+    header { padding: 16px 20px; }
+    .hero { padding: 32px 20px 24px; }
+    .hero h1 { font-size: 36px; }
+    main { padding: 0 20px 60px; }
+    .grid { grid-template-columns: 1fr; gap: 32px; }
+    .totals-bar { grid-template-columns: 1fr 1fr; }
+    .total-cell:nth-child(2) { border-right: none; }
+    .total-cell:first-child { grid-column: span 2; }
+    .rates-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <a href="/" class="logo">Breakaway<span>.</span>Timing</a>
+  <a href="/" class="back-link">← Back</a>
+</header>
+
+<div class="hero" style="max-width: 1100px; margin: 0 auto;">
+  <div class="hero-label">Services</div>
+  <h1>Quote Calculator</h1>
+  <p>Select your services, enter event details, and get an instant quote to share with your client.</p>
+</div>
+
+<main>
+
+  <div class="totals-bar">
+    <div class="total-cell">
+      <div class="total-label">Total charge</div>
+      <div class="total-value" id="total">$0</div>
+    </div>
+    <div class="total-cell">
+      <div class="total-label">Services</div>
+      <div class="total-value" id="services-total">$0</div>
+    </div>
+    <div class="total-cell">
+      <div class="total-label">Travel</div>
+      <div class="total-value" id="travel-total">$0</div>
+    </div>
+    <div class="total-cell">
+      <div class="total-label">Rider fees</div>
+      <div class="total-value" id="rider-total">$0</div>
+    </div>
+  </div>
+
+  <div class="grid">
+
+    <div>
+      <div class="section-label">Event Details</div>
+
+      <div class="field">
+        <label>Riders in race <span class="val" id="riders-out">100</span></label>
+        <input type="range" min="10" max="600" step="10" value="100" id="riders" oninput="update()">
+      </div>
+
+      <div class="field">
+        <label>Distance one way (miles) <span class="val" id="miles-out">50</span></label>
+        <input type="range" min="0" max="500" step="5" value="50" id="miles" oninput="update()">
+      </div>
+
+      <div class="field">
+        <label>Overnight stays <span class="val" id="nights-out">0</span></label>
+        <input type="range" min="0" max="5" step="1" value="0" id="nights" oninput="update()">
+      </div>
+
+      <div class="field">
+        <label>Event duration (hours) <span class="val" id="hours-out">4</span></label>
+        <input type="range" min="1" max="12" step="1" value="4" id="hours" oninput="update()">
+      </div>
+
+      <div class="section-label" style="margin-top: 32px;">Rate Settings</div>
+
+      <div class="rates-grid">
+        <div class="rate-field">
+          <label>Per rider fee ($)</label>
+          <input type="number" id="rider-rate" value="1.50" step="0.25" min="0" oninput="update()">
+        </div>
+        <div class="rate-field">
+          <label>Mileage rate ($/mile)</label>
+          <input type="number" id="mileage-rate" value="0.67" step="0.01" min="0" oninput="update()">
+        </div>
+        <div class="rate-field">
+          <label>Hotel per night ($)</label>
+          <input type="number" id="hotel-rate" value="120" step="10" min="0" oninput="update()">
+        </div>
+        <div class="rate-field">
+          <label>Minimum charge ($)</label>
+          <input type="number" id="minimum" value="0" step="50" min="0" oninput="update()">
+        </div>
+      </div>
+
+      <div class="section-label" style="margin-top: 32px;">Client Info (optional)</div>
+      <div class="rates-grid">
+        <div class="rate-field" style="grid-column: span 2;">
+          <label>Event / organization name</label>
+          <input type="text" id="client-name" placeholder="e.g. Utah XC Championship" style="width: 100%;">
+        </div>
+        <div class="rate-field" style="grid-column: span 2;">
+          <label>Event date</label>
+          <input type="text" id="event-date" placeholder="e.g. June 14, 2025" style="width: 100%;">
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="section-label">Services</div>
+      <div id="services-list"></div>
+
+      <div style="margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--border);">
+        <div class="section-label">Add Custom Service</div>
+        <div class="custom-add">
+          <input type="text" id="custom-name" placeholder="Service name">
+          <input type="number" id="custom-price" placeholder="Price" step="25" min="0">
+          <button class="btn btn-ghost btn-small" onclick="addCustom()">Add</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="actions">
+    <button class="btn btn-primary" onclick="printQuote()">Print / Save PDF</button>
+    <button class="btn btn-ghost" onclick="resetAll()">Reset</button>
+  </div>
+
+</main>
+
+<script>
+const services = [
+  { id: 'chip',       label: 'Chip timing (RFID)',         base: 400,  checked: true  },
+  { id: 'finishlynx', label: 'FinishLynx photo finish',    base: 250,  checked: false },
+  { id: 'results',    label: 'Live results website',       base: 100,  checked: true  },
+  { id: 'gps',        label: 'GPS live tracking (app)',    base: 150,  checked: false },
+  { id: 'starlink',   label: 'Starlink connectivity',      base: 75,   checked: false },
+  { id: 'rfid',       label: 'RFID mat/reader rental',     base: 200,  checked: false },
+  { id: 'setup',      label: 'Setup & breakdown labor',    base: 150,  checked: true  },
+  { id: 'announce',   label: 'Announcer support',          base: 200,  checked: false },
+  { id: 'usac',       label: 'USA Cycling reg support',    base: 75,   checked: false },
+  { id: 'awards',     label: 'Awards ceremony timing',     base: 50,   checked: false },
+];
+
+const custom = [];
+
+function renderServices() {
+  const el = document.getElementById('services-list');
+  el.innerHTML = services.map(s => `
+    <div class="service-row">
+      <label class="service-check">
+        <input type="checkbox" id="svc-${s.id}" ${s.checked ? 'checked' : ''} onchange="update()">
+        ${s.label}
+      </label>
+      <div class="service-price-wrap">
+        <span class="price-prefix">$</span>
+        <input type="number" id="price-${s.id}" value="${s.base}" step="25" min="0" oninput="update()">
+      </div>
+    </div>
+  `).join('') + custom.map((c, i) => `
+    <div class="service-row">
+      <label class="service-check">
+        <input type="checkbox" id="custom-cb-${i}" checked onchange="update()">
+        ${c.name}
+        <span style="font-size:12px; color: var(--muted); margin-left: 4px; cursor:pointer;" onclick="removeCustom(${i})">✕</span>
+      </label>
+      <div class="service-price-wrap">
+        <span class="price-prefix">$</span>
+        <input type="number" id="custom-p-${i}" value="${c.price}" step="25" min="0" oninput="update()">
+      </div>
+    </div>
+  `).join('');
+}
+
+function update() {
+  const riders  = parseInt(document.getElementById('riders').value);
+  const miles   = parseInt(document.getElementById('miles').value);
+  const nights  = parseInt(document.getElementById('nights').value);
+  const hours   = parseInt(document.getElementById('hours').value);
+  const riderRate   = parseFloat(document.getElementById('rider-rate').value)   || 0;
+  const mileageRate = parseFloat(document.getElementById('mileage-rate').value) || 0;
+  const hotelRate   = parseFloat(document.getElementById('hotel-rate').value)   || 0;
+  const minimum     = parseFloat(document.getElementById('minimum').value)      || 0;
+
+  document.getElementById('riders-out').textContent = riders;
+  document.getElementById('miles-out').textContent  = miles;
+  document.getElementById('nights-out').textContent = nights;
+  document.getElementById('hours-out').textContent  = hours;
+
+  let svcTotal = 0;
+  services.forEach(s => {
+    const cb = document.getElementById('svc-' + s.id);
+    const pr = document.getElementById('price-' + s.id);
+    if (cb && cb.checked) svcTotal += parseFloat(pr.value) || 0;
+  });
+  custom.forEach((c, i) => {
+    const cb = document.getElementById('custom-cb-' + i);
+    const pr = document.getElementById('custom-p-' + i);
+    if (cb && cb.checked) svcTotal += parseFloat(pr.value) || 0;
+  });
+
+  const travelCost = (miles * 2 * mileageRate) + (nights * hotelRate);
+  const riderCost  = riders * riderRate;
+  let total = svcTotal + travelCost + riderCost;
+  if (minimum > 0 && total < minimum) total = minimum;
+
+  document.getElementById('services-total').textContent = '$' + Math.round(svcTotal).toLocaleString();
+  document.getElementById('travel-total').textContent   = '$' + Math.round(travelCost).toLocaleString();
+  document.getElementById('rider-total').textContent    = '$' + Math.round(riderCost).toLocaleString();
+  document.getElementById('total').textContent          = '$' + Math.round(total).toLocaleString();
+}
+
+function addCustom() {
+  const name  = document.getElementById('custom-name').value.trim();
+  const price = parseFloat(document.getElementById('custom-price').value) || 0;
+  if (!name) return;
+  custom.push({ name, price });
+  document.getElementById('custom-name').value  = '';
+  document.getElementById('custom-price').value = '';
+  renderServices();
+  update();
+}
+
+function removeCustom(i) {
+  custom.splice(i, 1);
+  renderServices();
+  update();
+}
+
+function resetAll() {
+  custom.length = 0;
+  services.forEach(s => { s.checked = ['chip','results','setup'].includes(s.id); });
+  document.getElementById('riders').value      = 100;
+  document.getElementById('miles').value       = 50;
+  document.getElementById('nights').value      = 0;
+  document.getElementById('hours').value       = 4;
+  document.getElementById('rider-rate').value  = 1.50;
+  document.getElementById('mileage-rate').value = 0.67;
+  document.getElementById('hotel-rate').value  = 120;
+  document.getElementById('minimum').value     = 0;
+  document.getElementById('client-name').value = '';
+  document.getElementById('event-date').value  = '';
+  renderServices();
+  update();
+}
+
+function printQuote() {
+  window.print();
+}
+
+renderServices();
+update();
+</script>
+</body>
+</html>
