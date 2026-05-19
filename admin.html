@@ -7,12 +7,13 @@
 <title>Breakaway Timing — Admin Panel</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;900&family=Barlow:wght@400;500;600&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <style>
   :root {
     --bg: #0c0e0f; --bg2: #131618; --bg3: #1a1d1f; --bg4: #1f2326;
     --orange: #f5a623; --orange-dim: #b87c1a;
     --green: #39d353; --red: #e5534b; --amber: #f5a623;
-    --blue: #58a6ff;
+    --blue: #58a6ff; --purple: #c084fc;
     --text: #e8eaeb; --text-dim: #6b7280; --text-mid: #9ca3af;
     --border: #2a2d30;
     --mono: 'Share Tech Mono', monospace;
@@ -89,13 +90,10 @@
   .btn-red:hover { background:#c94040; }
   .btn-green { background:var(--green); color:#0c0e0f; }
   .btn-blue { background:var(--blue); color:#0c0e0f; }
+  .btn-purple { background:var(--purple); color:#0c0e0f; }
+  .btn-purple:hover { background:#a855f7; }
 
   .gpx-panel { background:var(--bg3); border-top:2px solid var(--green); padding:20px; margin-bottom:24px; }
-  .riderlist-panel { background:var(--bg3); border-top:2px solid var(--amber); padding:20px; margin-bottom:24px; }
-  .riderlist-table { width:100%; border-collapse:collapse; margin-top:12px; font-family:var(--mono); font-size:12px; }
-  .riderlist-table th { text-align:left; padding:6px 10px; color:var(--text-dim); border-bottom:1px solid var(--border); letter-spacing:1px; text-transform:uppercase; font-size:10px; }
-  .riderlist-table td { padding:6px 10px; border-bottom:1px solid rgba(255,255,255,0.04); color:var(--text-mid); }
-  .riderlist-table td:first-child { color:var(--amber); font-weight:700; font-size:14px; }
 
   /* ADD EVENT PANEL */
   .add-event-panel { background:var(--bg3); border-top:2px solid var(--orange); padding:20px; margin-bottom:20px; display:none; }
@@ -124,6 +122,64 @@
   .sched-window { color:var(--text-dim); }
   .sched-del { background:none; border:1px solid var(--red); color:var(--red); padding:2px 10px; font-family:var(--mono); font-size:10px; cursor:pointer; }
   .sched-del:hover { background:var(--red); color:#fff; }
+
+  /* ── FEEDZONE PANEL ── */
+  .feedzone-panel { background:var(--bg3); border-top:2px solid var(--purple); padding:20px; margin-bottom:24px; }
+  .feedzone-title { font-family:var(--condensed); font-size:18px; font-weight:700; letter-spacing:3px; text-transform:uppercase; color:var(--purple); }
+  .feedzone-subtitle { font-family:var(--mono); font-size:11px; color:var(--text-dim); margin-top:4px; }
+
+  /* Feedzone add form */
+  .fz-add-form { display:flex; gap:12px; align-items:end; margin-top:16px; flex-wrap:wrap; }
+  .fz-name-wrap { flex:1; min-width:180px; }
+
+  /* Click-to-place map modal */
+  .fz-modal-overlay {
+    position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:500;
+    display:none; align-items:center; justify-content:center;
+  }
+  .fz-modal-overlay.open { display:flex; }
+  .fz-modal {
+    background:var(--bg2); border-top:3px solid var(--purple);
+    width:min(700px, 95vw); max-height:90vh;
+    display:flex; flex-direction:column;
+  }
+  .fz-modal-header {
+    display:flex; align-items:center; justify-content:space-between;
+    padding:16px 20px; border-bottom:1px solid var(--border);
+    flex-shrink:0;
+  }
+  .fz-modal-title { font-family:var(--condensed); font-size:18px; font-weight:700; letter-spacing:2px; color:var(--purple); }
+  .fz-modal-hint { font-family:var(--mono); font-size:11px; color:var(--text-dim); margin-top:2px; }
+  .fz-modal-close { background:none; border:none; color:var(--text-dim); font-size:1.2rem; cursor:pointer; }
+  .fz-modal-close:hover { color:var(--text); }
+
+  #fzPickerMap {
+    flex:1; min-height:400px; background:#0a0a0a;
+  }
+
+  .fz-modal-footer {
+    padding:14px 20px; border-top:1px solid var(--border);
+    display:flex; align-items:center; gap:12px; flex-wrap:wrap; flex-shrink:0;
+  }
+  .fz-coord-display {
+    font-family:var(--mono); font-size:12px; color:var(--text-dim); flex:1;
+  }
+  .fz-coord-display.picked { color:var(--purple); }
+  .fz-save-btn { background:var(--purple); color:#0c0e0f; }
+  .fz-save-btn:hover { background:#a855f7; color:#fff; }
+  .fz-save-btn:disabled { background:#444; color:#888; cursor:not-allowed; }
+
+  /* Feedzone list */
+  .fz-list { margin-top:16px; display:flex; flex-direction:column; gap:6px; }
+  .fz-row {
+    display:flex; align-items:center; gap:12px;
+    padding:10px 14px; background:var(--bg2);
+    border-left:3px solid var(--purple);
+    font-family:var(--mono); font-size:12px;
+  }
+  .fz-icon { font-size:16px; flex-shrink:0; }
+  .fz-name { color:var(--text); font-weight:700; flex:1; }
+  .fz-coords { color:var(--text-dim); font-size:11px; }
 
   /* ── STATS ROW ── */
   .stats-row { display:grid; grid-template-columns:repeat(4,1fr); gap:2px; margin-bottom:24px; }
@@ -199,6 +255,12 @@
   .datetime-input { background:var(--bg2); border:2px solid var(--border); border-top:2px solid #3a3d40; color:var(--text); font-family:var(--mono); font-size:13px; padding:10px 12px; outline:none; width:100%; cursor:pointer; }
   .datetime-input:focus { border-color:var(--blue); }
   input[type="datetime-local"]::-webkit-calendar-picker-indicator { filter:invert(0.5); cursor:pointer; }
+
+  /* Leaflet overrides for dark theme in modal */
+  .fz-modal .leaflet-container { background:#0a0a0a; }
+  .fz-modal .leaflet-control-zoom a { background:#1a1a1a !important; color:#fff !important; border-color:#333 !important; }
+  .fz-modal .leaflet-popup-content-wrapper { background:#1a1a1a; border:1px solid #333; color:#fff; }
+  .fz-modal .leaflet-popup-tip { background:#1a1a1a; }
 </style>
 </head>
 <body>
@@ -220,7 +282,7 @@
   </div>
 </div>
 
-<!-- CONFIRM DIALOG — used for multiple actions -->
+<!-- CONFIRM DIALOG -->
 <div class="dialog-overlay" id="confirmDialog">
   <div class="dialog-box">
     <div class="dialog-title" id="dialogTitle">Confirm</div>
@@ -228,6 +290,25 @@
     <div class="dialog-actions">
       <button class="btn btn-red" id="dialogConfirmBtn" onclick="executeDialogAction()">CONFIRM</button>
       <button class="btn btn-ghost" onclick="closeDialog()">CANCEL</button>
+    </div>
+  </div>
+</div>
+
+<!-- FEEDZONE MAP MODAL -->
+<div class="fz-modal-overlay" id="fzModalOverlay">
+  <div class="fz-modal">
+    <div class="fz-modal-header">
+      <div>
+        <div class="fz-modal-title">📍 Place Feedzone</div>
+        <div class="fz-modal-hint">Click anywhere on the map to drop the feedzone pin</div>
+      </div>
+      <button class="fz-modal-close" id="fzModalCloseBtn">✕</button>
+    </div>
+    <div id="fzPickerMap"></div>
+    <div class="fz-modal-footer">
+      <div class="fz-coord-display" id="fzCoordDisplay">No location selected — click the map to place a pin</div>
+      <button class="btn fz-save-btn" id="fzSaveBtn" disabled>SAVE FEEDZONE</button>
+      <button class="btn btn-ghost" id="fzCancelBtn">CANCEL</button>
     </div>
   </div>
 </div>
@@ -262,7 +343,10 @@
       </select>
     </div>
     <button class="btn btn-ghost" onclick="toggleAddPanel()">+ Add Event</button>
-    <!-- ── NEW: Delete current race ── -->
+    <button class="btn btn-ghost" id="visibilityBtn" onclick="toggleRaceVisibility()"
+      style="display:none">
+      <span id="visibilityBtnLabel">👁 Public: ON</span>
+    </button>
     <button class="btn btn-ghost" id="deleteRaceBtn" onclick="promptDeleteRace()"
       style="border-color:var(--red);color:var(--red);display:none">
       🗑 Delete Race
@@ -282,16 +366,6 @@
       </div>
       <button class="btn btn-orange" onclick="addEvent()" style="height:42px;align-self:end">CREATE</button>
     </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px;align-items:end;">
-      <div>
-        <div class="field-label">Race Start Date & Time</div>
-        <input type="datetime-local" class="datetime-input" id="newRaceStart">
-      </div>
-      <div>
-        <div class="field-label">Categories (comma separated)</div>
-        <input type="text" class="styled-input" id="newRaceCategories" placeholder="e.g. XC, Enduro, DH">
-      </div>
-    </div>
     <div style="margin-top:10px;font-family:var(--mono);font-size:11px;color:var(--text-dim)" id="addEventMsg"></div>
   </div>
 
@@ -305,23 +379,40 @@
         </div>
       </div>
     </div>
-
-    <!-- Add course form -->
-    <div style="display:grid;grid-template-columns:1fr 1fr auto auto;gap:12px;align-items:end;margin-top:16px;">
+    <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:12px;align-items:end;margin-top:16px;">
       <div>
         <div class="field-label">Course Name</div>
         <input type="text" class="styled-input" id="gpxCourseName" placeholder="e.g. Short Course, Long Course">
       </div>
       <div>
         <div class="field-label">GPX File</div>
-        <input type="file" accept=".gpx" id="gpxFileInput" class="styled-input" style="padding:8px;cursor:pointer;">
+        <input type="file" accept=".gpx" id="gpxFileInput" style="display:none" onchange="updateGpxLabel(this)">
+        <button class="btn btn-ghost" style="width:100%;justify-content:flex-start;font-family:var(--mono);font-size:12px;letter-spacing:0;text-transform:none;border-color:var(--border);color:var(--text-dim);padding:11px 14px;" onclick="document.getElementById('gpxFileInput').click()">
+          <span id="gpxFileLabel">Choose .gpx file…</span>
+        </button>
       </div>
       <button class="btn btn-green" onclick="uploadGpx()" style="height:42px;align-self:end">UPLOAD</button>
     </div>
     <div style="margin-top:10px;font-family:var(--mono);font-size:11px;" id="gpxMsg"></div>
-
-    <!-- Uploaded courses list -->
     <div id="gpxCourseList" style="margin-top:16px;display:flex;flex-direction:column;gap:8px;"></div>
+  </div>
+
+  <!-- ── FEEDZONE PANEL ── -->
+  <div class="feedzone-panel" id="feedzonePanel" style="display:none">
+    <div class="feedzone-title">🏁 Feedzones</div>
+    <div class="feedzone-subtitle">Click-to-place feedzone markers shown on the spectator map.</div>
+
+    <div class="fz-add-form">
+      <div class="fz-name-wrap">
+        <div class="field-label">Feedzone Name</div>
+        <input type="text" class="styled-input" id="fzNameInput" placeholder="e.g. Aid Station 1, Main Feedzone">
+      </div>
+      <button class="btn btn-purple" id="fzOpenBtn">📍 PLACE ON MAP</button>
+    </div>
+
+    <div class="fz-list" id="fzList">
+      <div style="font-family:var(--mono);font-size:11px;color:var(--text-dim);margin-top:8px;">No feedzones added yet.</div>
+    </div>
   </div>
 
   <!-- SCHEDULING PANEL -->
@@ -362,47 +453,6 @@
     <div class="schedule-list" id="scheduleList"></div>
   </div>
 
-  <!-- RIDER LIST PANEL -->
-  <div class="riderlist-panel" id="riderListPanel" style="display:none">
-    <div class="schedule-header">
-      <div>
-        <div class="schedule-title" style="color:var(--amber)">📋 Registered Riders</div>
-        <div style="font-family:var(--mono);font-size:11px;color:var(--text-dim);margin-top:4px;">
-          Upload a CSV to validate bibs at registration. When validation is ON, only listed riders can track.
-        </div>
-      </div>
-      <div style="display:flex;align-items:center;gap:12px;">
-        <span style="font-family:var(--condensed);font-size:12px;font-weight:700;letter-spacing:2px;color:var(--text-dim)">VALIDATE BIBS</span>
-        <label class="toggle-switch">
-          <input type="checkbox" id="validateToggle" onchange="toggleValidation(this.checked)">
-          <div class="toggle-track"></div>
-          <div class="toggle-thumb"></div>
-        </label>
-        <span id="validateLabel" style="font-family:var(--condensed);font-size:13px;font-weight:700;letter-spacing:2px;color:var(--red)">OFF</span>
-      </div>
-    </div>
-
-    <div style="display:grid;grid-template-columns:1fr auto auto;gap:12px;align-items:end;margin-top:16px;">
-      <div>
-        <div class="field-label">CSV File (bib, name — one per line)</div>
-        <input type="file" accept=".csv,.txt" id="riderCsvInput" class="styled-input" style="padding:8px;cursor:pointer;">
-      </div>
-      <button class="btn btn-orange" onclick="uploadRiderList()" style="height:42px;align-self:end">UPLOAD LIST</button>
-      <button class="btn btn-ghost" onclick="clearRiderList()" style="height:42px;align-self:end;border-color:var(--red);color:var(--red)">CLEAR</button>
-    </div>
-    <div style="margin-top:8px;font-family:var(--mono);font-size:11px;" id="riderListMsg"></div>
-    <div style="font-family:var(--mono);font-size:10px;color:var(--text-dim);margin-top:6px;">
-      CSV format: <span style="color:var(--text)">bib,name</span> — e.g. <span style="color:var(--text)">42,TJ Stone</span> — one rider per line. Headers optional.
-    </div>
-
-    <div id="riderListPreview" style="margin-top:16px;max-height:200px;overflow-y:auto;display:none">
-      <table class="riderlist-table">
-        <thead><tr><th>Bib</th><th>Name</th></tr></thead>
-        <tbody id="riderListBody"></tbody>
-      </table>
-    </div>
-  </div>
-
   <!-- STATS ROW -->
   <div class="stats-row">
     <div class="stat-card active-card">
@@ -427,7 +477,6 @@
   <div class="search-row">
     <input type="text" class="search-input" id="searchInput" placeholder="Filter by bib or name..." oninput="filterTable()">
     <div style="font-family:var(--mono);font-size:11px;color:var(--text-dim);white-space:nowrap" id="filterCount"></div>
-    <!-- ── NEW: Rider cleanup buttons ── -->
     <button class="btn btn-ghost" id="clearExpiredBtn" onclick="promptClearExpired()"
       style="border-color:var(--amber);color:var(--amber);display:none">
       Clear Expired
@@ -454,6 +503,7 @@
 
 </div>
 
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
 import { getDatabase, ref, set, get, update, remove, onValue, off } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
@@ -477,7 +527,7 @@ const db  = getDatabase(app);
 let currentRaceId      = null;
 let currentRiders      = {};
 let raceListener       = null;
-let pendingAction      = null;   // { type, payload }
+let pendingAction      = null;
 let scheduleWindows    = [];
 let scheduleCheckInterval = null;
 
@@ -496,6 +546,12 @@ function init() {
   loadRaces();
   listenGlobalTracking();
   startScheduleCheck();
+
+  // Wire feedzone buttons inside module scope
+  document.getElementById('fzOpenBtn').addEventListener('click', openFzModal);
+  document.getElementById('fzSaveBtn').addEventListener('click', saveFeedzone);
+  document.getElementById('fzModalCloseBtn').addEventListener('click', closeFzModal);
+  document.getElementById('fzCancelBtn').addEventListener('click', closeFzModal);
 }
 
 // ── RACES ─────────────────────────────────────────────────────────────────────
@@ -518,36 +574,43 @@ function loadRaces() {
 }
 
 window.addEvent = async function() {
-  const id         = document.getElementById('newRaceId').value.trim().replace(/\s+/g, '-');
-  const name       = document.getElementById('newRaceName').value.trim();
-  const startVal   = document.getElementById('newRaceStart').value;
-  const catsRaw    = document.getElementById('newRaceCategories').value.trim();
-  const msg        = document.getElementById('addEventMsg');
-  if (!id || !name) { msg.style.color = 'var(--red)'; msg.textContent = 'Both ID and name required.'; return; }
+  const id   = document.getElementById('newRaceId').value.trim().replace(/\s+/g, '-');
+  const name = document.getElementById('newRaceName').value.trim();
+  const msg  = document.getElementById('addEventMsg');
+  if (!id || !name) { msg.style.color = 'var(--red)'; msg.textContent = 'Both fields required.'; return; }
+  await set(ref(db, `config/races/${id}`), { name, trackingEnabled: true, visible: false, createdAt: Date.now() });
+  msg.style.color = 'var(--green)'; msg.textContent = `✓ Event "${name}" created. (Hidden by default — toggle Public ON when ready.)`;
+  document.getElementById('newRaceId').value  = '';
+  document.getElementById('newRaceName').value = '';
+};
 
-  // Build categories object
-  const categories = {};
-  if (catsRaw) {
-    catsRaw.split(',').forEach(c => {
-      const key = c.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-');
-      if (key) categories[key] = { name: c.trim() };
-    });
-  }
-
-  await set(ref(db, `config/races/${id}`), {
-    name,
-    trackingEnabled: true,
-    createdAt:       Date.now(),
-    startTime:       startVal ? new Date(startVal).getTime() : null,
-    categories:      Object.keys(categories).length ? categories : null,
+// ── RACE VISIBILITY ───────────────────────────────────────────────────────────
+function loadRaceVisibility(raceId) {
+  get(ref(db, `config/races/${raceId}/visible`)).then(snap => {
+    updateVisibilityBtn(snap.val() !== false);
   });
+}
 
-  msg.style.color = 'var(--green)';
-  msg.textContent = `✓ Event "${name}" created${startVal ? ' with race clock' : ''}${catsRaw ? ' and categories' : ''}.`;
-  document.getElementById('newRaceId').value         = '';
-  document.getElementById('newRaceName').value       = '';
-  document.getElementById('newRaceStart').value      = '';
-  document.getElementById('newRaceCategories').value = '';
+function updateVisibilityBtn(isVisible) {
+  const btn = document.getElementById('visibilityBtn');
+  const lbl = document.getElementById('visibilityBtnLabel');
+  if (isVisible) {
+    lbl.textContent = '👁 Public: ON';
+    btn.style.borderColor = 'var(--green)';
+    btn.style.color = 'var(--green)';
+  } else {
+    lbl.textContent = '🚫 Public: OFF';
+    btn.style.borderColor = 'var(--red)';
+    btn.style.color = 'var(--red)';
+  }
+}
+
+window.toggleRaceVisibility = async function() {
+  if (!currentRaceId) return;
+  const snap = await get(ref(db, `config/races/${currentRaceId}/visible`));
+  const current = snap.val() !== false;
+  await set(ref(db, `config/races/${currentRaceId}/visible`), !current);
+  updateVisibilityBtn(!current);
 };
 
 window.toggleAddPanel = function() {
@@ -558,30 +621,35 @@ window.selectRace = function(raceId) {
   currentRaceId = raceId;
   if (raceListener) { off(ref(db, `tracker/${currentRaceId}`)); raceListener = null; }
 
-  const gpxPanel       = document.getElementById('gpxPanel');
-  const deleteRaceBtn  = document.getElementById('deleteRaceBtn');
+  const gpxPanel        = document.getElementById('gpxPanel');
+  const feedzonePanel   = document.getElementById('feedzonePanel');
+  const deleteRaceBtn   = document.getElementById('deleteRaceBtn');
+  const visibilityBtn   = document.getElementById('visibilityBtn');
   const clearExpiredBtn = document.getElementById('clearExpiredBtn');
-  const clearAllBtn    = document.getElementById('clearAllBtn');
+  const clearAllBtn     = document.getElementById('clearAllBtn');
 
   if (!raceId) {
     renderEmpty('No event selected.');
     gpxPanel.style.display      = 'none';
+    feedzonePanel.style.display = 'none';
     deleteRaceBtn.style.display  = 'none';
+    visibilityBtn.style.display  = 'none';
     clearExpiredBtn.style.display = 'none';
     clearAllBtn.style.display    = 'none';
-    document.getElementById('riderListPanel').style.display = 'none';
     return;
   }
 
-  gpxPanel.style.display                          = 'block';
-  deleteRaceBtn.style.display                     = 'inline-flex';
-  clearExpiredBtn.style.display                   = 'inline-flex';
-  clearAllBtn.style.display                       = 'inline-flex';
-  document.getElementById('riderListPanel').style.display = 'block';
-  loadRiderListStatus(raceId);
+  gpxPanel.style.display       = 'block';
+  feedzonePanel.style.display  = 'block';
+  deleteRaceBtn.style.display  = 'inline-flex';
+  visibilityBtn.style.display  = 'inline-flex';
+  clearExpiredBtn.style.display = 'inline-flex';
+  clearAllBtn.style.display    = 'inline-flex';
 
   loadSchedule(raceId);
   loadGpxStatus(raceId);
+  loadFeedzones(raceId);
+  loadRaceVisibility(raceId);
 
   raceListener = onValue(ref(db, `tracker/${raceId}`), (snap) => {
     currentRiders = snap.val() || {};
@@ -598,34 +666,27 @@ window.promptDeleteRace = function() {
   pendingAction = { type: 'deleteRace', raceId: currentRaceId };
   document.getElementById('dialogTitle').textContent = 'Delete Race';
   document.getElementById('confirmMsg').textContent  =
-    `Permanently delete "${name}" and ALL its rider data, schedule, and GPX course? This cannot be undone.`;
+    `Permanently delete "${name}" and ALL its rider data, schedule, feedzones, and GPX course? This cannot be undone.`;
   document.getElementById('dialogConfirmBtn').textContent = 'DELETE RACE';
   document.getElementById('confirmDialog').classList.add('open');
 };
 
 async function executeDeleteRace(raceId) {
-  // Remove riders
   await remove(ref(db, `tracker/${raceId}`));
-  // Remove schedule
   await remove(ref(db, `config/schedules/${raceId}`));
-  // Remove GPX
   await remove(ref(db, `config/gpx/${raceId}`));
-  // Remove the race entry itself
+  await remove(ref(db, `config/feedzones/${raceId}`));
   await remove(ref(db, `config/races/${raceId}`));
-  // Reset UI
   document.getElementById('raceSelect').value = '';
   window.selectRace('');
 }
 
-// ── CLEAR EXPIRED RIDERS ──────────────────────────────────────────────────────
+// ── CLEAR EXPIRED / ALL RIDERS ────────────────────────────────────────────────
 window.promptClearExpired = function() {
   if (!currentRaceId) return;
   const now     = Date.now();
   const expired = Object.entries(currentRiders).filter(([, r]) => !r.expiresAt || r.expiresAt < now);
-  if (!expired.length) {
-    alert('No expired riders found for this event.');
-    return;
-  }
+  if (!expired.length) { alert('No expired riders found for this event.'); return; }
   pendingAction = { type: 'clearExpired', raceId: currentRaceId };
   document.getElementById('dialogTitle').textContent = 'Clear Expired Riders';
   document.getElementById('confirmMsg').textContent  =
@@ -644,7 +705,6 @@ async function executeClearExpired(raceId) {
   await Promise.all(dels);
 }
 
-// ── CLEAR ALL RIDERS ──────────────────────────────────────────────────────────
 window.promptClearAll = function() {
   if (!currentRaceId) return;
   const count = Object.keys(currentRiders).length;
@@ -788,7 +848,7 @@ function isInScheduleWindow(ts) {
     if (now >= w.start && now <= w.end) return true;
     if (w.repeat === 'daily') {
       const dur = w.end - w.start, dayMs = 86400000;
-      const pos = ((( now - w.start) % dayMs) + dayMs) % dayMs;
+      const pos = (((now - w.start) % dayMs) + dayMs) % dayMs;
       return pos <= dur;
     }
     if (w.repeat === 'weekly') {
@@ -804,6 +864,121 @@ function isInScheduleWindow(ts) {
 function startScheduleCheck() {
   scheduleCheckInterval = setInterval(() => { checkScheduleNow(); renderScheduleList(); }, 30000);
 }
+
+// ── FEEDZONES ─────────────────────────────────────────────────────────────────
+let fzPickerMap     = null;
+let fzPickerMarker  = null;
+let fzPickedLatLng  = null;
+let fzListener      = null;
+
+function loadFeedzones(raceId) {
+  if (fzListener) fzListener();
+  fzListener = onValue(ref(db, `config/feedzones/${raceId}`), (snap) => {
+    renderFzList(snap.val() || {});
+  });
+}
+
+function renderFzList(feedzones) {
+  const list = document.getElementById('fzList');
+  const entries = Object.entries(feedzones);
+  if (!entries.length) {
+    list.innerHTML = '<div style="font-family:var(--mono);font-size:11px;color:var(--text-dim);margin-top:8px;">No feedzones added yet.</div>';
+    return;
+  }
+  list.innerHTML = entries.map(([key, fz]) => `
+    <div class="fz-row">
+      <div class="fz-icon">🏁</div>
+      <div class="fz-name">${fz.name}</div>
+      <div class="fz-coords">${fz.lat.toFixed(5)}, ${fz.lng.toFixed(5)}</div>
+      <button class="sched-del" onclick="removeFeedzone('${key}')">✕ REMOVE</button>
+    </div>`).join('');
+}
+
+window.openFzModal = function() {
+  const name = document.getElementById('fzNameInput').value.trim();
+  if (!name) {
+    document.getElementById('fzNameInput').focus();
+    document.getElementById('fzNameInput').style.borderColor = 'var(--red)';
+    setTimeout(() => document.getElementById('fzNameInput').style.borderColor = '', 1500);
+    return;
+  }
+  if (!currentRaceId) { alert('Select an event first.'); return; }
+
+  document.getElementById('fzModalOverlay').classList.add('open');
+
+  // Init map on first open, or just invalidate size
+  setTimeout(() => {
+    if (!fzPickerMap) {
+      fzPickerMap = L.map('fzPickerMap', { zoomControl: true }).setView([37.1, -113.5], 10);
+      L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+        attribution: '© Esri, Maxar, Earthstar Geographics',
+        maxZoom: 19,
+      }).addTo(fzPickerMap);
+
+      fzPickerMap.on('click', (e) => {
+        fzPickedLatLng = e.latlng;
+        if (fzPickerMarker) fzPickerMarker.setLatLng(e.latlng);
+        else {
+          fzPickerMarker = L.marker(e.latlng, {
+            icon: L.divIcon({
+              className: '',
+              html: `<div style="width:18px;height:18px;border-radius:50%;background:#c084fc;border:3px solid #fff;box-shadow:0 0 8px rgba(192,132,252,0.8)"></div>`,
+              iconSize: [18,18], iconAnchor: [9,9]
+            })
+          }).addTo(fzPickerMap);
+        }
+        const coord = document.getElementById('fzCoordDisplay');
+        coord.textContent = `${e.latlng.lat.toFixed(5)}, ${e.latlng.lng.toFixed(5)}`;
+        coord.classList.add('picked');
+        document.getElementById('fzSaveBtn').disabled = false;
+      });
+    } else {
+      fzPickerMap.invalidateSize();
+    }
+
+    // Try to center map on existing feedzones or course bounds
+    centerPickerMap();
+  }, 100);
+};
+
+function centerPickerMap() {
+  // Try to fit to existing course GPX for current event
+  if (!currentRaceId || !fzPickerMap) return;
+  // Just invalidate size — map already centered from last use or default
+  fzPickerMap.invalidateSize();
+}
+
+window.closeFzModal = function() {
+  document.getElementById('fzModalOverlay').classList.remove('open');
+};
+
+window.saveFeedzone = async function() {
+  if (!fzPickedLatLng || !currentRaceId) return;
+  const name = document.getElementById('fzNameInput').value.trim();
+  if (!name) return;
+
+  const key = 'fz_' + Date.now();
+  await set(ref(db, `config/feedzones/${currentRaceId}/${key}`), {
+    name,
+    lat: fzPickedLatLng.lat,
+    lng: fzPickedLatLng.lng,
+    createdAt: Date.now()
+  });
+
+  // Reset
+  document.getElementById('fzNameInput').value = '';
+  document.getElementById('fzCoordDisplay').textContent = 'No location selected — click the map to place a pin';
+  document.getElementById('fzCoordDisplay').classList.remove('picked');
+  document.getElementById('fzSaveBtn').disabled = true;
+  if (fzPickerMarker) { fzPickerMarker.remove(); fzPickerMarker = null; }
+  fzPickedLatLng = null;
+  closeFzModal();
+};
+
+window.removeFeedzone = async function(key) {
+  if (!currentRaceId) return;
+  await remove(ref(db, `config/feedzones/${currentRaceId}/${key}`));
+};
 
 // ── RIDER TABLE ───────────────────────────────────────────────────────────────
 function autoExpireCheck() {
@@ -887,7 +1062,6 @@ function renderEmpty(msg) {
 }
 
 function updateStats() {
-  const now = Date.now();
   let active = 0, stopped = 0;
   Object.values(currentRiders).forEach(r => { if (r.active && !r.adminStop) active++; else stopped++; });
   document.getElementById('statActive').textContent  = active;
@@ -911,13 +1085,12 @@ window.promptRemoveRider = function(bib) {
   document.getElementById('confirmDialog').classList.add('open');
 };
 
-// ── GPX COURSE OVERLAYS (multiple per event) ─────────────────────────────────
+// ── GPX COURSE OVERLAYS ───────────────────────────────────────────────────────
 const COURSE_COLORS = ['#ff1744', '#2979ff', '#ff6d00', '#00e676', '#d500f9'];
-
 let gpxListener = null;
 
 function loadGpxStatus(raceId) {
-  if (gpxListener) gpxListener();  // detach previous listener
+  if (gpxListener) gpxListener();
   gpxListener = onValue(ref(db, `config/gpx/${raceId}`), (snap) => {
     renderCourseList(snap.val() || {});
   });
@@ -926,7 +1099,7 @@ function loadGpxStatus(raceId) {
 function renderCourseList(courses) {
   const list = document.getElementById('gpxCourseList');
   list.innerHTML = '';
-  const entries = Object.entries(courses).filter(([k]) => k !== 'meta'); // ignore legacy single-course
+  const entries = Object.entries(courses).filter(([k]) => k !== 'meta');
   if (!entries.length) {
     list.innerHTML = '<div style="font-family:var(--mono);font-size:11px;color:var(--text-dim)">No courses uploaded yet.</div>';
     return;
@@ -945,6 +1118,11 @@ function renderCourseList(courses) {
     list.appendChild(div);
   });
 }
+
+window.updateGpxLabel = function(input) {
+  const label = document.getElementById('gpxFileLabel');
+  label.textContent = input.files[0]?.name || 'Choose .gpx file…';
+};
 
 window.uploadGpx = async function() {
   if (!currentRaceId) { alert('Select an event first.'); return; }
@@ -969,9 +1147,7 @@ window.uploadGpx = async function() {
     pts = pts.filter((_,i) => i % step === 0);
   }
 
-  // Use a slug of the name as the key
   const courseId = name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
-
   await set(ref(db, `config/gpx/${currentRaceId}/${courseId}/points`), pts);
   await set(ref(db, `config/gpx/${currentRaceId}/${courseId}/meta`), {
     name, fileName: file.name, pointCount: pts.length, uploadedAt: Date.now()
@@ -986,85 +1162,6 @@ window.uploadGpx = async function() {
 window.removeCourse = async function(courseId) {
   if (!currentRaceId || !confirm(`Remove this course?`)) return;
   await remove(ref(db, `config/gpx/${currentRaceId}/${courseId}`));
-};
-
-// ── RIDER LIST ────────────────────────────────────────────────────────────────
-let riderListListener = null;
-
-function loadRiderListStatus(raceId) {
-  if (riderListListener) riderListListener();
-  riderListListener = onValue(ref(db, `config/riderList/${raceId}`), (snap) => {
-    const data           = snap.val() || {};
-    const validateToggle = document.getElementById('validateToggle');
-    const validateLabel  = document.getElementById('validateLabel');
-    const preview        = document.getElementById('riderListPreview');
-    const tbody          = document.getElementById('riderListBody');
-
-    const validating = data.validate === true;
-    validateToggle.checked  = validating;
-    validateLabel.textContent = validating ? 'ON' : 'OFF';
-    validateLabel.style.color = validating ? 'var(--green)' : 'var(--red)';
-
-    const riders = data.riders || {};
-    const bibs   = Object.keys(riders);
-    if (bibs.length) {
-      preview.style.display = 'block';
-      tbody.innerHTML = bibs.sort((a,b) => parseInt(a)-parseInt(b)).slice(0,50).map(bib =>
-        `<tr><td>${bib}</td><td>${riders[bib].name||'—'}</td></tr>`
-      ).join('');
-      if (bibs.length > 50) tbody.innerHTML += `<tr><td colspan="2" style="color:var(--text-dim);text-align:center">...and ${bibs.length-50} more</td></tr>`;
-      document.getElementById('riderListMsg').style.color = 'var(--green)';
-      document.getElementById('riderListMsg').textContent = `✓ ${bibs.length} riders loaded`;
-    } else {
-      preview.style.display = 'none';
-      document.getElementById('riderListMsg').textContent = '';
-    }
-  });
-}
-
-window.toggleValidation = async function(on) {
-  if (!currentRaceId) return;
-  await set(ref(db, `config/riderList/${currentRaceId}/validate`), on);
-  const label = document.getElementById('validateLabel');
-  label.textContent = on ? 'ON' : 'OFF';
-  label.style.color = on ? 'var(--green)' : 'var(--red)';
-};
-
-window.uploadRiderList = async function() {
-  if (!currentRaceId) { alert('Select an event first.'); return; }
-  const file = document.getElementById('riderCsvInput').files[0];
-  const msg  = document.getElementById('riderListMsg');
-  if (!file) { msg.style.color = 'var(--red)'; msg.textContent = 'Please select a CSV file.'; return; }
-  msg.style.color = 'var(--text-dim)'; msg.textContent = 'Parsing CSV...';
-
-  const text   = await file.text();
-  const lines  = text.split(/\r?\n/).filter(l => l.trim());
-  const riders = {};
-  let skipped  = 0;
-
-  lines.forEach(line => {
-    const parts = line.split(',');
-    const bib   = parts[0]?.trim().replace(/[^0-9]/g, '');
-    const name  = parts.slice(1).join(',').trim().replace(/^"|"$/g, '') || '';
-    if (!bib || isNaN(parseInt(bib))) { skipped++; return; }
-    riders[bib] = { name };
-  });
-
-  const count = Object.keys(riders).length;
-  if (!count) { msg.style.color = 'var(--red)'; msg.textContent = 'No valid bibs found. Check CSV format.'; return; }
-
-  await set(ref(db, `config/riderList/${currentRaceId}/riders`), riders);
-  msg.style.color = 'var(--green)';
-  msg.textContent = `✓ ${count} riders uploaded${skipped ? ` (${skipped} rows skipped)` : ''}`;
-  document.getElementById('riderCsvInput').value = '';
-};
-
-window.clearRiderList = async function() {
-  if (!currentRaceId || !confirm('Clear the entire rider list for this event?')) return;
-  await remove(ref(db, `config/riderList/${currentRaceId}/riders`));
-  document.getElementById('riderListMsg').style.color = 'var(--text-dim)';
-  document.getElementById('riderListMsg').textContent = 'Rider list cleared.';
-  document.getElementById('riderListPreview').style.display = 'none';
 };
 </script>
 </body>

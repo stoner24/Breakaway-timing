@@ -418,6 +418,7 @@
       while (sel.options.length > 1) sel.remove(1);
       const events = snap.val() || {};
       Object.entries(events).forEach(([key, ev]) => {
+        if (ev.visible === false) return;  // hidden — skip
         const opt = document.createElement('option');
         opt.value = key;
         opt.textContent = ev.name || key;
