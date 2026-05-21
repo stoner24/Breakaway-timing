@@ -27,7 +27,6 @@
       max-width: 480px;
       margin: 0 auto 3rem;
     }
-
     .download-cards {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -91,14 +90,12 @@
       color: #3ddc84;
     }
     .download-btn.android:hover { background: #3ddc84; color: var(--black); }
-
     .install-note {
       font-size: 0.72rem;
       color: var(--border);
       margin-top: 0.5rem;
       line-height: 1.5;
     }
-
     .steps-section {
       max-width: 680px;
       margin: 4rem auto;
@@ -149,7 +146,6 @@
       line-height: 1.6;
     }
     .step-text strong { color: var(--white); }
-
     @media (max-width: 560px) {
       .download-cards { grid-template-columns: 1fr; }
       .steps-grid { grid-template-columns: 1fr; }
@@ -159,7 +155,6 @@
   </style>
 </head>
 <body>
-
   <nav>
     <a class="nav-logo" href="index.html">
       <img src="logo.jpg" alt="Breakaway Timing" />
@@ -177,64 +172,58 @@
       <span></span><span></span><span></span>
     </button>
   </nav>
-
   <div class="download-hero">
     <p class="section-label">Mobile App</p>
     <h1>Get the<br>App</h1>
     <p>Download the Breakaway Timing Race Tracker to share your GPS position during races. Your dot appears on the live spectator map — even with your screen off.</p>
   </div>
-
   <div class="download-cards">
     <!-- iPhone -->
     <div class="download-card">
       <div class="platform-icon">🍎</div>
       <div class="platform-name">iPhone</div>
       <div class="platform-title">iOS</div>
-      <p class="platform-desc">Available on TestFlight. Tap the button below and install from the TestFlight app.</p>
-      <a class="download-btn" href="mailto:breakawayracetiming@gmail.com?subject=TestFlight Access Request">
-        Request iOS Access →
+      <p class="platform-desc">Available on the App Store. Tap the button below to download.</p>
+      <a class="download-btn" href="https://apps.apple.com/app/id6768329409">
+        Download on App Store →
       </a>
-      <div class="install-note">Email us for TestFlight invite · iOS 15+</div>
+      <div class="install-note">Free · iOS 15+</div>
     </div>
-
     <!-- Android -->
     <div class="download-card">
       <div class="platform-icon">🤖</div>
       <div class="platform-name">Android</div>
       <div class="platform-title">Android</div>
       <p class="platform-desc">Download the APK directly. Tap the button and follow the install prompts on your phone.</p>
-      <a class="download-btn android" href="https://expo.dev/artifacts/eas/v6tQDFpBQygThDwEyyZ76x.apk">
+      <a class="download-btn android" href="https://expo.dev/accounts/stoner24/projects/breakaway-tracker/builds/0a8405bd-710a-4c5a-9d7a-d97a072b0a3b">
         Download for Android →
       </a>
       <div class="install-note">Tap "Allow from this source" when prompted</div>
     </div>
   </div>
-
   <!-- Install instructions -->
   <div class="steps-section">
     <h2>How to Install</h2>
     <div class="steps-grid">
-
       <div class="steps-col">
         <h3>🍎 iPhone</h3>
         <div class="step-item">
           <div class="step-num">1</div>
-          <div class="step-text">Install <strong>TestFlight</strong> from the App Store if you don't have it</div>
+          <div class="step-text">Tap <strong>Download on App Store</strong> above</div>
         </div>
         <div class="step-item">
           <div class="step-num">2</div>
-          <div class="step-text">Tap <strong>Download on TestFlight</strong> above</div>
+          <div class="step-text">Tap <strong>Get</strong> to install</div>
         </div>
         <div class="step-item">
           <div class="step-num">3</div>
-          <div class="step-text">Tap <strong>Install</strong> in TestFlight</div>
+          <div class="step-text">Open the app and tap <strong>Allow</strong> when asked for location access</div>
         </div>
         <div class="step-item">
           <div class="step-num">4</div>
-          <div class="step-text">Open the app, enter your bib, and tap <strong>Start Tracking</strong></div>
+          <div class="step-text">Enter your bib and tap <strong>Start Tracking</strong></div>
         </div>
       </div>
-
       <div class="steps-col">
         <h3>🤖 Android</h3>
         <div class="step-item">
@@ -254,12 +243,9 @@
           <div class="step-text">Open the app, enter your bib, and tap <strong>Start Tracking</strong></div>
         </div>
       </div>
-
     </div>
   </div>
-
   <div class="divider"></div>
-
   <section class="section" style="text-align:center; padding: 4rem 2rem;">
     <p class="section-label">Questions?</p>
     <h2 class="section-title">Need Help?</h2>
@@ -268,7 +254,6 @@
     </p>
     <a href="contact.html" class="btn btn-solid">Contact Us</a>
   </section>
-
   <footer>
     <div class="footer-logo">Breakaway Timing</div>
     <ul class="footer-links">
@@ -282,15 +267,13 @@
     </ul>
     <p class="footer-copy">© 2026 Breakaway Timing · breakawayracetiming@gmail.com</p>
   </footer>
-
   <script>
     const toggle = document.getElementById('navToggle');
     const links  = document.querySelector('.nav-links');
     if (toggle && links) {
-      toggle.addEventListener('click', () => { toggle.classList.toggle('open'); links.classList.toggle('open'); });
+      toggle.addEventListener('click', () => { toggle.classList.toggle('open'); links.classList.remove('open'); });
       links.querySelectorAll('a').forEach(a => a.addEventListener('click', () => { toggle.classList.remove('open'); links.classList.remove('open'); }));
     }
   </script>
-
 </body>
 </html>
