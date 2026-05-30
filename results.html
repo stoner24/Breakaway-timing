@@ -297,10 +297,11 @@
       }).join("");
     }
 
+    // ── Download CSV (with category place) ───────────────────────────────────
     btnCSV.addEventListener("click", () => {
       if (!currentRows.length) return;
-      const headers = ["Place","Bib","Rider","Team","Category","Time","Gap"];
-      const rows    = currentRows.map(r => [r.catPlace, r.bib, r.rider, r.team, r.category, r.time, r.gap]);
+      const headers = ["Cat Place","Overall Place","Bib","Rider","Team","Category","Time","Gap"];
+      const rows    = currentRows.map(r => [r.catPlace, r.place, r.bib, r.rider, r.team, r.category, r.time, r.gap]);
       const csv     = [headers, ...rows].map(row => row.map(v => `"${String(v).replace(/"/g,'""')}"`).join(",")).join("\n");
       const name    = (lastPayload ? (lastPayload.raceLabel || lastPayload.raceId || "results") : "results").replace(/\s+/g,"_");
       const cat     = selectedCategory !== "ALL" ? `_${selectedCategory}` : "";
@@ -397,7 +398,12 @@
 
       if (out.length === 0) { showPlaceholder(); setEnabled(false); return; }
 
-      out.forEach((row, i) => { row.catPlace = i + 1; });
+      // Assign category place (position within each category after filtering)
+      const catCounters = {};
+      out.forEach(row => {
+        catCounters[row.category] = (catCounters[row.category] || 0) + 1;
+        row.catPlace = catCounters[row.category];
+      });
       currentRows = out;
 
       resultsBody.innerHTML = out.map(row => `
@@ -413,15 +419,17 @@
 
     function setEnabled(v) { [btnCSV, btnPDF, btnUSAC, btnPrintResults, btnPodium, btnPrint].forEach(b => b.disabled = !v); }
 
+    // ── USA Cycling Export (with category place + finish time) ────────────────
     function downloadUSAC(data) {
       let raceDate = "";
       if (data.generatedAt) {
         const d = new Date(data.generatedAt);
         raceDate = (d.getMonth() + 1) + "/" + d.getDate() + "/" + d.getFullYear();
       }
-      const headers = ["Race Date","Race discipline","Race Category","Race Gender","Race Class","Race Age Group","Rider License","Rider First Name","Rider Last Name","Rider Place"];
+      const headers = ["Race Date","Race discipline","Race Category","Race Gender","Race Class","Race Age Group","Rider License","Rider First Name","Rider Last Name","Rider Place","Finish Time"];
       const rows = [];
       let firstRow = true;
+      const catCounts = {};
       for (const ev of toArray(data.events)) {
         for (const r of toArray(ev.results)) {
           const place     = clean(r.place || "");
@@ -431,11 +439,18 @@
           const category  = clean(r.category || "");
           const usac      = clean(r.usac || "");
           const status    = clean(r.status || "");
+          const time      = clean(r.time || "");
           if (isHeader(bib) || (!place && !bib && !firstName && !lastName)) continue;
           if (selectedCategory !== "ALL" && category !== selectedCategory) continue;
+          // Use DNF/DNS status as-is; otherwise assign sequential category place
           let riderPlace = place;
           if (!riderPlace && status) riderPlace = status;
-          rows.push([firstRow ? raceDate : "", "", category, "", "", "", usac, firstName, lastName, riderPlace]);
+          const isDNF = riderPlace && ["DNF","DNS","DSQ"].includes(String(riderPlace).toUpperCase());
+          if (!isDNF) {
+            catCounts[category] = (catCounts[category] || 0) + 1;
+            riderPlace = catCounts[category];
+          }
+          rows.push([firstRow ? raceDate : "", "", category, "", "", "", usac, firstName, lastName, riderPlace, time]);
           firstRow = false;
         }
       }
