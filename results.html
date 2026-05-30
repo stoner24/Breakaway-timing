@@ -428,7 +428,7 @@
         const d = new Date(data.generatedAt);
         raceDate = (d.getMonth() + 1) + "/" + d.getDate() + "/" + d.getFullYear();
       }
-      const headers = ["Race Date","Race discipline","Race Category","Race Gender","Race Class","Race Age Group","Rider License","Rider First Name","Rider Last Name","Rider Place","Finish Time","Bib"];
+      const headers = ["Race Date","Race discipline","Race Category","Race Gender","Race Type","Race Age Group","Rider License","Rider First Name","Rider Last Name","Rider Place","Finish Time","Bib"];
       // Collect all rows first so we can sort before assigning cat place
       const collected = [];
       for (const ev of toArray(data.events)) {
