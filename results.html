@@ -428,7 +428,7 @@
         const d = new Date(data.generatedAt);
         raceDate = (d.getMonth() + 1) + "/" + d.getDate() + "/" + d.getFullYear();
       }
-      const headers = ["Race Date","Race discipline","Race Category","Race Gender","Race Class","Race Age Group","Rider License","Rider First Name","Rider Last Name","Rider Place","Finish Time"];
+      const headers = ["Race Date","Race discipline","Race Category","Race Gender","Race Class","Race Age Group","Rider License","Rider First Name","Rider Last Name","Rider Place","Finish Time","Bib"];
       // Collect all rows first so we can sort before assigning cat place
       const collected = [];
       for (const ev of toArray(data.events)) {
@@ -438,6 +438,7 @@
           const firstName = clean(r.firstName || "");
           const lastName  = clean(r.lastName || "");
           const category  = clean(r.category || "");
+          const bib       = clean(r.bib || "");
           const usac      = clean(r.usac || "");
           const status    = clean(r.status || "");
           const time      = clean(r.time || "");
@@ -445,7 +446,7 @@
           if (selectedCategory !== "ALL" && category !== selectedCategory) continue;
           let riderPlace = place;
           if (!riderPlace && status) riderPlace = status;
-          collected.push({ category, usac, firstName, lastName, riderPlace, time });
+          collected.push({ category, bib, usac, firstName, lastName, riderPlace, time });
         }
       }
       if (collected.length === 0) return;
@@ -461,7 +462,7 @@
           catCounts[r.category] = (catCounts[r.category] || 0) + 1;
           r.riderPlace = catCounts[r.category];
         }
-        rows.push([firstRow ? raceDate : "", "", r.category, "", "", "", r.usac, r.firstName, r.lastName, r.riderPlace, r.time]);
+        rows.push([firstRow ? raceDate : "", "", r.category, "", "", "", r.usac, r.firstName, r.lastName, r.riderPlace, r.time, r.bib]);
         firstRow = false;
       }
       const csv = [headers, ...rows].map(row => row.map(v => `"${String(v).replace(/"/g, '""')}"`).join(",")).join("\n");
