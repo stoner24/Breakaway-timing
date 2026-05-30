@@ -297,11 +297,13 @@
       }).join("");
     }
 
-    // ── Download CSV (with category place) ───────────────────────────────────
+    // ── Download CSV (sorted by category A-Z, then cat place) ────────────────
     btnCSV.addEventListener("click", () => {
       if (!currentRows.length) return;
+      const sorted  = currentRows.slice().sort((a, b) =>
+        a.category.localeCompare(b.category) || a.catPlace - b.catPlace);
       const headers = ["Cat Place","Overall Place","Bib","Rider","Team","Category","Time","Gap"];
-      const rows    = currentRows.map(r => [r.catPlace, r.place, r.bib, r.rider, r.team, r.category, r.time, r.gap]);
+      const rows    = sorted.map(r => [r.catPlace, r.place, r.bib, r.rider, r.team, r.category, r.time, r.gap]);
       const csv     = [headers, ...rows].map(row => row.map(v => `"${String(v).replace(/"/g,'""')}"`).join(",")).join("\n");
       const name    = (lastPayload ? (lastPayload.raceLabel || lastPayload.raceId || "results") : "results").replace(/\s+/g,"_");
       const cat     = selectedCategory !== "ALL" ? `_${selectedCategory}` : "";
@@ -419,7 +421,7 @@
 
     function setEnabled(v) { [btnCSV, btnPDF, btnUSAC, btnPrintResults, btnPodium, btnPrint].forEach(b => b.disabled = !v); }
 
-    // ── USA Cycling Export (with category place + finish time) ────────────────
+    // ── USA Cycling Export (sorted by category A-Z, then cat place, with time) ─
     function downloadUSAC(data) {
       let raceDate = "";
       if (data.generatedAt) {
@@ -427,9 +429,8 @@
         raceDate = (d.getMonth() + 1) + "/" + d.getDate() + "/" + d.getFullYear();
       }
       const headers = ["Race Date","Race discipline","Race Category","Race Gender","Race Class","Race Age Group","Rider License","Rider First Name","Rider Last Name","Rider Place","Finish Time"];
-      const rows = [];
-      let firstRow = true;
-      const catCounts = {};
+      // Collect all rows first so we can sort before assigning cat place
+      const collected = [];
       for (const ev of toArray(data.events)) {
         for (const r of toArray(ev.results)) {
           const place     = clean(r.place || "");
@@ -442,19 +443,27 @@
           const time      = clean(r.time || "");
           if (isHeader(bib) || (!place && !bib && !firstName && !lastName)) continue;
           if (selectedCategory !== "ALL" && category !== selectedCategory) continue;
-          // Use DNF/DNS status as-is; otherwise assign sequential category place
           let riderPlace = place;
           if (!riderPlace && status) riderPlace = status;
-          const isDNF = riderPlace && ["DNF","DNS","DSQ"].includes(String(riderPlace).toUpperCase());
-          if (!isDNF) {
-            catCounts[category] = (catCounts[category] || 0) + 1;
-            riderPlace = catCounts[category];
-          }
-          rows.push([firstRow ? raceDate : "", "", category, "", "", "", usac, firstName, lastName, riderPlace, time]);
-          firstRow = false;
+          collected.push({ category, usac, firstName, lastName, riderPlace, time });
         }
       }
-      if (rows.length === 0) return;
+      if (collected.length === 0) return;
+      // Sort: category A-Z, then by existing place order within each category
+      collected.sort((a, b) => a.category.localeCompare(b.category));
+      // Assign sequential cat place per category (DNF/DNS/DSQ pass through)
+      const catCounts = {};
+      const rows = [];
+      let firstRow = true;
+      for (const r of collected) {
+        const isDNF = r.riderPlace && ["DNF","DNS","DSQ"].includes(String(r.riderPlace).toUpperCase());
+        if (!isDNF) {
+          catCounts[r.category] = (catCounts[r.category] || 0) + 1;
+          r.riderPlace = catCounts[r.category];
+        }
+        rows.push([firstRow ? raceDate : "", "", r.category, "", "", "", r.usac, r.firstName, r.lastName, r.riderPlace, r.time]);
+        firstRow = false;
+      }
       const csv = [headers, ...rows].map(row => row.map(v => `"${String(v).replace(/"/g, '""')}"`).join(",")).join("\n");
       const name = (data.raceLabel || data.raceId || "results").replace(/\s+/g, "_");
       const cat  = selectedCategory !== "ALL" ? `_${selectedCategory}` : "";
