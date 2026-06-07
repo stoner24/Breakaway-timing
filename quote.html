@@ -98,7 +98,7 @@
 
   .totals-bar {
     display: grid;
-    grid-template-columns: 2fr 1fr 1fr 1fr;
+    grid-template-columns: 2fr 1fr 1fr 1fr 1fr;
     border-bottom: 1px solid var(--border);
     margin-bottom: 40px;
   }
@@ -229,6 +229,57 @@
     width: 100%;
   }
 
+  /* ── chip supply toggle ── */
+  .chip-supply-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    margin-bottom: 20px;
+    cursor: pointer;
+  }
+  .chip-supply-row input[type="checkbox"] {
+    flex-shrink: 0;
+  }
+  .chip-supply-row-text {
+    flex: 1;
+  }
+  .chip-supply-row-text strong {
+    font-size: 13px;
+    color: var(--light);
+    display: block;
+  }
+  .chip-supply-row-text span {
+    font-size: 12px;
+    color: var(--muted);
+  }
+  .chip-supply-cost {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--orange);
+  }
+
+  .checkin-subfield {
+    padding: 10px 12px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    margin-bottom: 12px;
+  }
+  .checkin-subfield label {
+    font-size: 12px;
+    color: var(--muted);
+    display: block;
+    margin-bottom: 5px;
+  }
+  .checkin-subfield input {
+    width: 100%;
+  }
+
   .service-row {
     display: flex;
     align-items: center;
@@ -248,6 +299,18 @@
     cursor: pointer;
     font-size: 14px;
     color: var(--light);
+  }
+
+  .service-badge {
+    font-size: 10px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    background: var(--orange);
+    color: #000;
+    font-weight: 700;
+    padding: 2px 6px;
+    border-radius: 2px;
+    margin-left: 4px;
   }
 
   input[type="checkbox"] {
@@ -296,6 +359,37 @@
     font-family: 'Barlow Condensed', sans-serif;
     font-size: 16px;
     font-weight: 600;
+  }
+
+  /* checkin sub-options */
+  .checkin-expand {
+    display: none;
+    padding: 12px 0 4px 26px;
+    border-bottom: 1px solid var(--border);
+  }
+  .checkin-expand.open { display: block; }
+  .checkin-expand .sub-option {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 0;
+    font-size: 13px;
+    color: var(--muted);
+    cursor: pointer;
+  }
+  .checkin-expand .sub-option input[type="checkbox"] {
+    width: 13px;
+    height: 13px;
+  }
+  .checkin-expand .note {
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 8px;
+    line-height: 1.4;
+    padding: 8px 10px;
+    background: var(--surface2);
+    border-left: 2px solid var(--orange);
+    border-radius: 0 4px 4px 0;
   }
 
   .custom-add {
@@ -348,6 +442,14 @@
     flex-wrap: wrap;
   }
 
+  /* inline hint text */
+  .hint {
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 4px;
+    line-height: 1.4;
+  }
+
   /* Print styles */
   @media print {
     body { background: #fff; color: #000; }
@@ -368,7 +470,10 @@
     .service-row { border-color: #ddd; }
     input[type="range"] { display: none; }
     .val::before { content: ''; }
-    .surface { background: #f9f9f9; }
+    .chip-supply-row { background: #f5f5f5; border-color: #ddd; }
+    .chip-supply-row-text strong { color: #333; }
+    .chip-supply-row-text span { color: #666; }
+    .checkin-expand .note { border-color: var(--orange); background: #f5f5f5; }
   }
 
   @media (max-width: 700px) {
@@ -380,6 +485,7 @@
     .totals-bar { grid-template-columns: 1fr 1fr; }
     .total-cell:nth-child(2) { border-right: none; }
     .total-cell:first-child { grid-column: span 2; }
+    .total-cell:nth-child(4) { border-right: none; }
     .rates-grid { grid-template-columns: 1fr; }
   }
 </style>
@@ -409,23 +515,28 @@
       <div class="total-value" id="services-total">$0</div>
     </div>
     <div class="total-cell">
+      <div class="total-label">Rider fees</div>
+      <div class="total-value" id="rider-total">$0</div>
+    </div>
+    <div class="total-cell">
       <div class="total-label">Travel</div>
       <div class="total-value" id="travel-total">$0</div>
     </div>
     <div class="total-cell">
-      <div class="total-label">Rider fees</div>
-      <div class="total-value" id="rider-total">$0</div>
+      <div class="total-label">Chips</div>
+      <div class="total-value" id="chip-supply-total">$0</div>
     </div>
   </div>
 
   <div class="grid">
 
+    <!-- LEFT COLUMN -->
     <div>
       <div class="section-label">Event Details</div>
 
       <div class="field">
         <label>Riders in race <span class="val" id="riders-out">100</span></label>
-        <input type="range" min="10" max="600" step="10" value="100" id="riders" oninput="update()">
+        <input type="range" min="10" max="1000" step="10" value="100" id="riders" oninput="update()">
       </div>
 
       <div class="field">
@@ -443,12 +554,34 @@
         <input type="range" min="1" max="12" step="1" value="4" id="hours" oninput="update()">
       </div>
 
-      <div class="section-label" style="margin-top: 32px;">Rate Settings</div>
+      <!-- Chip supply toggle -->
+      <div class="section-label" style="margin-top: 32px;">Chip Supply</div>
+      <label class="chip-supply-row" id="chip-supply-row">
+        <input type="checkbox" id="supply-chips" onchange="update()">
+        <div class="chip-supply-row-text">
+          <strong>Breakaway supplies disposable bib chips</strong>
+          <span>Pass-through cost added to quote at <span id="chip-rate-display">$0.75</span>/chip</span>
+        </div>
+        <span class="chip-supply-cost" id="chip-cost-display">$0</span>
+      </label>
+      <div class="rates-grid" style="margin-bottom: 4px;">
+        <div class="rate-field">
+          <label>Cost per chip ($)</label>
+          <input type="number" id="chip-cost-per" value="0.75" step="0.05" min="0" oninput="update()">
+        </div>
+        <div class="rate-field">
+          <label>Markup (%)</label>
+          <input type="number" id="chip-markup" value="20" step="5" min="0" oninput="update()">
+        </div>
+      </div>
+      <p class="hint" style="margin-bottom: 20px;">At cost + markup. Uncheck if client is using their own chips or reusables.</p>
+
+      <div class="section-label" style="margin-top: 24px;">Rate Settings</div>
 
       <div class="rates-grid">
         <div class="rate-field">
           <label>Per rider fee ($)</label>
-          <input type="number" id="rider-rate" value="1.50" step="0.25" min="0" oninput="update()">
+          <input type="number" id="rider-rate" value="2.75" step="0.25" min="0" oninput="update()">
         </div>
         <div class="rate-field">
           <label>Mileage rate ($/mile)</label>
@@ -460,11 +593,12 @@
         </div>
         <div class="rate-field">
           <label>Minimum charge ($)</label>
-          <input type="number" id="minimum" value="0" step="50" min="0" oninput="update()">
+          <input type="number" id="minimum" value="700" step="50" min="0" oninput="update()">
         </div>
       </div>
+      <p class="hint" style="margin-bottom: 24px;">Minimum ensures small local events still cover your time and gear.</p>
 
-      <div class="section-label" style="margin-top: 32px;">Client Info (optional)</div>
+      <div class="section-label">Client Info (optional)</div>
       <div class="rates-grid">
         <div class="rate-field" style="grid-column: span 2;">
           <label>Event / organization name</label>
@@ -477,6 +611,7 @@
       </div>
     </div>
 
+    <!-- RIGHT COLUMN: Services -->
     <div>
       <div class="section-label">Services</div>
       <div id="services-list"></div>
@@ -501,40 +636,116 @@
 </main>
 
 <script>
+// ─── Service definitions ───────────────────────────────────────────────────
+// type: 'standard' | 'checkin_day' | 'race_checkin' | 'expandable'
 const services = [
-  { id: 'chip',       label: 'Chip timing (RFID)',         base: 400,  checked: true  },
-  { id: 'finishlynx', label: 'FinishLynx photo finish',    base: 250,  checked: false },
-  { id: 'results',    label: 'Live results website',       base: 100,  checked: true  },
-  { id: 'gps',        label: 'GPS live tracking (app)',    base: 150,  checked: false },
-  { id: 'starlink',   label: 'Starlink connectivity',      base: 75,   checked: false },
-  { id: 'rfid',       label: 'RFID mat/reader rental',     base: 200,  checked: false },
-  { id: 'setup',      label: 'Setup & breakdown labor',    base: 150,  checked: true  },
-  { id: 'announce',   label: 'Announcer support',          base: 200,  checked: false },
-  { id: 'usac',       label: 'USA Cycling reg support',    base: 75,   checked: false },
-  { id: 'awards',     label: 'Awards ceremony timing',     base: 50,   checked: false },
+  { id: 'chip',        label: 'Chip timing (RFID)',                 base: 400,  checked: true,  badge: null },
+  { id: 'finishlynx', label: 'FinishLynx photo finish',             base: 250,  checked: false, badge: null },
+  { id: 'results',    label: 'Live results website',                base: 100,  checked: true,  badge: null },
+  { id: 'leaderboard',label: 'Live leaderboard display',            base: 175,  checked: false, badge: 'Add-on' },
+  { id: 'splits',     label: 'Intermediate split timing (per mat)', base: 150,  checked: false, badge: 'Add-on' },
+  { id: 'gps',        label: 'GPS live tracking (app)',             base: 150,  checked: false, badge: null },
+  { id: 'starlink',   label: 'Starlink connectivity',               base: 75,   checked: false, badge: null },
+  { id: 'rfid',       label: 'RFID mat/reader rental',              base: 200,  checked: false, badge: null },
+  { id: 'setup',      label: 'Setup & breakdown labor',             base: 150,  checked: true,  badge: null },
+  { id: 'staff2',     label: 'Additional staff (Annaliese)',        base: 400,  checked: false, badge: 'Staffing' },
+  { id: 'announce',   label: 'Announcer support',                   base: 200,  checked: false, badge: null },
+  { id: 'usac',       label: 'USA Cycling reg support',             base: 75,   checked: false, badge: null },
+  { id: 'awards',     label: 'Awards ceremony timing',              base: 50,   checked: false, badge: null },
+
+  // ── Day-before full check-in (timing company manages reg) ──
+  {
+    id: 'checkin_day',
+    label: 'Day-before check-in (full registration mgmt)',
+    base: 550,
+    checked: false,
+    badge: 'Multi-day',
+    type: 'checkin_day'
+  },
+
+  // ── Race-day check-in (ID verify, bib hand-out, ppl file) ──
+  {
+    id: 'race_checkin',
+    label: 'Race-day athlete check-in',
+    base: 0,   // calculated dynamically from sub-options
+    checked: false,
+    badge: 'Check-in',
+    type: 'race_checkin'
+  },
+];
+
+const CHECKIN_SUBS = [
+  { id: 'ci_id',    label: 'ID verification',                      base: 75  },
+  { id: 'ci_bib',   label: 'Bib number assignment & hand-out',      base: 100 },
+  { id: 'ci_ppl',   label: 'Prepare ppl/start list file for scoring company', base: 125 },
+  { id: 'ci_staff', label: 'Additional check-in staff member',      base: 350 },
 ];
 
 const custom = [];
 
+// ─── Render ────────────────────────────────────────────────────────────────
 function renderServices() {
   const el = document.getElementById('services-list');
-  el.innerHTML = services.map(s => `
-    <div class="service-row">
-      <label class="service-check">
-        <input type="checkbox" id="svc-${s.id}" ${s.checked ? 'checked' : ''} onchange="update()">
-        ${s.label}
-      </label>
-      <div class="service-price-wrap">
-        <span class="price-prefix">$</span>
-        <input type="number" id="price-${s.id}" value="${s.base}" step="25" min="0" oninput="update()">
-      </div>
-    </div>
-  `).join('') + custom.map((c, i) => `
+  let html = '';
+
+  services.forEach(s => {
+    const badgeHtml = s.badge ? `<span class="service-badge">${s.badge}</span>` : '';
+
+    if (s.type === 'race_checkin') {
+      // Special expandable row for race-day check-in
+      html += `
+        <div class="service-row" style="border-bottom: none;">
+          <label class="service-check" onclick="toggleCheckin()">
+            <input type="checkbox" id="svc-race_checkin" ${s.checked ? 'checked' : ''} onchange="toggleCheckin(); update()">
+            ${s.label} ${badgeHtml}
+          </label>
+          <div class="service-price-wrap">
+            <span class="price-prefix">$</span>
+            <span id="race-checkin-total-display" style="font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:600;color:var(--text);min-width:50px;text-align:right;">0</span>
+          </div>
+        </div>
+        <div class="checkin-expand" id="checkin-expand">
+          ${CHECKIN_SUBS.map(sub => `
+            <div class="sub-option">
+              <input type="checkbox" id="sub-${sub.id}" onchange="update()" ${sub.id !== 'ci_staff' ? 'checked' : ''}>
+              <span>${sub.label}</span>
+              <div style="margin-left:auto;display:flex;align-items:center;gap:4px;">
+                <span style="font-size:12px;color:var(--muted);">$</span>
+                <input type="number" id="subprice-${sub.id}" value="${sub.base}" step="25" min="0"
+                  oninput="update()"
+                  style="width:64px;text-align:right;font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:600;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:4px 6px;border-radius:3px;">
+              </div>
+            </div>
+          `).join('')}
+          <div class="note">
+            💡 <strong>ppl file prep</strong> is billed as a flat fee for building the scored start list — verifying registrant data, assigning categories, formatting for the scoring company's import. Budget ~60–90 min for 300+ riders.
+          </div>
+        </div>
+        <div style="height:1px;background:var(--border);margin:4px 0 0;"></div>
+      `;
+    } else {
+      html += `
+        <div class="service-row">
+          <label class="service-check">
+            <input type="checkbox" id="svc-${s.id}" ${s.checked ? 'checked' : ''} onchange="update()">
+            ${s.label} ${badgeHtml}
+          </label>
+          <div class="service-price-wrap">
+            <span class="price-prefix">$</span>
+            <input type="number" id="price-${s.id}" value="${s.base}" step="25" min="0" oninput="update()">
+          </div>
+        </div>
+      `;
+    }
+  });
+
+  // Custom items
+  html += custom.map((c, i) => `
     <div class="service-row">
       <label class="service-check">
         <input type="checkbox" id="custom-cb-${i}" checked onchange="update()">
         ${c.name}
-        <span style="font-size:12px; color: var(--muted); margin-left: 4px; cursor:pointer;" onclick="removeCustom(${i})">✕</span>
+        <span style="font-size:12px;color:var(--muted);margin-left:4px;cursor:pointer;" onclick="removeCustom(${i})">✕</span>
       </label>
       <div class="service-price-wrap">
         <span class="price-prefix">$</span>
@@ -542,13 +753,48 @@ function renderServices() {
       </div>
     </div>
   `).join('');
+
+  el.innerHTML = html;
+
+  // Restore checkin expand state
+  const svc = services.find(s => s.id === 'race_checkin');
+  if (svc && svc.checked) {
+    const exp = document.getElementById('checkin-expand');
+    if (exp) exp.classList.add('open');
+  }
+}
+
+function toggleCheckin() {
+  const cb  = document.getElementById('svc-race_checkin');
+  const exp = document.getElementById('checkin-expand');
+  const svc = services.find(s => s.id === 'race_checkin');
+  if (!cb || !exp) return;
+  // Use a small delay so checkbox state settles before we read it
+  setTimeout(() => {
+    svc.checked = cb.checked;
+    exp.classList.toggle('open', cb.checked);
+    update();
+  }, 0);
+}
+
+// ─── Calculate ────────────────────────────────────────────────────────────
+function calcCheckinTotal() {
+  const cb = document.getElementById('svc-race_checkin');
+  if (!cb || !cb.checked) return 0;
+  let total = 0;
+  CHECKIN_SUBS.forEach(sub => {
+    const scb = document.getElementById('sub-' + sub.id);
+    const spr = document.getElementById('subprice-' + sub.id);
+    if (scb && scb.checked && spr) total += parseFloat(spr.value) || 0;
+  });
+  return total;
 }
 
 function update() {
-  const riders  = parseInt(document.getElementById('riders').value);
-  const miles   = parseInt(document.getElementById('miles').value);
-  const nights  = parseInt(document.getElementById('nights').value);
-  const hours   = parseInt(document.getElementById('hours').value);
+  const riders      = parseInt(document.getElementById('riders').value);
+  const miles       = parseInt(document.getElementById('miles').value);
+  const nights      = parseInt(document.getElementById('nights').value);
+  const hours       = parseInt(document.getElementById('hours').value);
   const riderRate   = parseFloat(document.getElementById('rider-rate').value)   || 0;
   const mileageRate = parseFloat(document.getElementById('mileage-rate').value) || 0;
   const hotelRate   = parseFloat(document.getElementById('hotel-rate').value)   || 0;
@@ -559,27 +805,52 @@ function update() {
   document.getElementById('nights-out').textContent = nights;
   document.getElementById('hours-out').textContent  = hours;
 
+  // Services total
   let svcTotal = 0;
   services.forEach(s => {
+    if (s.type === 'race_checkin') return; // handled separately
     const cb = document.getElementById('svc-' + s.id);
     const pr = document.getElementById('price-' + s.id);
-    if (cb && cb.checked) svcTotal += parseFloat(pr.value) || 0;
+    if (cb && cb.checked && pr) svcTotal += parseFloat(pr.value) || 0;
   });
+
+  // Race check-in sub-total
+  const checkinTotal = calcCheckinTotal();
+  svcTotal += checkinTotal;
+  const displayEl = document.getElementById('race-checkin-total-display');
+  if (displayEl) displayEl.textContent = checkinTotal.toLocaleString();
+
+  // Custom
   custom.forEach((c, i) => {
     const cb = document.getElementById('custom-cb-' + i);
     const pr = document.getElementById('custom-p-' + i);
-    if (cb && cb.checked) svcTotal += parseFloat(pr.value) || 0;
+    if (cb && cb.checked && pr) svcTotal += parseFloat(pr.value) || 0;
   });
 
+  // Chip supply cost
+  const supplyChips  = document.getElementById('supply-chips').checked;
+  const chipCostPer  = parseFloat(document.getElementById('chip-cost-per').value) || 0;
+  const chipMarkup   = parseFloat(document.getElementById('chip-markup').value)   || 0;
+  const chipTotal    = supplyChips ? riders * chipCostPer * (1 + chipMarkup / 100) : 0;
+  const chipRateDisplay = (chipCostPer * (1 + chipMarkup / 100)).toFixed(2);
+  document.getElementById('chip-rate-display').textContent = '$' + chipRateDisplay;
+  document.getElementById('chip-cost-display').textContent = supplyChips ? '$' + Math.round(chipTotal).toLocaleString() : '$0';
+
+  // Travel
   const travelCost = (miles * 2 * mileageRate) + (nights * hotelRate);
-  const riderCost  = riders * riderRate;
-  let total = svcTotal + travelCost + riderCost;
+
+  // Rider fees
+  const riderCost = riders * riderRate;
+
+  // Grand total
+  let total = svcTotal + travelCost + riderCost + chipTotal;
   if (minimum > 0 && total < minimum) total = minimum;
 
-  document.getElementById('services-total').textContent = '$' + Math.round(svcTotal).toLocaleString();
-  document.getElementById('travel-total').textContent   = '$' + Math.round(travelCost).toLocaleString();
-  document.getElementById('rider-total').textContent    = '$' + Math.round(riderCost).toLocaleString();
-  document.getElementById('total').textContent          = '$' + Math.round(total).toLocaleString();
+  document.getElementById('services-total').textContent    = '$' + Math.round(svcTotal).toLocaleString();
+  document.getElementById('rider-total').textContent       = '$' + Math.round(riderCost).toLocaleString();
+  document.getElementById('travel-total').textContent      = '$' + Math.round(travelCost).toLocaleString();
+  document.getElementById('chip-supply-total').textContent = '$' + Math.round(chipTotal).toLocaleString();
+  document.getElementById('total').textContent             = '$' + Math.round(total).toLocaleString();
 }
 
 function addCustom() {
@@ -601,17 +872,22 @@ function removeCustom(i) {
 
 function resetAll() {
   custom.length = 0;
-  services.forEach(s => { s.checked = ['chip','results','setup'].includes(s.id); });
-  document.getElementById('riders').value      = 100;
-  document.getElementById('miles').value       = 50;
-  document.getElementById('nights').value      = 0;
-  document.getElementById('hours').value       = 4;
-  document.getElementById('rider-rate').value  = 1.50;
-  document.getElementById('mileage-rate').value = 0.67;
-  document.getElementById('hotel-rate').value  = 120;
-  document.getElementById('minimum').value     = 0;
-  document.getElementById('client-name').value = '';
-  document.getElementById('event-date').value  = '';
+  services.forEach(s => {
+    s.checked = ['chip', 'results', 'setup'].includes(s.id);
+  });
+  document.getElementById('riders').value         = 100;
+  document.getElementById('miles').value          = 50;
+  document.getElementById('nights').value         = 0;
+  document.getElementById('hours').value          = 4;
+  document.getElementById('rider-rate').value     = 2.75;
+  document.getElementById('mileage-rate').value   = 0.67;
+  document.getElementById('hotel-rate').value     = 120;
+  document.getElementById('minimum').value        = 700;
+  document.getElementById('supply-chips').checked = false;
+  document.getElementById('chip-cost-per').value  = 0.75;
+  document.getElementById('chip-markup').value    = 20;
+  document.getElementById('client-name').value    = '';
+  document.getElementById('event-date').value     = '';
   renderServices();
   update();
 }
