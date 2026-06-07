@@ -550,9 +550,25 @@
       </div>
 
       <div class="field">
-        <label>Event duration (hours) <span class="val" id="hours-out">4</span></label>
-        <input type="range" min="1" max="12" step="1" value="4" id="hours" oninput="update()">
+        <label>On-site hours <span class="val" id="hours-out">4</span></label>
+        <input type="range" min="1" max="16" step="0.5" value="4" id="hours" oninput="update()">
       </div>
+
+      <label class="chip-supply-row" style="margin-bottom:8px;">
+        <input type="checkbox" id="use-hourly-labor" onchange="update()">
+        <div class="chip-supply-row-text">
+          <strong>Bill on-site labor hourly</strong>
+          <span>Adds <span id="labor-rate-display">$60</span>/hr × <span id="labor-hours-display">4</span> hrs to services</span>
+        </div>
+        <span class="chip-supply-cost" id="labor-cost-display">$0</span>
+      </label>
+      <div class="rates-grid" style="margin-bottom:4px;">
+        <div class="rate-field">
+          <label>Labor rate ($/hr)</label>
+          <input type="number" id="labor-rate" value="60" step="5" min="0" oninput="update()">
+        </div>
+      </div>
+      <p class="hint" style="margin-bottom:20px;">Use for standalone check-in gigs or any event where time on-site is the primary cost driver.</p>
 
       <!-- Chip supply toggle -->
       <div class="section-label" style="margin-top: 32px;">Chip Supply</div>
@@ -674,12 +690,20 @@ const services = [
   },
 ];
 
+// Check-in sub-options: type 'hourly' uses checkin hrs × rate; type 'flat' is a fixed add-on
 const CHECKIN_SUBS = [
-  { id: 'ci_id',    label: 'ID verification',                      base: 75  },
-  { id: 'ci_bib',   label: 'Bib number assignment & hand-out',      base: 100 },
-  { id: 'ci_ppl',   label: 'Prepare ppl/start list file for scoring company', base: 125 },
-  { id: 'ci_staff', label: 'Additional check-in staff member',      base: 350 },
+  { id: 'ci_id',    label: 'ID verification',                               type: 'included', base: 0   },
+  { id: 'ci_bib',   label: 'Bib number assignment & hand-out',               type: 'included', base: 0   },
+  { id: 'ci_ppl',   label: 'Prepare ppl/start list file for scoring company',type: 'flat',     base: 125 },
+  { id: 'ci_staff', label: 'Additional check-in staff',                      type: 'hourly',   base: 0   },
 ];
+
+// Checkin uses its own hours + rate inputs (separate from event duration)
+function getCheckinLabor() {
+  const hrs  = parseFloat(document.getElementById('checkin-hours')?.value) || 0;
+  const rate = parseFloat(document.getElementById('checkin-rate')?.value)  || 0;
+  return hrs * rate;
+}
 
 const custom = [];
 
@@ -705,20 +729,56 @@ function renderServices() {
           </div>
         </div>
         <div class="checkin-expand" id="checkin-expand">
-          ${CHECKIN_SUBS.map(sub => `
-            <div class="sub-option">
-              <input type="checkbox" id="sub-${sub.id}" onchange="update()" ${sub.id !== 'ci_staff' ? 'checked' : ''}>
-              <span>${sub.label}</span>
-              <div style="margin-left:auto;display:flex;align-items:center;gap:4px;">
-                <span style="font-size:12px;color:var(--muted);">$</span>
-                <input type="number" id="subprice-${sub.id}" value="${sub.base}" step="25" min="0"
+
+          <!-- Hourly labor block -->
+          <div style="padding:10px 0 6px;">
+            <div style="font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--orange);font-weight:700;margin-bottom:10px;">Check-in Labor</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:6px;">
+              <div>
+                <label style="font-size:12px;color:var(--muted);display:block;margin-bottom:4px;">Hours on-site</label>
+                <input type="number" id="checkin-hours" value="3" step="0.5" min="0"
                   oninput="update()"
-                  style="width:64px;text-align:right;font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:600;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:4px 6px;border-radius:3px;">
+                  style="width:100%;font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:600;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:6px 10px;border-radius:3px;outline:none;">
+              </div>
+              <div>
+                <label style="font-size:12px;color:var(--muted);display:block;margin-bottom:4px;">Rate ($/hr per person)</label>
+                <input type="number" id="checkin-rate" value="60" step="5" min="0"
+                  oninput="update()"
+                  style="width:100%;font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:600;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:6px 10px;border-radius:3px;outline:none;">
               </div>
             </div>
-          `).join('')}
-          <div class="note">
-            💡 <strong>ppl file prep</strong> is billed as a flat fee for building the scored start list — verifying registrant data, assigning categories, formatting for the scoring company's import. Budget ~60–90 min for 300+ riders.
+            <div style="font-size:11px;color:var(--muted);margin-bottom:10px;">
+              Covers all included check-in tasks. Add staff below if bringing a second person.
+            </div>
+          </div>
+
+          <!-- Included tasks (informational, no extra charge) -->
+          <div style="font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);font-weight:700;margin-bottom:6px;">Included in labor rate</div>
+          <div class="sub-option" style="opacity:0.6;cursor:default;">
+            <span style="font-size:13px;color:var(--muted);">✓</span>
+            <span>ID verification</span>
+          </div>
+          <div class="sub-option" style="opacity:0.6;cursor:default;">
+            <span style="font-size:13px;color:var(--muted);">✓</span>
+            <span>Bib number assignment & hand-out</span>
+          </div>
+          <div class="sub-option" style="opacity:0.6;cursor:default;margin-bottom:10px;">
+            <span style="font-size:13px;color:var(--muted);">✓</span>
+            <span>ppl/start list file — updated live as riders check in</span>
+          </div>
+
+          <!-- Add-on: second staff -->
+          <div style="font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);font-weight:700;margin:8px 0 6px;">Add-ons</div>
+          <div class="sub-option">
+            <input type="checkbox" id="sub-ci_staff" onchange="update()">
+            <span>Additional check-in staff (per hour rate × hours)</span>
+            <div style="margin-left:auto;display:flex;align-items:center;gap:4px;">
+              <span style="font-size:12px;color:var(--muted);white-space:nowrap;" id="ci-staff-calc">$0</span>
+            </div>
+          </div>
+
+          <div class="note" style="margin-top:10px;">
+            💡 <strong>Rule of thumb:</strong> budget ~1 hr per 75–100 riders for check-in. 300 riders ≈ 3–4 hrs, 500 riders ≈ 5–6 hrs. ID check, bib hand-out, and keeping the ppl file current as riders come through are all part of the hourly rate.
           </div>
         </div>
         <div style="height:1px;background:var(--border);margin:4px 0 0;"></div>
@@ -781,29 +841,44 @@ function toggleCheckin() {
 function calcCheckinTotal() {
   const cb = document.getElementById('svc-race_checkin');
   if (!cb || !cb.checked) return 0;
-  let total = 0;
-  CHECKIN_SUBS.forEach(sub => {
-    const scb = document.getElementById('sub-' + sub.id);
-    const spr = document.getElementById('subprice-' + sub.id);
-    if (scb && scb.checked && spr) total += parseFloat(spr.value) || 0;
-  });
-  return total;
+
+  const hrs        = parseFloat(document.getElementById('checkin-hours')?.value) || 0;
+  const rate       = parseFloat(document.getElementById('checkin-rate')?.value)  || 0;
+  const laborTotal = hrs * rate;
+
+  // second staff add-on (same hrs × rate)
+  const staffCb    = document.getElementById('sub-ci_staff');
+  const staffTotal = (staffCb && staffCb.checked) ? laborTotal : 0;
+
+  // update staff calc display
+  const staffCalcEl = document.getElementById('ci-staff-calc');
+  if (staffCalcEl) staffCalcEl.textContent = (staffCb && staffCb.checked) ? '$' + Math.round(staffTotal).toLocaleString() : '$0';
+
+  return laborTotal + staffTotal;
 }
 
 function update() {
   const riders      = parseInt(document.getElementById('riders').value);
   const miles       = parseInt(document.getElementById('miles').value);
   const nights      = parseInt(document.getElementById('nights').value);
-  const hours       = parseInt(document.getElementById('hours').value);
+  const hours       = parseFloat(document.getElementById('hours').value);
   const riderRate   = parseFloat(document.getElementById('rider-rate').value)   || 0;
   const mileageRate = parseFloat(document.getElementById('mileage-rate').value) || 0;
   const hotelRate   = parseFloat(document.getElementById('hotel-rate').value)   || 0;
   const minimum     = parseFloat(document.getElementById('minimum').value)      || 0;
+  const useHourly   = document.getElementById('use-hourly-labor').checked;
+  const laborRate   = parseFloat(document.getElementById('labor-rate').value)   || 0;
 
   document.getElementById('riders-out').textContent = riders;
   document.getElementById('miles-out').textContent  = miles;
   document.getElementById('nights-out').textContent = nights;
   document.getElementById('hours-out').textContent  = hours;
+
+  // On-site labor
+  const laborCost = useHourly ? hours * laborRate : 0;
+  document.getElementById('labor-rate-display').textContent = '$' + laborRate;
+  document.getElementById('labor-hours-display').textContent = hours;
+  document.getElementById('labor-cost-display').textContent = useHourly ? '$' + Math.round(laborCost).toLocaleString() : '$0';
 
   // Services total
   let svcTotal = 0;
@@ -843,7 +918,7 @@ function update() {
   const riderCost = riders * riderRate;
 
   // Grand total
-  let total = svcTotal + travelCost + riderCost + chipTotal;
+  let total = svcTotal + travelCost + riderCost + chipTotal + laborCost;
   if (minimum > 0 && total < minimum) total = minimum;
 
   document.getElementById('services-total').textContent    = '$' + Math.round(svcTotal).toLocaleString();
@@ -879,6 +954,8 @@ function resetAll() {
   document.getElementById('miles').value          = 50;
   document.getElementById('nights').value         = 0;
   document.getElementById('hours').value          = 4;
+  document.getElementById('use-hourly-labor').checked = false;
+  document.getElementById('labor-rate').value     = 60;
   document.getElementById('rider-rate').value     = 2.75;
   document.getElementById('mileage-rate').value   = 0.67;
   document.getElementById('hotel-rate').value     = 120;
