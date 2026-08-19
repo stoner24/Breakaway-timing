@@ -439,30 +439,6 @@
     </div>
   </div>
 
-  <!-- ── PRIME SPRINT / SPECIAL RESULTS PANEL ── -->
-  <!-- Independent of the event selector above -- this posts directly into the
-       RESULTS database (breakaway-timing-results), not the tracking database,
-       so it shows up as its own selectable entry on results.html. -->
-  <div class="prime-panel" id="primePanel">
-    <div class="prime-title">🏆 Post Prime / Special Result</div>
-    <div class="prime-subtitle">Creates a new entry in the Results page dropdown — separate from your regular FinishLynx race results.</div>
-
-    <div class="prime-label-row">
-      <div class="field-label">Race / Result Name (shown in the Results dropdown)</div>
-      <input type="text" class="styled-input" id="primeLabelInput" placeholder="e.g. Prime Sprint — Lap 5">
-    </div>
-
-    <div class="prime-rows" id="primeRows"></div>
-    <button class="prime-add-row-btn" id="primeAddRowBtn">+ ADD ROW</button>
-
-    <div class="prime-save-row">
-      <button class="btn btn-cyan" id="primeSaveBtn">POST TO RESULTS PAGE</button>
-      <div style="font-family:var(--mono);font-size:11px;" id="primeMsg"></div>
-    </div>
-
-    <div class="prime-list" id="primeList"></div>
-  </div>
-
   <!-- SCHEDULING PANEL -->
   <div class="schedule-panel" id="schedulePanel">
     <div class="schedule-header">
@@ -499,6 +475,30 @@
     </div>
     <div class="sched-info" id="schedInfo">No tracking windows scheduled.</div>
     <div class="schedule-list" id="scheduleList"></div>
+  </div>
+
+  <!-- ── PRIME SPRINT / SPECIAL RESULTS PANEL ── -->
+  <!-- Independent of the event selector above -- this posts directly into the
+       RESULTS database (breakaway-timing-results), not the tracking database,
+       so it shows up as its own selectable entry on results.html. -->
+  <div class="prime-panel" id="primePanel">
+    <div class="prime-title">🏆 Post Prime / Special Result</div>
+    <div class="prime-subtitle">Creates a new entry in the Results page dropdown — separate from your regular FinishLynx race results.</div>
+
+    <div class="prime-label-row">
+      <div class="field-label">Race / Result Name (shown in the Results dropdown)</div>
+      <input type="text" class="styled-input" id="primeLabelInput" placeholder="e.g. Prime Sprint — Lap 5">
+    </div>
+
+    <div class="prime-rows" id="primeRows"></div>
+    <button class="prime-add-row-btn" id="primeAddRowBtn">+ ADD ROW</button>
+
+    <div class="prime-save-row">
+      <button class="btn btn-cyan" id="primeSaveBtn">POST TO RESULTS PAGE</button>
+      <div style="font-family:var(--mono);font-size:11px;" id="primeMsg"></div>
+    </div>
+
+    <div class="prime-list" id="primeList"></div>
   </div>
 
   <!-- STATS ROW -->
