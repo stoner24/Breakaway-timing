@@ -13,7 +13,7 @@
     --bg: #0c0e0f; --bg2: #131618; --bg3: #1a1d1f; --bg4: #1f2326;
     --orange: #f5a623; --orange-dim: #b87c1a;
     --green: #39d353; --red: #e5534b; --amber: #f5a623;
-    --blue: #58a6ff; --purple: #c084fc;
+    --blue: #58a6ff; --purple: #c084fc; --cyan: #22d3ee;
     --text: #e8eaeb; --text-dim: #6b7280; --text-mid: #9ca3af;
     --border: #2a2d30;
     --mono: 'Share Tech Mono', monospace;
@@ -180,6 +180,30 @@
   .fz-icon { font-size:16px; flex-shrink:0; }
   .fz-name { color:var(--text); font-weight:700; flex:1; }
   .fz-coords { color:var(--text-dim); font-size:11px; }
+
+  /* ── PRIME SPRINT PANEL ── */
+  .prime-panel { background:var(--bg3); border-top:2px solid var(--cyan); padding:20px; margin-bottom:24px; }
+  .prime-title { font-family:var(--condensed); font-size:18px; font-weight:700; letter-spacing:3px; text-transform:uppercase; color:var(--cyan); }
+  .prime-subtitle { font-family:var(--mono); font-size:11px; color:var(--text-dim); margin-top:4px; }
+  .prime-label-row { margin-top:16px; }
+  .prime-rows { margin-top:12px; display:flex; flex-direction:column; gap:8px; }
+  .prime-row-input { display:grid; grid-template-columns:70px 100px 1fr auto; gap:10px; align-items:center; }
+  .prime-row-input .styled-input { padding:8px 12px; font-size:14px; }
+  .prime-row-remove { background:none; border:1px solid var(--red); color:var(--red); padding:6px 10px; font-family:var(--mono); font-size:11px; cursor:pointer; }
+  .prime-row-remove:hover { background:var(--red); color:#fff; }
+  .prime-add-row-btn { background:transparent; border:1px dashed var(--border); color:var(--text-dim); padding:8px; font-family:var(--mono); font-size:11px; cursor:pointer; margin-top:8px; width:100%; }
+  .prime-add-row-btn:hover { border-color:var(--cyan); color:var(--cyan); }
+  .prime-save-row { display:flex; gap:12px; align-items:center; margin-top:16px; }
+  .btn-cyan { background:var(--cyan); color:#0c0e0f; }
+  .btn-cyan:hover { background:#67e8f9; }
+  .prime-list { margin-top:20px; display:flex; flex-direction:column; gap:10px; }
+  .prime-card { background:var(--bg2); border-left:3px solid var(--cyan); padding:12px 16px; }
+  .prime-card-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; }
+  .prime-card-label { font-family:var(--condensed); font-size:15px; font-weight:700; color:var(--text); letter-spacing:1px; }
+  .prime-card-time { font-family:var(--mono); font-size:10px; color:var(--text-dim); }
+  .prime-result-row { display:flex; gap:14px; font-family:var(--mono); font-size:12px; color:var(--text-mid); padding:3px 0; }
+  .prime-result-place { color:var(--cyan); font-weight:700; width:24px; }
+  .prime-result-bib { color:var(--amber); width:50px; }
 
   /* ── STATS ROW ── */
   .stats-row { display:grid; grid-template-columns:repeat(4,1fr); gap:2px; margin-bottom:24px; }
@@ -415,6 +439,30 @@
     </div>
   </div>
 
+  <!-- ── PRIME SPRINT / SPECIAL RESULTS PANEL ── -->
+  <!-- Independent of the event selector above -- this posts directly into the
+       RESULTS database (breakaway-timing-results), not the tracking database,
+       so it shows up as its own selectable entry on results.html. -->
+  <div class="prime-panel" id="primePanel">
+    <div class="prime-title">🏆 Post Prime / Special Result</div>
+    <div class="prime-subtitle">Creates a new entry in the Results page dropdown — separate from your regular FinishLynx race results.</div>
+
+    <div class="prime-label-row">
+      <div class="field-label">Race / Result Name (shown in the Results dropdown)</div>
+      <input type="text" class="styled-input" id="primeLabelInput" placeholder="e.g. Prime Sprint — Lap 5">
+    </div>
+
+    <div class="prime-rows" id="primeRows"></div>
+    <button class="prime-add-row-btn" id="primeAddRowBtn">+ ADD ROW</button>
+
+    <div class="prime-save-row">
+      <button class="btn btn-cyan" id="primeSaveBtn">POST TO RESULTS PAGE</button>
+      <div style="font-family:var(--mono);font-size:11px;" id="primeMsg"></div>
+    </div>
+
+    <div class="prime-list" id="primeList"></div>
+  </div>
+
   <!-- SCHEDULING PANEL -->
   <div class="schedule-panel" id="schedulePanel">
     <div class="schedule-header">
@@ -552,6 +600,12 @@ function init() {
   document.getElementById('fzSaveBtn').addEventListener('click', saveFeedzone);
   document.getElementById('fzModalCloseBtn').addEventListener('click', closeFzModal);
   document.getElementById('fzCancelBtn').addEventListener('click', closeFzModal);
+
+  // Wire prime sprint buttons inside module scope
+  document.getElementById('primeAddRowBtn').addEventListener('click', () => addPrimeRow());
+  document.getElementById('primeSaveBtn').addEventListener('click', savePrime);
+  resetPrimeForm();
+  loadPrimes();
 }
 
 // ── RACES ─────────────────────────────────────────────────────────────────────
@@ -978,6 +1032,156 @@ window.saveFeedzone = async function() {
 window.removeFeedzone = async function(key) {
   if (!currentRaceId) return;
   await remove(ref(db, `config/feedzones/${currentRaceId}/${key}`));
+};
+
+// ── PRIME SPRINT / SPECIAL RESULTS ────────────────────────────────────────────
+// NOTE: this posts into the RESULTS database (breakaway-timing-results),
+// a completely separate Firebase project from the tracking `db` used above.
+// results.html reads race_index.json (for the dropdown) and
+// race_history/{raceId}.json (for the actual rows) via plain REST, so we
+// write the same way here -- no Firebase SDK needed for this part.
+const RESULTS_FIREBASE_URL = "https://breakaway-timing-results-default-rtdb.europe-west1.firebasedatabase.app";
+
+window.addPrimeRow = function(place = '', bib = '', name = '') {
+  const rows = document.getElementById('primeRows');
+  const rowId = 'prow_' + Date.now() + '_' + Math.floor(Math.random() * 10000);
+  const row = document.createElement('div');
+  row.className = 'prime-row-input';
+  row.id = rowId;
+  row.innerHTML = `
+    <input type="text" class="styled-input" placeholder="Place" value="${place}">
+    <input type="text" class="styled-input" placeholder="Bib" value="${bib}">
+    <input type="text" class="styled-input" placeholder="Name (optional)" value="${name}">
+    <button class="prime-row-remove" onclick="document.getElementById('${rowId}').remove()">✕</button>`;
+  rows.appendChild(row);
+};
+
+function resetPrimeForm() {
+  document.getElementById('primeLabelInput').value = '';
+  document.getElementById('primeRows').innerHTML = '';
+  document.getElementById('primeMsg').textContent = '';
+  // start with 10 blank rows (places 1-10), auto-numbered, so it's fast to tab through
+  for (let i = 1; i <= 10; i++) addPrimeRow(i, '', '');
+}
+
+window.savePrime = async function() {
+  const msg = document.getElementById('primeMsg');
+  const label = document.getElementById('primeLabelInput').value.trim();
+  if (!label) {
+    msg.style.color = 'var(--red)'; msg.textContent = 'Enter a race/result name (e.g. "Prime Sprint — Lap 5").';
+    return;
+  }
+
+  const rowEls = document.querySelectorAll('#primeRows .prime-row-input');
+  const results = [];
+  rowEls.forEach(row => {
+    const inputs = row.querySelectorAll('input');
+    const place = inputs[0].value.trim();
+    const bib   = inputs[1].value.trim();
+    const name  = inputs[2].value.trim();
+    if (bib) results.push({ place: place || String(results.length + 1), bib, name });
+  });
+
+  if (!results.length) {
+    msg.style.color = 'var(--red)'; msg.textContent = 'Add at least one row with a bib number.';
+    return;
+  }
+
+  results.sort((a, b) => (parseInt(a.place) || 999) - (parseInt(b.place) || 999));
+
+  const raceId = 'prime_' + Date.now();
+  const generatedAt = new Date().toISOString();
+
+  // Shaped exactly like results.html expects: events[].results[] with
+  // place/bib/firstName/lastName/team/category/time/gap.
+  const raceHistoryPayload = {
+    raceId,
+    raceLabel: label,
+    generatedAt,
+    events: [{
+      results: results.map(r => ({
+        place: r.place,
+        bib: r.bib,
+        firstName: r.name || '',
+        lastName: '',
+        team: '',
+        category: 'Prime / Special',
+        time: '',
+        gap: ''
+      }))
+    }]
+  };
+
+  const raceIndexPayload = { raceId, raceLabel: label, generatedAt, resultCount: results.length };
+
+  msg.style.color = 'var(--text-dim)'; msg.textContent = 'Posting...';
+
+  try {
+    const [histRes, idxRes] = await Promise.all([
+      fetch(`${RESULTS_FIREBASE_URL}/race_history/${raceId}.json`, {
+        method: 'PUT', body: JSON.stringify(raceHistoryPayload)
+      }),
+      fetch(`${RESULTS_FIREBASE_URL}/race_index/${raceId}.json`, {
+        method: 'PUT', body: JSON.stringify(raceIndexPayload)
+      })
+    ]);
+    if (!histRes.ok || !idxRes.ok) throw new Error(`HTTP ${histRes.status}/${idxRes.status}`);
+
+    msg.style.color = 'var(--green)';
+    msg.textContent = `✓ "${label}" posted — ${results.length} result${results.length !== 1 ? 's' : ''}. It'll appear in the Results dropdown now.`;
+    resetPrimeForm();
+    loadPrimes();
+  } catch (err) {
+    msg.style.color = 'var(--red)';
+    msg.textContent = `✗ Failed to post (${err.message}). If this keeps happening, the results database's write rules probably need to allow this -- check the Firebase console for breakaway-timing-results.`;
+    console.error('savePrime failed:', err);
+  }
+};
+
+async function loadPrimes() {
+  try {
+    const res = await fetch(`${RESULTS_FIREBASE_URL}/race_index.json`);
+    const data = await res.json();
+    const primes = {};
+    Object.entries(data || {}).forEach(([key, race]) => {
+      if (key.startsWith('prime_')) primes[key] = race;
+    });
+    renderPrimeList(primes);
+  } catch (err) {
+    console.error('loadPrimes failed:', err);
+  }
+}
+
+function renderPrimeList(primes) {
+  const list = document.getElementById('primeList');
+  const entries = Object.entries(primes).sort((a, b) => (b[1].generatedAt || '').localeCompare(a[1].generatedAt || ''));
+  if (!entries.length) {
+    list.innerHTML = '<div style="font-family:var(--mono);font-size:11px;color:var(--text-dim);">No prime/special results posted yet.</div>';
+    return;
+  }
+  list.innerHTML = entries.map(([key, race]) => {
+    const when = race.generatedAt ? new Date(race.generatedAt).toLocaleString('en-US', { month:'short', day:'numeric', hour:'2-digit', minute:'2-digit' }) : '';
+    return `<div class="prime-card">
+      <div class="prime-card-header">
+        <span class="prime-card-label">${race.raceLabel}</span>
+        <span class="prime-card-time">${when} · ${race.resultCount || '?'} results</span>
+        <button class="sched-del" onclick="removePrime('${key}')">✕ REMOVE</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+window.removePrime = async function(key) {
+  try {
+    await Promise.all([
+      fetch(`${RESULTS_FIREBASE_URL}/race_history/${key}.json`, { method: 'DELETE' }),
+      fetch(`${RESULTS_FIREBASE_URL}/race_index/${key}.json`, { method: 'DELETE' })
+    ]);
+    loadPrimes();
+  } catch (err) {
+    console.error('removePrime failed:', err);
+    alert('Failed to remove -- check console for details.');
+  }
 };
 
 // ── RIDER TABLE ───────────────────────────────────────────────────────────────
