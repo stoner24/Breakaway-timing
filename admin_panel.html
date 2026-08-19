@@ -1056,8 +1056,8 @@ function resetPrimeForm() {
   document.getElementById('primeLabelInput').value = '';
   document.getElementById('primeRows').innerHTML = '';
   document.getElementById('primeMsg').textContent = '';
-  // start with a few blank rows, auto-numbered, so it's fast to tab through
-  for (let i = 1; i <= 3; i++) addPrimeRow(i, '', '');
+  // start with 10 blank rows (places 1-10), auto-numbered, so it's fast to tab through
+  for (let i = 1; i <= 10; i++) addPrimeRow(i, '', '');
 }
 
 window.savePrime = async function() {
