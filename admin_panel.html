@@ -439,13 +439,16 @@
     </div>
   </div>
 
-  <!-- ── PRIME SPRINT RESULTS PANEL ── -->
-  <div class="prime-panel" id="primePanel" style="display:none">
-    <div class="prime-title">🏆 Prime Sprint Results</div>
-    <div class="prime-subtitle">Post a quick placeholder result for a mid-race sprint/prime — separate from the main race results.</div>
+  <!-- ── PRIME SPRINT / SPECIAL RESULTS PANEL ── -->
+  <!-- Independent of the event selector above -- this posts directly into the
+       RESULTS database (breakaway-timing-results), not the tracking database,
+       so it shows up as its own selectable entry on results.html. -->
+  <div class="prime-panel" id="primePanel">
+    <div class="prime-title">🏆 Post Prime / Special Result</div>
+    <div class="prime-subtitle">Creates a new entry in the Results page dropdown — separate from your regular FinishLynx race results.</div>
 
     <div class="prime-label-row">
-      <div class="field-label">Prime Label</div>
+      <div class="field-label">Race / Result Name (shown in the Results dropdown)</div>
       <input type="text" class="styled-input" id="primeLabelInput" placeholder="e.g. Prime Sprint — Lap 5">
     </div>
 
@@ -453,7 +456,7 @@
     <button class="prime-add-row-btn" id="primeAddRowBtn">+ ADD ROW</button>
 
     <div class="prime-save-row">
-      <button class="btn btn-cyan" id="primeSaveBtn">POST PRIME RESULTS</button>
+      <button class="btn btn-cyan" id="primeSaveBtn">POST TO RESULTS PAGE</button>
       <div style="font-family:var(--mono);font-size:11px;" id="primeMsg"></div>
     </div>
 
@@ -601,6 +604,8 @@ function init() {
   // Wire prime sprint buttons inside module scope
   document.getElementById('primeAddRowBtn').addEventListener('click', () => addPrimeRow());
   document.getElementById('primeSaveBtn').addEventListener('click', savePrime);
+  resetPrimeForm();
+  loadPrimes();
 }
 
 // ── RACES ─────────────────────────────────────────────────────────────────────
@@ -672,7 +677,6 @@ window.selectRace = function(raceId) {
 
   const gpxPanel        = document.getElementById('gpxPanel');
   const feedzonePanel   = document.getElementById('feedzonePanel');
-  const primePanel      = document.getElementById('primePanel');
   const deleteRaceBtn   = document.getElementById('deleteRaceBtn');
   const visibilityBtn   = document.getElementById('visibilityBtn');
   const clearExpiredBtn = document.getElementById('clearExpiredBtn');
@@ -682,7 +686,6 @@ window.selectRace = function(raceId) {
     renderEmpty('No event selected.');
     gpxPanel.style.display      = 'none';
     feedzonePanel.style.display = 'none';
-    primePanel.style.display    = 'none';
     deleteRaceBtn.style.display  = 'none';
     visibilityBtn.style.display  = 'none';
     clearExpiredBtn.style.display = 'none';
@@ -692,7 +695,6 @@ window.selectRace = function(raceId) {
 
   gpxPanel.style.display       = 'block';
   feedzonePanel.style.display  = 'block';
-  primePanel.style.display     = 'block';
   deleteRaceBtn.style.display  = 'inline-flex';
   visibilityBtn.style.display  = 'inline-flex';
   clearExpiredBtn.style.display = 'inline-flex';
@@ -702,8 +704,6 @@ window.selectRace = function(raceId) {
   loadGpxStatus(raceId);
   loadFeedzones(raceId);
   loadRaceVisibility(raceId);
-  loadPrimes(raceId);
-  resetPrimeForm();
 
   raceListener = onValue(ref(db, `tracker/${raceId}`), (snap) => {
     currentRiders = snap.val() || {};
@@ -730,7 +730,6 @@ async function executeDeleteRace(raceId) {
   await remove(ref(db, `config/schedules/${raceId}`));
   await remove(ref(db, `config/gpx/${raceId}`));
   await remove(ref(db, `config/feedzones/${raceId}`));
-  await remove(ref(db, `config/primes/${raceId}`));
   await remove(ref(db, `config/races/${raceId}`));
   document.getElementById('raceSelect').value = '';
   window.selectRace('');
@@ -1035,8 +1034,13 @@ window.removeFeedzone = async function(key) {
   await remove(ref(db, `config/feedzones/${currentRaceId}/${key}`));
 };
 
-// ── PRIME SPRINT RESULTS ──────────────────────────────────────────────────────
-let primeListener = null;
+// ── PRIME SPRINT / SPECIAL RESULTS ────────────────────────────────────────────
+// NOTE: this posts into the RESULTS database (breakaway-timing-results),
+// a completely separate Firebase project from the tracking `db` used above.
+// results.html reads race_index.json (for the dropdown) and
+// race_history/{raceId}.json (for the actual rows) via plain REST, so we
+// write the same way here -- no Firebase SDK needed for this part.
+const RESULTS_FIREBASE_URL = "https://breakaway-timing-results-default-rtdb.europe-west1.firebasedatabase.app";
 
 window.addPrimeRow = function(place = '', bib = '', name = '') {
   const rows = document.getElementById('primeRows');
@@ -1061,11 +1065,10 @@ function resetPrimeForm() {
 }
 
 window.savePrime = async function() {
-  if (!currentRaceId) { alert('Select an event first.'); return; }
   const msg = document.getElementById('primeMsg');
   const label = document.getElementById('primeLabelInput').value.trim();
   if (!label) {
-    msg.style.color = 'var(--red)'; msg.textContent = 'Enter a prime label (e.g. "Prime Sprint — Lap 5").';
+    msg.style.color = 'var(--red)'; msg.textContent = 'Enter a race/result name (e.g. "Prime Sprint — Lap 5").';
     return;
   }
 
@@ -1076,7 +1079,7 @@ window.savePrime = async function() {
     const place = inputs[0].value.trim();
     const bib   = inputs[1].value.trim();
     const name  = inputs[2].value.trim();
-    if (bib) results.push({ place: place || String(results.length + 1), bib, name: name || null });
+    if (bib) results.push({ place: place || String(results.length + 1), bib, name });
   });
 
   if (!results.length) {
@@ -1086,52 +1089,99 @@ window.savePrime = async function() {
 
   results.sort((a, b) => (parseInt(a.place) || 999) - (parseInt(b.place) || 999));
 
-  const key = 'prime_' + Date.now();
-  await set(ref(db, `config/primes/${currentRaceId}/${key}`), {
-    label, results, createdAt: Date.now()
-  });
+  const raceId = 'prime_' + Date.now();
+  const generatedAt = new Date().toISOString();
 
-  msg.style.color = 'var(--green)';
-  msg.textContent = `✓ "${label}" posted — ${results.length} result${results.length !== 1 ? 's' : ''} live on site.`;
-  resetPrimeForm();
+  // Shaped exactly like results.html expects: events[].results[] with
+  // place/bib/firstName/lastName/team/category/time/gap.
+  const raceHistoryPayload = {
+    raceId,
+    raceLabel: label,
+    generatedAt,
+    events: [{
+      results: results.map(r => ({
+        place: r.place,
+        bib: r.bib,
+        firstName: r.name || '',
+        lastName: '',
+        team: '',
+        category: 'Prime / Special',
+        time: '',
+        gap: ''
+      }))
+    }]
+  };
+
+  const raceIndexPayload = { raceId, raceLabel: label, generatedAt, resultCount: results.length };
+
+  msg.style.color = 'var(--text-dim)'; msg.textContent = 'Posting...';
+
+  try {
+    const [histRes, idxRes] = await Promise.all([
+      fetch(`${RESULTS_FIREBASE_URL}/race_history/${raceId}.json`, {
+        method: 'PUT', body: JSON.stringify(raceHistoryPayload)
+      }),
+      fetch(`${RESULTS_FIREBASE_URL}/race_index/${raceId}.json`, {
+        method: 'PUT', body: JSON.stringify(raceIndexPayload)
+      })
+    ]);
+    if (!histRes.ok || !idxRes.ok) throw new Error(`HTTP ${histRes.status}/${idxRes.status}`);
+
+    msg.style.color = 'var(--green)';
+    msg.textContent = `✓ "${label}" posted — ${results.length} result${results.length !== 1 ? 's' : ''}. It'll appear in the Results dropdown now.`;
+    resetPrimeForm();
+    loadPrimes();
+  } catch (err) {
+    msg.style.color = 'var(--red)';
+    msg.textContent = `✗ Failed to post (${err.message}). If this keeps happening, the results database's write rules probably need to allow this -- check the Firebase console for breakaway-timing-results.`;
+    console.error('savePrime failed:', err);
+  }
 };
 
-function loadPrimes(raceId) {
-  if (primeListener) primeListener();
-  primeListener = onValue(ref(db, `config/primes/${raceId}`), (snap) => {
-    renderPrimeList(snap.val() || {});
-  });
+async function loadPrimes() {
+  try {
+    const res = await fetch(`${RESULTS_FIREBASE_URL}/race_index.json`);
+    const data = await res.json();
+    const primes = {};
+    Object.entries(data || {}).forEach(([key, race]) => {
+      if (key.startsWith('prime_')) primes[key] = race;
+    });
+    renderPrimeList(primes);
+  } catch (err) {
+    console.error('loadPrimes failed:', err);
+  }
 }
 
 function renderPrimeList(primes) {
   const list = document.getElementById('primeList');
-  const entries = Object.entries(primes).sort((a, b) => (b[1].createdAt || 0) - (a[1].createdAt || 0));
+  const entries = Object.entries(primes).sort((a, b) => (b[1].generatedAt || '').localeCompare(a[1].generatedAt || ''));
   if (!entries.length) {
-    list.innerHTML = '<div style="font-family:var(--mono);font-size:11px;color:var(--text-dim);">No prime results posted yet.</div>';
+    list.innerHTML = '<div style="font-family:var(--mono);font-size:11px;color:var(--text-dim);">No prime/special results posted yet.</div>';
     return;
   }
-  list.innerHTML = entries.map(([key, prime]) => {
-    const when = prime.createdAt ? new Date(prime.createdAt).toLocaleString('en-US', { month:'short', day:'numeric', hour:'2-digit', minute:'2-digit' }) : '';
-    const rows = (prime.results || []).map(r => `
-      <div class="prime-result-row">
-        <span class="prime-result-place">${r.place}.</span>
-        <span class="prime-result-bib">#${r.bib}</span>
-        <span>${r.name || ''}</span>
-      </div>`).join('');
+  list.innerHTML = entries.map(([key, race]) => {
+    const when = race.generatedAt ? new Date(race.generatedAt).toLocaleString('en-US', { month:'short', day:'numeric', hour:'2-digit', minute:'2-digit' }) : '';
     return `<div class="prime-card">
       <div class="prime-card-header">
-        <span class="prime-card-label">${prime.label}</span>
-        <span class="prime-card-time">${when}</span>
+        <span class="prime-card-label">${race.raceLabel}</span>
+        <span class="prime-card-time">${when} · ${race.resultCount || '?'} results</span>
         <button class="sched-del" onclick="removePrime('${key}')">✕ REMOVE</button>
       </div>
-      ${rows}
     </div>`;
   }).join('');
 }
 
 window.removePrime = async function(key) {
-  if (!currentRaceId) return;
-  await remove(ref(db, `config/primes/${currentRaceId}/${key}`));
+  try {
+    await Promise.all([
+      fetch(`${RESULTS_FIREBASE_URL}/race_history/${key}.json`, { method: 'DELETE' }),
+      fetch(`${RESULTS_FIREBASE_URL}/race_index/${key}.json`, { method: 'DELETE' })
+    ]);
+    loadPrimes();
+  } catch (err) {
+    console.error('removePrime failed:', err);
+    alert('Failed to remove -- check console for details.');
+  }
 };
 
 // ── RIDER TABLE ───────────────────────────────────────────────────────────────
