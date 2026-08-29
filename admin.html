@@ -1340,7 +1340,12 @@ window.uploadGpx = async function() {
 
   const text   = await file.text();
   const xml    = new DOMParser().parseFromString(text, 'application/xml');
-  const trkpts = Array.from(xml.querySelectorAll('trkpt, wpt'));
+  // NOTE: only real track points here -- do NOT include ", wpt". Waypoints
+  // (aid stations, feedzone markers, etc.) live outside the <trk> in most
+  // Garmin/Strava exports and are NOT in route order, so mixing them into
+  // this array puts them at the wrong index and draws a rogue straight
+  // line across the map when the polyline connects them out of sequence.
+  const trkpts = Array.from(xml.querySelectorAll('trkpt'));
   if (!trkpts.length) { msg.style.color = 'var(--red)'; msg.textContent = 'No track points found in GPX file.'; return; }
 
   const MAX_POINTS = 2000;
