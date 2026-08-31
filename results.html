@@ -440,7 +440,6 @@
 
       const hasLapData = out.some(row => row.lap);
       lapToggleLabel.classList.toggle("visible", hasLapData);
-      if (!lapManuallySet) showLap = hasLapData;
       lapToggle.checked = showLap;
       applyLapVisibility();
 
