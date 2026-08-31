@@ -50,6 +50,12 @@
 
     #resultsTable.hide-lap th:nth-child(6),
     #resultsTable.hide-lap td:nth-child(6) { display: none; }
+    #resultsTable td:nth-child(6) {
+      font-family: monospace;
+      font-size: 0.82rem;
+      color: var(--mid, #888);
+      white-space: normal;
+    }
 
     #podiumView { display: none; }
 
@@ -426,7 +432,7 @@
           const team      = clean(r.team || r.affiliation || "");
           const category  = clean(r.category || "");
           const gap       = clean(r.gap || "");
-          const lap       = clean(r.lap || r.laps || r.currentLap || r.lapCount || "");
+          const lap       = formatLaps(clean(r.lap || r.laps || r.currentLap || r.lapCount || ""));
 
           if (category) categorySet.add(category);
           if (selectedCategory !== "ALL" && category !== selectedCategory) continue;
@@ -530,7 +536,7 @@
           const team      = clean(r.team || r.affiliation || "");
           const time      = clean(r.time || "");
           const gap       = clean(r.gap || "");
-          const lap       = clean(r.lap || r.laps || r.currentLap || r.lapCount || "");
+          const lap       = formatLaps(clean(r.lap || r.laps || r.currentLap || r.lapCount || ""));
           if (isHeader(bib) || isHeader(rider)) continue;
           if (!place && !bib && !rider && !time) continue;
           if (selectedCategory !== "ALL" && category !== selectedCategory) continue;
@@ -608,6 +614,7 @@
 
     function toArray(v) { if (!v) return []; if (Array.isArray(v)) return v; return Object.values(v); }
     function clean(v)   { const s = String(v ?? "").trim(); return (s === "#N/A" || s.toUpperCase() === "N/A") ? "" : s; }
+    function formatLaps(v) { return String(v ?? "").split(",").map(s => s.trim()).filter(Boolean).join(", "); }
     function isHeader(v){ return ["bib","first name","last name","firstname","lastname"].includes(String(v||"").trim().toLowerCase()); }
   </script>
 
