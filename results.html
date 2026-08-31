@@ -50,12 +50,6 @@
 
     #resultsTable.hide-lap th:nth-child(6),
     #resultsTable.hide-lap td:nth-child(6) { display: none; }
-    #resultsTable td:nth-child(6) {
-      font-family: monospace;
-      font-size: 0.82rem;
-      color: var(--mid, #888);
-      white-space: normal;
-    }
 
     #podiumView { display: none; }
 
@@ -614,7 +608,7 @@
 
     function toArray(v) { if (!v) return []; if (Array.isArray(v)) return v; return Object.values(v); }
     function clean(v)   { const s = String(v ?? "").trim(); return (s === "#N/A" || s.toUpperCase() === "N/A") ? "" : s; }
-    function formatLaps(v) { return String(v ?? "").split(",").map(s => s.trim()).filter(Boolean).join(", "); }
+    function formatLaps(v) { return String(v ?? "").split(",").map(s => s.trim()).filter(Boolean).length || ""; }
     function isHeader(v){ return ["bib","first name","last name","firstname","lastname"].includes(String(v||"").trim().toLowerCase()); }
   </script>
 
