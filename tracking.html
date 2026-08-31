@@ -146,6 +146,18 @@
     .feedzone-toggle-btn.active { background: rgba(192,132,252,0.12); }
     .feedzone-toggle-btn:not(.active) { color: var(--mid); border-color: var(--border); }
 
+    /* Mile marker toggle button */
+    .mile-toggle-btn {
+      background: transparent; border: 1px solid var(--blue);
+      color: var(--blue); font-family: var(--font); font-size: 0.7rem;
+      font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase;
+      padding: 0.45rem 0.85rem; border-radius: 6px; cursor: pointer;
+      white-space: nowrap; transition: border-color 0.15s, color 0.15s, background 0.15s;
+      display: flex; align-items: center; gap: 0.4rem;
+    }
+    .mile-toggle-btn.active { background: rgba(88,166,255,0.12); }
+    .mile-toggle-btn:not(.active) { color: var(--mid); border-color: var(--border); }
+
     #map { position: fixed; top: 90px; left: 0; right: 0; bottom: 0; }
 
     .rider-panel {
@@ -196,6 +208,18 @@
       box-shadow: 0 0 10px rgba(192,132,252,0.7), 0 1px 4px rgba(0,0,0,0.5);
       display: flex; align-items: center; justify-content: center;
       font-size: 13px; line-height: 1;
+    }
+
+    /* Mile marker */
+    .mile-marker {
+      min-width: 26px; height: 26px; padding: 0 4px; border-radius: 50%;
+      background: rgba(0,0,0,0.9);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 11px; font-weight: 700; color: #fff;
+      border: 2px solid #58a6ff;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.5);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      white-space: nowrap;
     }
 
     .leaflet-container { background: #0a0a0a; }
@@ -249,6 +273,9 @@
       <!-- Feedzone toggle injected here by JS -->
       <button class="feedzone-toggle-btn active" id="feedzoneToggleBtn" onclick="toggleFeedzones()" style="display:none">
         🏁 Feedzones
+      </button>
+      <button class="mile-toggle-btn active" id="mileToggleBtn" onclick="toggleMileMarkers()" style="display:none">
+        📍 Mile Markers
       </button>
     </div>
   </div>
@@ -411,6 +438,67 @@
       feedzoneVisible = true;
     }
 
+    // ── Mile markers ──────────────────────────────────────────────────────────
+    const MILE_INTERVAL = 5;         // miles between markers
+    const METERS_PER_MILE = 1609.344;
+    let mileMarkersVisible = true;
+
+    function makeMileIcon(mile) {
+      return L.divIcon({
+        className: '',
+        html: `<div class="mile-marker">${mile} mi</div>`,
+        iconSize: [30, 26], iconAnchor: [15, 13], popupAnchor: [0, -14],
+      });
+    }
+
+    // Walk the course points, dropping a marker every MILE_INTERVAL miles.
+    // Returns an array of Leaflet markers (not yet necessarily on the map).
+    function buildMileMarkers(pts) {
+      const result = [];
+      if (!pts || pts.length < 2) return result;
+
+      let cumMiles = 0;
+      let nextMile = MILE_INTERVAL;
+
+      for (let i = 1; i < pts.length; i++) {
+        const p1 = L.latLng(pts[i - 1].lat, pts[i - 1].lng);
+        const p2 = L.latLng(pts[i].lat, pts[i].lng);
+        const segMeters = p1.distanceTo(p2);
+        const segMiles  = segMeters / METERS_PER_MILE;
+        if (segMiles <= 0) continue;
+
+        while (cumMiles + segMiles >= nextMile) {
+          const fraction = (nextMile - cumMiles) / segMiles;
+          const lat = p1.lat + (p2.lat - p1.lat) * fraction;
+          const lng = p1.lng + (p2.lng - p1.lng) * fraction;
+          const marker = L.marker([lat, lng], { icon: makeMileIcon(nextMile), zIndexOffset: -50 })
+            .bindPopup(`<div style="font-family:-apple-system,sans-serif;font-size:0.85rem;font-weight:600;">Mile ${nextMile}</div>`);
+          result.push(marker);
+          nextMile += MILE_INTERVAL;
+        }
+        cumMiles += segMiles;
+      }
+      return result;
+    }
+
+    function updateMileToggleVisibility() {
+      const anyMarkers = Object.values(courseLayers).some(c => c.mileMarkers && c.mileMarkers.length);
+      document.getElementById('mileToggleBtn').style.display = anyMarkers ? 'flex' : 'none';
+    }
+
+    window.toggleMileMarkers = function() {
+      mileMarkersVisible = !mileMarkersVisible;
+      const btn = document.getElementById('mileToggleBtn');
+      btn.classList.toggle('active', mileMarkersVisible);
+      Object.values(courseLayers).forEach(c => {
+        if (!c.mileMarkers) return;
+        c.mileMarkers.forEach(m => {
+          if (mileMarkersVisible && c.visible) m.addTo(map);
+          else m.remove();
+        });
+      });
+    };
+
     // ── Load events dropdown ──────────────────────────────────────────────────
     db.ref('config/races').on('value', (snap) => {
       const sel  = document.getElementById('eventSelect');
@@ -475,7 +563,10 @@
     const courseLayers  = {};
 
     function loadCourse(eventId) {
-      Object.values(courseLayers).forEach(c => { if (c.layer) c.layer.remove(); });
+      Object.values(courseLayers).forEach(c => {
+        if (c.layer) c.layer.remove();
+        if (c.mileMarkers) c.mileMarkers.forEach(m => m.remove());
+      });
       Object.keys(courseLayers).forEach(k => delete courseLayers[k]);
       document.getElementById('courseToggles').innerHTML = '';
       const legend = document.getElementById('courseLegend');
@@ -484,10 +575,10 @@
 
       db.ref(`config/gpx/${eventId}`).once('value').then(snap => {
         const data = snap.val();
-        if (!data) return;
+        if (!data) { updateMileToggleVisibility(); return; }
 
         const courses = Object.entries(data).filter(([k]) => k !== 'meta' && k !== 'points' && data[k].meta);
-        if (!courses.length) return;
+        if (!courses.length) { updateMileToggleVisibility(); return; }
 
         courses.forEach(([courseId, course], i) => {
           const pts   = course.points;
@@ -500,7 +591,10 @@
             color, weight: 4, opacity: 0.9, smoothFactor: 1,
           }).addTo(map);
 
-          courseLayers[courseId] = { layer, visible: true, color, name };
+          const mileMarkers = buildMileMarkers(pts);
+          if (mileMarkersVisible) mileMarkers.forEach(m => m.addTo(map));
+
+          courseLayers[courseId] = { layer, visible: true, color, name, mileMarkers };
 
           if (!mapFitted) {
             map.fitBounds(layer.getBounds(), { padding: [40, 40] });
@@ -521,6 +615,8 @@
           item.innerHTML = `<div class="legend-line" style="background:${color}"></div><span>${name}</span>`;
           legend.appendChild(item);
         });
+
+        updateMileToggleVisibility();
       });
     }
 
@@ -533,21 +629,27 @@
         btn.classList.add('active');
         btn.style.borderColor = c.color;
         btn.style.color = c.color;
+        if (mileMarkersVisible && c.mileMarkers) c.mileMarkers.forEach(m => m.addTo(map));
       } else {
         c.layer.remove();
         btn.classList.remove('active');
         btn.style.borderColor = 'var(--border)';
         btn.style.color = 'var(--mid)';
+        if (c.mileMarkers) c.mileMarkers.forEach(m => m.remove());
       }
     }
 
     function removeCourseLayer() {
-      Object.values(courseLayers).forEach(c => { if (c.layer) c.layer.remove(); });
+      Object.values(courseLayers).forEach(c => {
+        if (c.layer) c.layer.remove();
+        if (c.mileMarkers) c.mileMarkers.forEach(m => m.remove());
+      });
       Object.keys(courseLayers).forEach(k => delete courseLayers[k]);
       document.getElementById('courseToggles').innerHTML = '';
       const legend = document.getElementById('courseLegend');
       legend.querySelectorAll('.legend-course-item').forEach(el => el.remove());
       if (!legend.children.length) legend.style.display = 'none';
+      updateMileToggleVisibility();
     }
 
     // ── Rider helpers ─────────────────────────────────────────────────────────
