@@ -142,7 +142,7 @@
 
     <div class="controls-row">
       <select class="styled-select" id="raceDropdown">
-        <option value="LIVE">🔴 Live Results</option>
+        <option value="LIVE" id="liveOption">🔴 Live Results</option>
       </select>
       <select class="styled-select" id="categoryDropdown">
         <option value="ALL">All Categories</option>
@@ -219,6 +219,7 @@
     let lapManuallySet   = false;
 
     const raceDropdown     = document.getElementById("raceDropdown");
+    const liveOptionEl     = document.getElementById("liveOption");
     const categoryDropdown = document.getElementById("categoryDropdown");
     const resultsBody      = document.getElementById("resultsBody");
     const lastUpdatedEl    = document.getElementById("lastUpdated");
@@ -245,6 +246,13 @@
 
     function applyLapVisibility() {
       resultsTableEl.classList.toggle("hide-lap", !showLap);
+    }
+
+    // Updates the "🔴 Live Results" dropdown option to show the active race name,
+    // e.g. "Salty Lizard Road Race 🔴 Live Results", once we know it.
+    function updateLiveOptionLabel(data) {
+      const raceName = clean((data && (data.raceLabel || data.raceId)) || "");
+      liveOptionEl.textContent = raceName ? `${raceName} 🔴 Live Results` : "🔴 Live Results";
     }
 
     loadRaceIndex();
@@ -402,6 +410,7 @@
           if (data.generatedAt === lastGeneratedAt) return;
           lastGeneratedAt = data.generatedAt;
           lastPayload     = data;
+          updateLiveOptionLabel(data);
           renderResults(data);
         })
         .catch(err => console.warn("Auto-refresh failed:", err));
