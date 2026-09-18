@@ -347,6 +347,7 @@
 
     const markers     = {};
     const riders      = {};
+    const riderFirstProgress = {};   // bib → { ts, alongMeters } — first on-course sighting, for pace/ETA
     let riderListener = null;
     let currentEvent  = null;
     let mapFitted     = false;
@@ -531,6 +532,7 @@
       }
       Object.keys(markers).forEach(b => { markers[b].remove(); delete markers[b]; });
       Object.keys(riders).forEach(b => delete riders[b]);
+      Object.keys(riderFirstProgress).forEach(b => delete riderFirstProgress[b]);
       removeCourseLayer();
       clearFeedzones();
       mapFitted     = false;
@@ -570,6 +572,80 @@
     const COURSE_COLORS = ['#ff1744', '#2979ff', '#ff6d00', '#00e676', '#d500f9'];
     const courseLayers  = {};
 
+    function totalCourseMeters(pts) {
+      let total = 0;
+      for (let i = 1; i < pts.length; i++) {
+        total += L.latLng(pts[i - 1].lat, pts[i - 1].lng).distanceTo(L.latLng(pts[i].lat, pts[i].lng));
+      }
+      return total;
+    }
+
+    // Fraction [can be outside 0..1] of target's projection onto segment p1→p2, in plain lat/lng space.
+    // Good enough at course-segment scale; avoids a full geodesic projection.
+    function projectFraction(p1, p2, target) {
+      const dx = p2.lng - p1.lng, dy = p2.lat - p1.lat;
+      const len2 = dx * dx + dy * dy;
+      if (len2 === 0) return 0;
+      return ((target.lng - p1.lng) * dx + (target.lat - p1.lat) * dy) / len2;
+    }
+
+    // Finds how far along a course polyline (in meters from the start) a lat/lng sits,
+    // by snapping to the closest point on the closest segment.
+    function progressAlongCourse(pts, lat, lng) {
+      if (!pts || pts.length < 2) return null;
+      const target = L.latLng(lat, lng);
+      let cum = 0, best = null;
+      for (let i = 1; i < pts.length; i++) {
+        const p1 = L.latLng(pts[i - 1].lat, pts[i - 1].lng);
+        const p2 = L.latLng(pts[i].lat, pts[i].lng);
+        const segLen = p1.distanceTo(p2);
+        const t = Math.max(0, Math.min(1, projectFraction(p1, p2, target)));
+        const proj = L.latLng(p1.lat + (p2.lat - p1.lat) * t, p1.lng + (p2.lng - p1.lng) * t);
+        const offDist = target.distanceTo(proj);
+        if (!best || offDist < best.offMeters) {
+          best = { offMeters: offDist, alongMeters: cum + segLen * t };
+        }
+        cum += segLen;
+      }
+      return best ? { alongMeters: best.alongMeters, totalMeters: cum, offMeters: best.offMeters } : null;
+    }
+
+    // Picks whichever loaded course a rider's position sits closest to.
+    function bestCourseProgress(lat, lng) {
+      let best = null;
+      Object.values(courseLayers).forEach(c => {
+        if (!c.points) return;
+        const prog = progressAlongCourse(c.points, lat, lng);
+        if (prog && (!best || prog.offMeters < best.offMeters)) best = prog;
+      });
+      return best;
+    }
+
+    // Very rough finish-time estimate: average pace since the rider's first on-course
+    // sighting this session, projected across the remaining course distance.
+    function estimateFinishTime(bib, lat, lng, ts) {
+      const prog = bestCourseProgress(lat, lng);
+      if (!prog) return null;
+
+      const prev = riderFirstProgress[bib];
+      if (!prev) {
+        riderFirstProgress[bib] = { ts, alongMeters: prog.alongMeters };
+        return null;
+      }
+
+      const elapsedMs   = ts - prev.ts;
+      const distCovered = prog.alongMeters - prev.alongMeters;
+      // Need a few minutes of real forward movement before a pace estimate means anything.
+      if (elapsedMs < 3 * 60 * 1000 || distCovered < 150) return null;
+
+      const paceMPerMs = distCovered / elapsedMs;
+      const remaining  = prog.totalMeters - prog.alongMeters;
+      if (paceMPerMs <= 0 || remaining <= 0) return null;
+
+      const finishDate = new Date(ts + remaining / paceMPerMs);
+      return finishDate.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+    }
+
     function loadCourse(eventId) {
       Object.values(courseLayers).forEach(c => {
         if (c.layer) c.layer.remove();
@@ -602,7 +678,8 @@
           const mileMarkers = buildMileMarkers(pts);
           if (mileMarkersVisible) mileMarkers.forEach(m => m.addTo(map));
 
-          courseLayers[courseId] = { layer, visible: true, color, name, mileMarkers };
+          const totalMeters = totalCourseMeters(pts);
+          courseLayers[courseId] = { layer, visible: true, color, name, mileMarkers, points: pts, totalMeters };
 
           if (!mapFitted) {
             map.fitBounds(layer.getBounds(), { padding: [40, 40] });
@@ -709,12 +786,14 @@
           markers[bib] = L.marker(ll, { icon: makeIcon(s, bib) }).addTo(map);
           if (!mapFitted) { map.setView(ll, 14); mapFitted = true; }
         }
+        const eta = ts ? estimateFinishTime(bib, lat, lng, ts) : null;
         markers[bib].bindPopup(`
           <div style="font-family:-apple-system,sans-serif;min-width:140px;">
             <div style="font-size:1rem;font-weight:700;color:#fff;">Bib ${bib}</div>
             <div style="font-size:0.85rem;color:#aaa;margin-top:2px;">${data.name||''}</div>
             <div style="font-size:0.75rem;color:#888;margin-top:8px;">${formatAge(ts)}${acc?` · ±${acc}m`:''}</div>
             <div style="font-size:0.7rem;color:#666;margin-top:2px;">${data.expiresAt?formatExpiry(data.expiresAt):''}</div>
+            ${eta ? `<div style="font-size:0.75rem;color:#58a6ff;margin-top:6px;">Est. finish: ${eta}</div>` : ''}
           </div>`);
       }
       renderRiderList();
