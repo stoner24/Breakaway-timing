@@ -12,6 +12,7 @@
     :root {
       --black: #000; --white: #fff; --green: #00e676;
       --amber: #ffab00; --red: #ff4444; --blue: #58a6ff;
+      --purple: #c084fc;
       --mid: #888; --border: #333; --surface: #111;
       --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     }
@@ -114,7 +115,6 @@
     .search-toggle:hover { color: var(--white); border-color: var(--white); }
     .search-toggle.open { right: 280px; }
 
-    /* Shrink map when panel open */
     #map.panel-open { right: 280px; }
 
     @media (max-width: 600px) {
@@ -133,6 +133,30 @@
     }
     .course-btn .dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
     .course-btn.active { background: rgba(255,255,255,0.08); }
+
+    /* Feedzone toggle button */
+    .feedzone-toggle-btn {
+      background: transparent; border: 1px solid var(--purple);
+      color: var(--purple); font-family: var(--font); font-size: 0.7rem;
+      font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase;
+      padding: 0.45rem 0.85rem; border-radius: 6px; cursor: pointer;
+      white-space: nowrap; transition: border-color 0.15s, color 0.15s, background 0.15s;
+      display: flex; align-items: center; gap: 0.4rem;
+    }
+    .feedzone-toggle-btn.active { background: rgba(192,132,252,0.12); }
+    .feedzone-toggle-btn:not(.active) { color: var(--mid); border-color: var(--border); }
+
+    /* Mile marker toggle button */
+    .mile-toggle-btn {
+      background: transparent; border: 1px solid var(--blue);
+      color: var(--blue); font-family: var(--font); font-size: 0.7rem;
+      font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase;
+      padding: 0.45rem 0.85rem; border-radius: 6px; cursor: pointer;
+      white-space: nowrap; transition: border-color 0.15s, color 0.15s, background 0.15s;
+      display: flex; align-items: center; gap: 0.4rem;
+    }
+    .mile-toggle-btn.active { background: rgba(88,166,255,0.12); }
+    .mile-toggle-btn:not(.active) { color: var(--mid); border-color: var(--border); }
 
     #map { position: fixed; top: 90px; left: 0; right: 0; bottom: 0; }
 
@@ -172,9 +196,41 @@
     .rider-status.stale { color: var(--amber); }
     .rider-status.old   { color: #999; }
 
-    .rider-marker { width: 16px; height: 16px; border-radius: 50%; border: 3px solid #fff; box-shadow: 0 1px 4px rgba(0,0,0,0.4); }
+    .rider-marker {
+      min-width: 22px; height: 22px; padding: 0 3px; border-radius: 11px;
+      background: #ff6d00; border: 2px solid #fff;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.4);
+      display: flex; align-items: center; justify-content: center;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      font-size: 10px; font-weight: 700; color: #fff; line-height: 1;
+      white-space: nowrap;
+    }
+    .rider-marker.stale { background: #ffab00; }
+    .rider-marker.old   { background: #bbb; color: #222; }
 
-    .leaflet-container { background: #0a0a0a; }
+    /* Feedzone marker */
+    .feedzone-marker {
+      width: 28px; height: 28px; border-radius: 50%;
+      background: rgba(192,132,252,0.9);
+      border: 3px solid #fff;
+      box-shadow: 0 0 10px rgba(192,132,252,0.7), 0 1px 4px rgba(0,0,0,0.5);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px; line-height: 1;
+    }
+
+    /* Mile marker */
+    .mile-marker {
+      min-width: 26px; height: 26px; padding: 0 4px; border-radius: 50%;
+      background: rgba(0,0,0,0.9);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 11px; font-weight: 700; color: #fff;
+      border: 2px solid #58a6ff;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.5);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      white-space: nowrap;
+    }
+
+    .leaflet-container { background: #dfe5e8; }
     .leaflet-popup-content-wrapper { background: #1a1a1a; border: 1px solid #333; border-radius: 8px; color: #fff; box-shadow: 0 2px 12px rgba(0,0,0,0.5); }
     .leaflet-popup-tip { background: #1a1a1a; }
     .leaflet-popup-close-button { color: #888 !important; }
@@ -204,6 +260,7 @@
     }
     .legend-item { display:flex; align-items:center; gap:0.4rem; }
     .legend-line { width: 18px; height: 3px; border-radius: 2px; flex-shrink: 0; }
+    .legend-fz { width: 10px; height: 10px; border-radius: 50%; background: var(--purple); flex-shrink: 0; }
   </style>
 </head>
 <body>
@@ -221,6 +278,13 @@
         <option value="">— Select Event —</option>
       </select>
       <div id="courseToggles" style="display:flex;gap:0.5rem;flex-wrap:wrap;"></div>
+      <!-- Feedzone toggle injected here by JS -->
+      <button class="feedzone-toggle-btn active" id="feedzoneToggleBtn" onclick="toggleFeedzones()" style="display:none">
+        🏁 Feedzones
+      </button>
+      <button class="mile-toggle-btn active" id="mileToggleBtn" onclick="toggleMileMarkers()" style="display:none">
+        📍 Mile Markers
+      </button>
     </div>
   </div>
 
@@ -233,7 +297,6 @@
 
   <div class="course-legend" id="courseLegend" style="display:none;flex-wrap:wrap;gap:0.5rem 1rem;"></div>
 
-  <!-- ── Search panel ── -->
   <button class="search-toggle" id="searchToggle" onclick="toggleSearchPanel()">🔍 Find Rider</button>
 
   <div class="search-panel" id="searchPanel">
@@ -276,39 +339,173 @@
     const db = firebase.database();
 
     const map = L.map('map', { zoomControl: true }).setView([37.1, -113.5], 13);
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
       attribution: '© OpenStreetMap contributors, © CARTO',
       subdomains: 'abcd',
       maxZoom: 19,
     }).addTo(map);
 
-    const markers      = {};
-    const riders       = {};
-    const trailLayers  = {};   // bib → Leaflet polyline of history
-    let riderListener  = null;
-    let courseLayer    = null;
-    let courseVisible  = true;
-    let currentEvent   = null;
-    let mapFitted      = false;
+    const markers     = {};
+    const riders      = {};
+    let riderListener = null;
+    let currentEvent  = null;
+    let mapFitted     = false;
 
     const STALE_MS = 8  * 60 * 1000;
     const OLD_MS   = 20 * 60 * 1000;
 
-    // Category colors — cycle through these
-    const CATEGORY_COLORS = {
-      default: '#ff6d00',
-      xc:      '#00e5ff',
-      enduro:  '#ff1744',
-      dh:      '#d500f9',
-      gravel:  '#00e676',
-      road:    '#ffab00',
+    // ── Feedzones ─────────────────────────────────────────────────────────────
+    const feedzoneMarkers  = {};   // key → Leaflet marker
+    let feedzoneListener   = null;
+    let feedzoneVisible    = true;
+
+    function makeFzIcon() {
+      return L.divIcon({
+        className: '',
+        html: `<div class="feedzone-marker">🏁</div>`,
+        iconSize: [28, 28], iconAnchor: [14, 14], popupAnchor: [0, -16],
+      });
+    }
+
+    function loadFeedzones(eventId) {
+      // Clear old markers and listener
+      Object.values(feedzoneMarkers).forEach(m => m.remove());
+      Object.keys(feedzoneMarkers).forEach(k => delete feedzoneMarkers[k]);
+      if (feedzoneListener) { feedzoneListener(); feedzoneListener = null; }
+
+      const toggleBtn = document.getElementById('feedzoneToggleBtn');
+
+      feedzoneListener = db.ref(`config/feedzones/${eventId}`).on('value', (snap) => {
+        const data = snap.val() || {};
+
+        // Remove markers for deleted feedzones
+        Object.keys(feedzoneMarkers).forEach(k => {
+          if (!data[k]) { feedzoneMarkers[k].remove(); delete feedzoneMarkers[k]; }
+        });
+
+        // Add/update markers
+        Object.entries(data).forEach(([key, fz]) => {
+          if (!fz.lat || !fz.lng) return;
+          if (feedzoneMarkers[key]) {
+            feedzoneMarkers[key].setLatLng([fz.lat, fz.lng]);
+          } else {
+            const m = L.marker([fz.lat, fz.lng], { icon: makeFzIcon(), zIndexOffset: -100 })
+              .bindPopup(`
+                <div style="font-family:-apple-system,sans-serif;min-width:120px;">
+                  <div style="font-size:0.9rem;font-weight:700;color:#c084fc;">🏁 Feedzone</div>
+                  <div style="font-size:1rem;font-weight:600;color:#fff;margin-top:4px;">${fz.name}</div>
+                  <div style="font-size:0.72rem;color:#888;margin-top:6px;">${fz.lat.toFixed(5)}, ${fz.lng.toFixed(5)}</div>
+                </div>`)
+              .addTo(map);
+            feedzoneMarkers[key] = m;
+          }
+
+          // Hide if feedzones are toggled off
+          if (!feedzoneVisible) feedzoneMarkers[key].remove();
+        });
+
+        // Show/hide toggle button
+        const count = Object.keys(data).length;
+        toggleBtn.style.display = count > 0 ? 'flex' : 'none';
+        updateFzLegend(count);
+      });
+    }
+
+    function updateFzLegend(count) {
+      const legend = document.getElementById('courseLegend');
+      const existing = legend.querySelector('.fz-legend-item');
+      if (existing) existing.remove();
+      if (count > 0 && feedzoneVisible) {
+        const item = document.createElement('div');
+        item.className = 'legend-item fz-legend-item';
+        item.innerHTML = `<div class="legend-fz"></div><span>${count} Feedzone${count !== 1 ? 's' : ''}</span>`;
+        legend.appendChild(item);
+        legend.style.display = 'flex';
+      }
+    }
+
+    window.toggleFeedzones = function() {
+      feedzoneVisible = !feedzoneVisible;
+      const btn = document.getElementById('feedzoneToggleBtn');
+      btn.classList.toggle('active', feedzoneVisible);
+
+      Object.values(feedzoneMarkers).forEach(m => {
+        if (feedzoneVisible) m.addTo(map);
+        else m.remove();
+      });
+
+      // Update legend
+      updateFzLegend(feedzoneVisible ? Object.keys(feedzoneMarkers).length : 0);
     };
 
-    function categoryColor(cat) {
-      if (!cat) return CATEGORY_COLORS.default;
-      const key = cat.toLowerCase().replace(/[^a-z]/g, '');
-      return CATEGORY_COLORS[key] || CATEGORY_COLORS.default;
+    function clearFeedzones() {
+      Object.values(feedzoneMarkers).forEach(m => m.remove());
+      Object.keys(feedzoneMarkers).forEach(k => delete feedzoneMarkers[k]);
+      if (feedzoneListener) { feedzoneListener(); feedzoneListener = null; }
+      document.getElementById('feedzoneToggleBtn').style.display = 'none';
+      feedzoneVisible = true;
     }
+
+    // ── Mile markers ──────────────────────────────────────────────────────────
+    const MILE_INTERVAL = 5;         // miles between markers
+    const METERS_PER_MILE = 1609.344;
+    let mileMarkersVisible = true;
+
+    function makeMileIcon(mile) {
+      return L.divIcon({
+        className: '',
+        html: `<div class="mile-marker">${mile} mi</div>`,
+        iconSize: [30, 26], iconAnchor: [15, 13], popupAnchor: [0, -14],
+      });
+    }
+
+    // Walk the course points, dropping a marker every MILE_INTERVAL miles.
+    // Returns an array of Leaflet markers (not yet necessarily on the map).
+    function buildMileMarkers(pts) {
+      const result = [];
+      if (!pts || pts.length < 2) return result;
+
+      let cumMiles = 0;
+      let nextMile = MILE_INTERVAL;
+
+      for (let i = 1; i < pts.length; i++) {
+        const p1 = L.latLng(pts[i - 1].lat, pts[i - 1].lng);
+        const p2 = L.latLng(pts[i].lat, pts[i].lng);
+        const segMeters = p1.distanceTo(p2);
+        const segMiles  = segMeters / METERS_PER_MILE;
+        if (segMiles <= 0) continue;
+
+        while (cumMiles + segMiles >= nextMile) {
+          const fraction = (nextMile - cumMiles) / segMiles;
+          const lat = p1.lat + (p2.lat - p1.lat) * fraction;
+          const lng = p1.lng + (p2.lng - p1.lng) * fraction;
+          const marker = L.marker([lat, lng], { icon: makeMileIcon(nextMile), zIndexOffset: -50 })
+            .bindPopup(`<div style="font-family:-apple-system,sans-serif;font-size:0.85rem;font-weight:600;">Mile ${nextMile}</div>`);
+          result.push(marker);
+          nextMile += MILE_INTERVAL;
+        }
+        cumMiles += segMiles;
+      }
+      return result;
+    }
+
+    function updateMileToggleVisibility() {
+      const anyMarkers = Object.values(courseLayers).some(c => c.mileMarkers && c.mileMarkers.length);
+      document.getElementById('mileToggleBtn').style.display = anyMarkers ? 'flex' : 'none';
+    }
+
+    window.toggleMileMarkers = function() {
+      mileMarkersVisible = !mileMarkersVisible;
+      const btn = document.getElementById('mileToggleBtn');
+      btn.classList.toggle('active', mileMarkersVisible);
+      Object.values(courseLayers).forEach(c => {
+        if (!c.mileMarkers) return;
+        c.mileMarkers.forEach(m => {
+          if (mileMarkersVisible && c.visible) m.addTo(map);
+          else m.remove();
+        });
+      });
+    };
 
     // ── Load events dropdown ──────────────────────────────────────────────────
     db.ref('config/races').on('value', (snap) => {
@@ -317,6 +514,7 @@
       while (sel.options.length > 1) sel.remove(1);
       const events = snap.val() || {};
       Object.entries(events).forEach(([key, ev]) => {
+        if (ev.visible === false) return;  // hidden — skip
         const opt = document.createElement('option');
         opt.value = key;
         opt.textContent = ev.name || key;
@@ -332,19 +530,17 @@
         riderListener = null;
       }
       Object.keys(markers).forEach(b => { markers[b].remove(); delete markers[b]; });
-      Object.keys(trailLayers).forEach(b => { trailLayers[b].remove(); delete trailLayers[b]; });
       Object.keys(riders).forEach(b => delete riders[b]);
       removeCourseLayer();
+      clearFeedzones();
       mapFitted     = false;
       currentEvent  = eventId;
 
-      const msg          = document.getElementById('mapMessage');
-      const courseToggle = document.getElementById('courseToggle');
+      const msg = document.getElementById('mapMessage');
 
       if (!eventId) {
         msg.innerHTML = '<h2>Select an event above</h2><p>Choose an event to see riders and the course.</p>';
         msg.classList.add('visible');
-        courseToggle.classList.remove('visible');
         updateCount();
         renderRiderList();
         return;
@@ -352,6 +548,7 @@
 
       msg.classList.remove('visible');
       loadCourse(eventId);
+      loadFeedzones(eventId);
 
       riderListener = db.ref(`tracker/${eventId}`).on('value', (snap) => {
         const all = snap.val() || {};
@@ -369,25 +566,27 @@
       document.getElementById('panelTitle').textContent = optLabel || 'Riders';
     };
 
-    // ── Course GPX — multiple courses per event ──────────────────────────────
+    // ── Course GPX ────────────────────────────────────────────────────────────
     const COURSE_COLORS = ['#ff1744', '#2979ff', '#ff6d00', '#00e676', '#d500f9'];
-    const courseLayers  = {};   // courseId → { layer, visible, color, name }
+    const courseLayers  = {};
 
     function loadCourse(eventId) {
-      // Clear existing courses
-      Object.values(courseLayers).forEach(c => { if (c.layer) c.layer.remove(); });
+      Object.values(courseLayers).forEach(c => {
+        if (c.layer) c.layer.remove();
+        if (c.mileMarkers) c.mileMarkers.forEach(m => m.remove());
+      });
       Object.keys(courseLayers).forEach(k => delete courseLayers[k]);
       document.getElementById('courseToggles').innerHTML = '';
-      document.getElementById('courseLegend').style.display = 'none';
-      document.getElementById('courseLegend').innerHTML = '';
+      const legend = document.getElementById('courseLegend');
+      // Remove only course legend items (not feedzone)
+      legend.querySelectorAll('.legend-course-item').forEach(el => el.remove());
 
       db.ref(`config/gpx/${eventId}`).once('value').then(snap => {
         const data = snap.val();
-        if (!data) return;
+        if (!data) { updateMileToggleVisibility(); return; }
 
-        // Filter out legacy single-course 'meta' and 'points' keys
         const courses = Object.entries(data).filter(([k]) => k !== 'meta' && k !== 'points' && data[k].meta);
-        if (!courses.length) return;
+        if (!courses.length) { updateMileToggleVisibility(); return; }
 
         courses.forEach(([courseId, course], i) => {
           const pts   = course.points;
@@ -396,20 +595,20 @@
           const name  = meta?.name || courseId;
           if (!pts || !pts.length) return;
 
-          // Draw polyline
           const layer = L.polyline(pts.map(p => [p.lat, p.lng]), {
             color, weight: 4, opacity: 0.9, smoothFactor: 1,
           }).addTo(map);
 
-          courseLayers[courseId] = { layer, visible: true, color, name };
+          const mileMarkers = buildMileMarkers(pts);
+          if (mileMarkersVisible) mileMarkers.forEach(m => m.addTo(map));
 
-          // Fit map to first course
+          courseLayers[courseId] = { layer, visible: true, color, name, mileMarkers };
+
           if (!mapFitted) {
             map.fitBounds(layer.getBounds(), { padding: [40, 40] });
             mapFitted = true;
           }
 
-          // Add toggle button
           const btn = document.createElement('button');
           btn.className = 'course-btn active';
           btn.style.borderColor = color;
@@ -418,14 +617,14 @@
           btn.addEventListener('click', () => toggleCourseLayer(courseId, btn));
           document.getElementById('courseToggles').appendChild(btn);
 
-          // Add legend item
-          const legend = document.getElementById('courseLegend');
           legend.style.display = 'flex';
           const item = document.createElement('div');
-          item.className = 'legend-item';
+          item.className = 'legend-item legend-course-item';
           item.innerHTML = `<div class="legend-line" style="background:${color}"></div><span>${name}</span>`;
           legend.appendChild(item);
         });
+
+        updateMileToggleVisibility();
       });
     }
 
@@ -438,19 +637,27 @@
         btn.classList.add('active');
         btn.style.borderColor = c.color;
         btn.style.color = c.color;
+        if (mileMarkersVisible && c.mileMarkers) c.mileMarkers.forEach(m => m.addTo(map));
       } else {
         c.layer.remove();
         btn.classList.remove('active');
         btn.style.borderColor = 'var(--border)';
         btn.style.color = 'var(--mid)';
+        if (c.mileMarkers) c.mileMarkers.forEach(m => m.remove());
       }
     }
 
     function removeCourseLayer() {
-      Object.values(courseLayers).forEach(c => { if (c.layer) c.layer.remove(); });
+      Object.values(courseLayers).forEach(c => {
+        if (c.layer) c.layer.remove();
+        if (c.mileMarkers) c.mileMarkers.forEach(m => m.remove());
+      });
       Object.keys(courseLayers).forEach(k => delete courseLayers[k]);
       document.getElementById('courseToggles').innerHTML = '';
-      document.getElementById('courseLegend').style.display = 'none';
+      const legend = document.getElementById('courseLegend');
+      legend.querySelectorAll('.legend-course-item').forEach(el => el.remove());
+      if (!legend.children.length) legend.style.display = 'none';
+      updateMileToggleVisibility();
     }
 
     // ── Rider helpers ─────────────────────────────────────────────────────────
@@ -462,12 +669,12 @@
       return 'old';
     }
 
-    function makeIcon(s, courseColor) {
-      const color = s === 'fresh' ? (courseColor || '#ff6d00') : s === 'stale' ? '#ffab00' : '#888';
+    function makeIcon(s, bib) {
+      const label = bib != null ? bib : '';
       return L.divIcon({
         className: '',
-        html: `<div class="rider-marker" style="background:${color};border-color:${s==='fresh'?'#fff':'#555'}"></div>`,
-        iconSize: [16,16], iconAnchor: [8,8], popupAnchor: [0,-10],
+        html: `<div class="rider-marker ${s === 'fresh' ? '' : s}">${label}</div>`,
+        iconSize: [22, 22], iconAnchor: [11, 11], popupAnchor: [0, -12],
       });
     }
 
@@ -489,55 +696,24 @@
         removeRider(bib); return;
       }
       riders[bib] = data;
-      const ts    = data.latest?.ts       || null;
-      const lat   = data.latest?.lat      || null;
-      const lng   = data.latest?.lng      || null;
-      const acc   = data.latest?.accuracy || null;
-      const speed = data.latest?.speed    || null;
-      const elev  = data.latest?.elevation|| null;
-      const courseColor = data.courseColor || '#ff6d00';
-      const courseName  = data.courseName  || null;
-      const s           = stalenessClass(ts);
+      const ts  = data.latest?.ts  || null;
+      const lat = data.latest?.lat || null;
+      const lng = data.latest?.lng || null;
+      const acc = data.latest?.accuracy || null;
+      const s   = stalenessClass(ts);
 
       if (lat && lng) {
         const ll = [lat, lng];
-        if (markers[bib]) { markers[bib].setLatLng(ll); markers[bib].setIcon(makeIcon(s, courseColor)); }
+        if (markers[bib]) { markers[bib].setLatLng(ll); markers[bib].setIcon(makeIcon(s, bib)); }
         else {
-          markers[bib] = L.marker(ll, { icon: makeIcon(s, courseColor) }).addTo(map);
+          markers[bib] = L.marker(ll, { icon: makeIcon(s, bib) }).addTo(map);
           if (!mapFitted) { map.setView(ll, 14); mapFitted = true; }
         }
-
-        // ── History trail ──
-        const history = data.history ? Object.values(data.history).sort((a,b) => a.ts - b.ts) : [];
-        if (history.length > 1) {
-          const trailPoints = history.map(p => [p.lat, p.lng]);
-          if (trailLayers[bib]) trailLayers[bib].remove();
-          trailLayers[bib] = L.polyline(trailPoints, {
-            color: courseColor, weight: 2, opacity: 0.5, dashArray: '4 4',
-          }).addTo(map);
-        }
-
-        // ── Avatar ──
-        const avatarHtml = data.avatarUrl
-          ? `<img src="${data.avatarUrl}" style="width:40px;height:40px;border-radius:50%;object-fit:cover;margin-bottom:6px;display:block;">`
-          : '';
-
-        // ── Course badge ──
-        const catHtml = courseName
-          ? `<span style="display:inline-block;padding:2px 8px;border-radius:4px;background:${courseColor};color:#fff;font-size:0.65rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;margin-top:4px">${courseName}</span>`
-          : '';
-
         markers[bib].bindPopup(`
-          <div style="font-family:-apple-system,sans-serif;min-width:150px;">
-            ${avatarHtml}
+          <div style="font-family:-apple-system,sans-serif;min-width:140px;">
             <div style="font-size:1rem;font-weight:700;color:#fff;">Bib ${bib}</div>
             <div style="font-size:0.85rem;color:#aaa;margin-top:2px;">${data.name||''}</div>
-            ${catHtml}
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-top:8px;">
-              ${speed != null ? `<div style="font-size:0.72rem;color:#888;">Speed<br><span style="color:#fff;font-weight:600">${speed} mph</span></div>` : ''}
-              ${elev  != null ? `<div style="font-size:0.72rem;color:#888;">Elevation<br><span style="color:#fff;font-weight:600">${elev} ft</span></div>` : ''}
-            </div>
-            <div style="font-size:0.75rem;color:#888;margin-top:6px;">${formatAge(ts)}${acc?` · ±${acc}m`:''}</div>
+            <div style="font-size:0.75rem;color:#888;margin-top:8px;">${formatAge(ts)}${acc?` · ±${acc}m`:''}</div>
             <div style="font-size:0.7rem;color:#666;margin-top:2px;">${data.expiresAt?formatExpiry(data.expiresAt):''}</div>
           </div>`);
       }
@@ -547,8 +723,7 @@
     }
 
     function removeRider(bib) {
-      if (markers[bib])    { markers[bib].remove();    delete markers[bib]; }
-      if (trailLayers[bib]){ trailLayers[bib].remove(); delete trailLayers[bib]; }
+      if (markers[bib]) { markers[bib].remove(); delete markers[bib]; }
       delete riders[bib];
       renderRiderList();
       updateCount();
@@ -568,12 +743,11 @@
         const s   = stalenessClass(ts);
         const row = document.createElement('div');
         row.className = 'rider-row';
-        const catColor = rider.courseColor || '#333';
         row.innerHTML = `
-          <div class="rider-bib" style="border-left:3px solid ${catColor}">${bib}</div>
+          <div class="rider-bib">${bib}</div>
           <div class="rider-info">
             <div class="rider-name">${rider.name || `Bib ${bib}`}</div>
-            <div class="rider-meta">${rider.category ? `<span style="color:${catColor}">${rider.category}</span> · ` : ''}${formatAge(ts)}${rider.latest?.speed!=null?` · ${rider.latest.speed}mph`:''}${rider.latest?.elevation!=null?` · ${rider.latest.elevation}ft`:''}</div>
+            <div class="rider-meta">${formatAge(ts)}${rider.latest?.accuracy?` · ±${rider.latest.accuracy}m`:''}</div>
           </div>
           <div class="rider-status ${s}">${s==='fresh'?'● Live':s==='stale'?'● Stale':'● Offline'}</div>`;
         row.addEventListener('click', () => {
@@ -598,8 +772,8 @@
       document.getElementById('riderPanel').classList.remove('open'));
 
     // ── Rider search panel ────────────────────────────────────────────────────
-    let searchPanelOpen   = false;
-    let highlightedBib    = null;
+    let searchPanelOpen = false;
+    let highlightedBib  = null;
 
     window.toggleSearchPanel = function() {
       searchPanelOpen = !searchPanelOpen;
@@ -615,49 +789,39 @@
       }
     };
 
-    window.filterRiderSearch = function(q) {
-      renderSearchResults(q);
-    };
+    window.filterRiderSearch = function(q) { renderSearchResults(q); };
 
     function renderSearchResults(q) {
       const container = document.getElementById('searchResults');
       const active    = Object.entries(riders).filter(([, r]) => r.active && !r.adminStop);
-
       if (!active.length) {
         container.innerHTML = '<div class="search-empty">No active riders for this event.</div>';
         return;
       }
-
-      const query = q.toLowerCase().trim();
+      const query    = q.toLowerCase().trim();
       const filtered = active.filter(([bib, r]) =>
-        !query ||
-        bib.toLowerCase().includes(query) ||
-        (r.name || '').toLowerCase().includes(query)
+        !query || bib.toLowerCase().includes(query) || (r.name || '').toLowerCase().includes(query)
       );
-
       if (!filtered.length) {
         container.innerHTML = '<div class="search-empty">No riders match your search.</div>';
         return;
       }
-
       container.innerHTML = '';
       filtered
         .sort((a, b) => parseInt(a[0]) - parseInt(b[0]))
         .forEach(([bib, rider]) => {
-          const ts    = rider.latest?.ts || null;
-          const s     = stalenessClass(ts);
-          const isHL  = highlightedBib === bib;
-
-          const row = document.createElement('div');
+          const ts   = rider.latest?.ts || null;
+          const s    = stalenessClass(ts);
+          const isHL = highlightedBib === bib;
+          const row  = document.createElement('div');
           row.className = 'search-result-row' + (isHL ? ' highlighted' : '');
           row.innerHTML = `
             <div class="sr-bib">${bib}</div>
             <div class="sr-info">
               <div class="sr-name">${rider.name || 'Bib ' + bib}</div>
-              <div class="sr-meta">${formatAge(ts)}${rider.latest?.accuracy ? ' · ±' + rider.latest.accuracy + 'm' : ''}${rider.courseName ? ' · ' + rider.courseName : ''}</div>
+              <div class="sr-meta">${formatAge(ts)}${rider.latest?.accuracy ? ' · ±' + rider.latest.accuracy + 'm' : ''}</div>
             </div>
             <div class="sr-status ${s}">${s === 'fresh' ? '● Live' : s === 'stale' ? '● Stale' : '● Off'}</div>`;
-
           row.addEventListener('click', () => zoomToRider(bib));
           container.appendChild(row);
         });
@@ -666,19 +830,15 @@
     function zoomToRider(bib) {
       const rider = riders[bib];
       if (!rider?.latest?.lat || !rider?.latest?.lng) return;
-
-      // Highlight in search list
       highlightedBib = bib;
       renderSearchResults(document.getElementById('riderSearchBox').value);
-
-      // Zoom map and open popup
       map.setView([rider.latest.lat, rider.latest.lng], 15, { animate: true });
       markers[bib]?.openPopup();
     }
 
     setInterval(() => {
       Object.entries(riders).forEach(([b, d]) => {
-        if (markers[b]) markers[b].setIcon(makeIcon(stalenessClass(d.latest?.ts||null), d.courseColor || '#ff6d00'));
+        if (markers[b]) markers[b].setIcon(makeIcon(stalenessClass(d.latest?.ts||null), b));
       });
       renderRiderList();
     }, 60000);
