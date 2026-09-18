@@ -196,9 +196,17 @@
     .rider-status.stale { color: var(--amber); }
     .rider-status.old   { color: #999; }
 
-    .rider-marker { width: 16px; height: 16px; border-radius: 50%; background: #ff6d00; border: 3px solid #fff; box-shadow: 0 1px 4px rgba(0,0,0,0.4); }
-    .rider-marker.stale { background: #ffab00; border-color: #fff; }
-    .rider-marker.old   { background: #bbb; border-color: #fff; }
+    .rider-marker {
+      min-width: 22px; height: 22px; padding: 0 3px; border-radius: 11px;
+      background: #ff6d00; border: 2px solid #fff;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.4);
+      display: flex; align-items: center; justify-content: center;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      font-size: 10px; font-weight: 700; color: #fff; line-height: 1;
+      white-space: nowrap;
+    }
+    .rider-marker.stale { background: #ffab00; }
+    .rider-marker.old   { background: #bbb; color: #222; }
 
     /* Feedzone marker */
     .feedzone-marker {
@@ -222,7 +230,7 @@
       white-space: nowrap;
     }
 
-    .leaflet-container { background: #0a0a0a; }
+    .leaflet-container { background: #dfe5e8; }
     .leaflet-popup-content-wrapper { background: #1a1a1a; border: 1px solid #333; border-radius: 8px; color: #fff; box-shadow: 0 2px 12px rgba(0,0,0,0.5); }
     .leaflet-popup-tip { background: #1a1a1a; }
     .leaflet-popup-close-button { color: #888 !important; }
@@ -331,7 +339,7 @@
     const db = firebase.database();
 
     const map = L.map('map', { zoomControl: true }).setView([37.1, -113.5], 13);
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png?key=cb1_2i3f_1_122a33db49ae4ec466593f61', {
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
       attribution: '© OpenStreetMap contributors, © CARTO',
       subdomains: 'abcd',
       maxZoom: 19,
@@ -661,11 +669,12 @@
       return 'old';
     }
 
-    function makeIcon(s) {
+    function makeIcon(s, bib) {
+      const label = bib != null ? bib : '';
       return L.divIcon({
         className: '',
-        html: `<div class="rider-marker ${s === 'fresh' ? '' : s}"></div>`,
-        iconSize: [14,14], iconAnchor: [7,7], popupAnchor: [0,-10],
+        html: `<div class="rider-marker ${s === 'fresh' ? '' : s}">${label}</div>`,
+        iconSize: [22, 22], iconAnchor: [11, 11], popupAnchor: [0, -12],
       });
     }
 
@@ -695,9 +704,9 @@
 
       if (lat && lng) {
         const ll = [lat, lng];
-        if (markers[bib]) { markers[bib].setLatLng(ll); markers[bib].setIcon(makeIcon(s)); }
+        if (markers[bib]) { markers[bib].setLatLng(ll); markers[bib].setIcon(makeIcon(s, bib)); }
         else {
-          markers[bib] = L.marker(ll, { icon: makeIcon(s) }).addTo(map);
+          markers[bib] = L.marker(ll, { icon: makeIcon(s, bib) }).addTo(map);
           if (!mapFitted) { map.setView(ll, 14); mapFitted = true; }
         }
         markers[bib].bindPopup(`
@@ -829,7 +838,7 @@
 
     setInterval(() => {
       Object.entries(riders).forEach(([b, d]) => {
-        if (markers[b]) markers[b].setIcon(makeIcon(stalenessClass(d.latest?.ts||null)));
+        if (markers[b]) markers[b].setIcon(makeIcon(stalenessClass(d.latest?.ts||null), b));
       });
       renderRiderList();
     }, 60000);
