@@ -230,6 +230,17 @@
       white-space: nowrap;
     }
 
+    /* Finish line marker */
+    .finish-marker {
+      width: 32px; height: 32px; border-radius: 6px;
+      background:
+        repeating-conic-gradient(#111 0% 25%, #fff 0% 50%) 0 0 / 10px 10px;
+      border: 2px solid #fff;
+      box-shadow: 0 1px 5px rgba(0,0,0,0.6);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px; line-height: 1;
+    }
+
     .leaflet-container { background: #dfe5e8; }
     .leaflet-popup-content-wrapper { background: #1a1a1a; border: 1px solid #333; border-radius: 8px; color: #fff; box-shadow: 0 2px 12px rgba(0,0,0,0.5); }
     .leaflet-popup-tip { background: #1a1a1a; }
@@ -460,6 +471,14 @@
       });
     }
 
+    function makeFinishIcon() {
+      return L.divIcon({
+        className: '',
+        html: `<div class="finish-marker">🏁</div>`,
+        iconSize: [32, 32], iconAnchor: [16, 16], popupAnchor: [0, -18],
+      });
+    }
+
     // Walk the course points, dropping a marker every MILE_INTERVAL miles.
     // Returns an array of Leaflet markers (not yet necessarily on the map).
     function buildMileMarkers(pts) {
@@ -650,6 +669,7 @@
       Object.values(courseLayers).forEach(c => {
         if (c.layer) c.layer.remove();
         if (c.mileMarkers) c.mileMarkers.forEach(m => m.remove());
+        if (c.finishMarker) c.finishMarker.remove();
       });
       Object.keys(courseLayers).forEach(k => delete courseLayers[k]);
       document.getElementById('courseToggles').innerHTML = '';
@@ -679,7 +699,11 @@
           if (mileMarkersVisible) mileMarkers.forEach(m => m.addTo(map));
 
           const totalMeters = totalCourseMeters(pts);
-          courseLayers[courseId] = { layer, visible: true, color, name, mileMarkers, points: pts, totalMeters };
+          const finishPt    = pts[pts.length - 1];
+          const finishMarker = L.marker([finishPt.lat, finishPt.lng], { icon: makeFinishIcon(), zIndexOffset: 200 })
+            .bindPopup(`<div style="font-family:-apple-system,sans-serif;font-size:0.85rem;font-weight:700;">🏁 Finish — ${name}</div>`)
+            .addTo(map);
+          courseLayers[courseId] = { layer, visible: true, color, name, mileMarkers, points: pts, totalMeters, finishMarker };
 
           if (!mapFitted) {
             map.fitBounds(layer.getBounds(), { padding: [40, 40] });
@@ -715,12 +739,14 @@
         btn.style.borderColor = c.color;
         btn.style.color = c.color;
         if (mileMarkersVisible && c.mileMarkers) c.mileMarkers.forEach(m => m.addTo(map));
+        if (c.finishMarker) c.finishMarker.addTo(map);
       } else {
         c.layer.remove();
         btn.classList.remove('active');
         btn.style.borderColor = 'var(--border)';
         btn.style.color = 'var(--mid)';
         if (c.mileMarkers) c.mileMarkers.forEach(m => m.remove());
+        if (c.finishMarker) c.finishMarker.remove();
       }
     }
 
@@ -728,6 +754,7 @@
       Object.values(courseLayers).forEach(c => {
         if (c.layer) c.layer.remove();
         if (c.mileMarkers) c.mileMarkers.forEach(m => m.remove());
+        if (c.finishMarker) c.finishMarker.remove();
       });
       Object.keys(courseLayers).forEach(k => delete courseLayers[k]);
       document.getElementById('courseToggles').innerHTML = '';
